@@ -1,0 +1,118 @@
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String       @id @default(uuid())
+  name          String
+  email         String       @unique
+  timezone      String
+  memoryVault   MemoryVault?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  emailVerified Boolean      @default(false)
+  image         String?
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model MemoryVault {
+  id        String      @id @default(uuid())
+  userId    String      @unique
+  user      User        @relation(fields: [userId], references: [id])
+  favPeople FavPerson[]
+  memories  Memory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  //what remains is just the AI meta data for now. 
+}
+
+model Memory {
+  id      String      @id @default(uuid())
+  vaultId String
+  vault   MemoryVault @relation(fields: [vaultId], references: [id])
+
+  type      String // "text" | "image" | "audio"
+  content   String? // text content
+  fileUrl   String? // link if image/audio
+  createdAt DateTime @default(now())
+
+}
+
+model FavPerson {
+  id      String      @id @default(uuid())
+  vaultId String
+  vault   MemoryVault @relation(fields: [vaultId], references: [id])
+
+  name         String
+  relationship String
+  phoneNumber  String?
+  email        String?
+  priority     Int // e.g. 1 = highest importance
+  timezone     String?
+
+  supportMsg   String?
+  voiceNoteUrl String? // file upload storage URI
+  videoNoteUrl String? // file upload storage URI
+  photoUrl     String?
+
+  personaMetadata Json? // AI-specific metadata (tone, style, phrases, etc.)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
