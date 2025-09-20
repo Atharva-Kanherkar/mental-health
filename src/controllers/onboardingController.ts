@@ -57,9 +57,9 @@ export class OnboardingController {
     }
 
     /**
-     * Step 1: Create Memory Vault for the authenticated user
+     * Step 1: Initialize onboarding session (collect timezone, but don't create vault yet)
      */
-    static async createMemoryVault(req: Request, res: Response) {
+    static async initializeOnboarding(req: Request, res: Response) {
         try {
             const userId = req.user!.id;
             
@@ -87,15 +87,54 @@ export class OnboardingController {
                 });
             }
 
-            // Update user timezone if provided
+            // Update user timezone if provided (preparing for vault creation)
+            let updatedUser = null;
             if (timezone) {
-                await prisma.user.update({
+                updatedUser = await prisma.user.update({
                     where: { id: userId },
                     data: { timezone }
                 });
             }
 
-            // Create MemoryVault for the user (marks them as onboarded)
+            res.status(200).json({
+                success: true,
+                message: 'Onboarding initialized. Ready to collect your first memories and people.',
+                data: {
+                    user: updatedUser ? {
+                        timezone: updatedUser.timezone
+                    } : null,
+                    nextStep: 'Add your first cherished person - someone who matters most to you'
+                }
+            });
+        } catch (error: any) {
+            res.status(500).json({
+                success: false,
+                message: error.message || 'Internal server error'
+            });
+        }
+    }
+
+    /**
+     * Final Step: Create Memory Vault with collected data
+     * This should only be called after user has added at least one person or memory
+     */
+    static async createMemoryVaultWithContent(req: Request, res: Response) {
+        try {
+            const userId = req.user!.id;
+
+            // Check if user is already onboarded
+            const existingVault = await prisma.memoryVault.findUnique({
+                where: { userId }
+            });
+
+            if (existingVault) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'User has already completed onboarding'
+                });
+            }
+
+            // For now, create an empty vault but in the future this could include initial content
             const memoryVault = await prisma.memoryVault.create({
                 data: {
                     userId: userId
@@ -104,14 +143,14 @@ export class OnboardingController {
 
             res.status(201).json({
                 success: true,
-                message: 'Memory vault created successfully',
+                message: 'Your memory sanctuary has been created! Welcome to your safe space.',
                 data: {
                     memoryVault: {
                         id: memoryVault.id,
                         userId: memoryVault.userId,
                         createdAt: memoryVault.createdAt
                     },
-                    nextStep: 'Add your favorite people to your memory vault'
+                    nextStep: 'Explore your sanctuary - add more memories and people as you feel comfortable'
                 }
             });
         } catch (error: any) {
@@ -329,13 +368,14 @@ export class OnboardingController {
 
     /**
      * Final Step: Complete the entire onboarding process
+     * If no vault exists yet, create it. Then provide summary.
      */
     static async completeOnboarding(req: Request, res: Response) {
         try {
             const userId = req.user!.id;
 
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            let memoryVault = await prisma.memoryVault.findUnique({
                 where: { userId },
                 include: {
                     memories: true,
@@ -343,18 +383,22 @@ export class OnboardingController {
                 }
             });
 
+            // If no vault exists, create it now (progressive onboarding completion)
             if (!memoryVault) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Please create your memory vault first',
-                    redirectTo: '/onboarding/create-vault'
+                const newVault = await prisma.memoryVault.create({
+                    data: { userId },
+                    include: {
+                        memories: true,
+                        favPeople: true
+                    }
                 });
+                memoryVault = newVault;
             }
 
             // Get final summary
             res.json({
                 success: true,
-                message: 'Onboarding completed successfully!',
+                message: 'Welcome to your memory sanctuary! Your safe space is ready.',
                 data: {
                     memoryVault: {
                         id: memoryVault.id,
@@ -369,6 +413,9 @@ export class OnboardingController {
                             audio: memoryVault.memories.filter(m => m.type === 'audio').length
                         }
                     },
+                    message: memoryVault.favPeople.length === 0 && memoryVault.memories.length === 0 
+                        ? "Your sanctuary awaits your first cherished memories and people." 
+                        : "Your sanctuary is populated with the people and memories you hold dear.",
                     redirectTo: '/dashboard'
                 }
             });

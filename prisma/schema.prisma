@@ -13,7 +13,7 @@ model User {
   id            String       @id @default(uuid())
   name          String
   email         String       @unique
-  timezone      String
+  timezone      String?
   memoryVault   MemoryVault?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -42,18 +42,31 @@ model Memory {
   vaultId String
   vault   MemoryVault @relation(fields: [vaultId], references: [id])
 
-  type      String // "text" | "image" | "audio"
+  type      String // "text" | "image" | "audio" | "video"
   content   String? // text content
-  fileUrl   String? // link if image/audio
+  
+  // Encrypted file storage fields
+  fileUrl   String? // DigitalOcean Spaces URL (for encrypted files)
+  fileKey   String? // Storage key in DigitalOcean Spaces
+  fileName  String? // Original filename
+  fileMimeType String? // Original MIME type
+  fileSize  Int? // File size in bytes
+  
+  // Client-side encryption metadata
+  encryptionIV String? // Initialization Vector for decryption
+  encryptionAuthTag String? // Authentication tag for AES-GCM (optional)
+  isEncrypted Boolean @default(false) // Flag to indicate if file is encrypted
+  
   createdAt DateTime @default(now())
-
+  associatedPerson FavPerson? @relation(fields: [associatedPersonId], references: [id])
+  associatedPersonId String?
 }
 
 model FavPerson {
   id      String      @id @default(uuid())
   vaultId String
   vault   MemoryVault @relation(fields: [vaultId], references: [id])
-
+  
   name         String
   relationship String
   phoneNumber  String?
@@ -70,6 +83,8 @@ model FavPerson {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  memories Memory[]
 }
 
 model Session {

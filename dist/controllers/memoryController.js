@@ -6,19 +6,19 @@ const prisma_1 = require("../generated/prisma");
 const prisma = new prisma_1.PrismaClient();
 // Zod validation schemas
 const CreateMemorySchema = zod_1.z.object({
-    type: zod_1.z.enum(['text', 'image', 'audio']),
+    type: zod_1.z.enum(['text', 'image', 'audio', 'video']),
     content: zod_1.z.string().optional(),
     fileUrl: zod_1.z.string().url().optional(),
 }).refine((data) => {
     if (data.type === 'text' && !data.content) {
         return false;
     }
-    if ((data.type === 'image' || data.type === 'audio') && !data.fileUrl) {
+    if ((data.type === 'image' || data.type === 'audio' || data.type === 'video') && !data.fileUrl) {
         return false;
     }
     return true;
 }, {
-    message: "Text memories require content, image/audio memories require fileUrl",
+    message: "Text memories require content, image/audio/video memories require fileUrl",
 });
 const UpdateMemorySchema = zod_1.z.object({
     content: zod_1.z.string().optional(),

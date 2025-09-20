@@ -13,8 +13,15 @@ router.get('/status', onboardingController_1.OnboardingController.getOnboardingS
 router.use(onboarding_1.requireNoOnboarding);
 // Get onboarding page data (only for non-onboarded users)
 router.get('/page', onboardingController_1.OnboardingController.getOnboardingPage);
-// Complete onboarding
+// Get current onboarding progress
+router.get('/progress', onboardingController_1.OnboardingController.getOnboardingProgress);
+// Step-by-step onboarding process
+router.post('/initialize', onboardingController_1.OnboardingController.initializeOnboarding);
+router.post('/add-person', onboardingController_1.OnboardingController.addFavoritePersonOnboarding);
+router.post('/add-memory', onboardingController_1.OnboardingController.addMemoryOnboarding);
+// Complete onboarding (creates vault + marks complete)
 router.post('/complete', onboardingController_1.OnboardingController.completeOnboarding);
+router.post('/create-vault', onboardingController_1.OnboardingController.createMemoryVaultWithContent); // Alternative endpoint for immediate vault creation
 // Update profile during onboarding
 router.put('/profile', onboardingController_1.OnboardingController.updateProfile);
 exports.default = router;

@@ -1,12 +1,13 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { PrismaClient } from '../generated/prisma';
+import { getSignedUrl } from '../config/storage';
 
 const prisma = new PrismaClient();
 
 // Zod validation schemas
 const CreateMemorySchema = z.object({
-  type: z.enum(['text', 'image', 'audio']),
+  type: z.enum(['text', 'image', 'audio', 'video']),
   content: z.string().optional(),
   fileUrl: z.string().url().optional(),
 }).refine(
@@ -14,13 +15,13 @@ const CreateMemorySchema = z.object({
     if (data.type === 'text' && !data.content) {
       return false;
     }
-    if ((data.type === 'image' || data.type === 'audio') && !data.fileUrl) {
+    if ((data.type === 'image' || data.type === 'audio' || data.type === 'video') && !data.fileUrl) {
       return false;
     }
     return true;
   },
   {
-    message: "Text memories require content, image/audio memories require fileUrl",
+    message: "Text memories require content, image/audio/video memories require fileUrl",
   }
 );
 
@@ -120,27 +121,59 @@ export class MemoryController {
         whereClause.type = type;
       }
 
-      // Get memories with pagination
+      // Get memories with pagination and include encrypted file fields
       const [memories, totalCount] = await Promise.all([
         prisma.memory.findMany({
           where: whereClause,
           orderBy: { createdAt: 'desc' },
           skip: (page - 1) * limit,
-          take: limit
+          take: limit,
+          include: {
+            associatedPerson: {
+              select: {
+                id: true,
+                name: true,
+                relationship: true
+              }
+            }
+          }
         }),
         prisma.memory.count({ where: whereClause })
       ]);
 
+      // Process memories to generate signed URLs for encrypted files
+      const processedMemories = memories.map(memory => {
+        const baseMemory = {
+          id: memory.id,
+          type: memory.type,
+          content: memory.content,
+          fileUrl: memory.fileUrl,
+          fileName: memory.fileName,
+          fileMimeType: memory.fileMimeType,
+          fileSize: memory.fileSize,
+          isEncrypted: memory.isEncrypted,
+          encryptionIV: memory.encryptionIV,
+          encryptionAuthTag: memory.encryptionAuthTag,
+          createdAt: memory.createdAt,
+          associatedPerson: memory.associatedPerson
+        };
+
+        // If the memory has an encrypted file, generate a signed URL
+        if (memory.isEncrypted && memory.fileKey) {
+          const signedUrl = getSignedUrl(memory.fileKey, 3600); // 1 hour expiry
+          return {
+            ...baseMemory,
+            signedUrl
+          };
+        }
+
+        return baseMemory;
+      });
+
       res.json({
         success: true,
         data: {
-          memories: memories.map(memory => ({
-            id: memory.id,
-            type: memory.type,
-            content: memory.content,
-            fileUrl: memory.fileUrl,
-            createdAt: memory.createdAt
-          })),
+          memories: processedMemories,
           pagination: {
             page,
             limit,

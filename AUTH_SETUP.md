@@ -133,12 +133,11 @@ npm run dev
 
 - `/src/utils/auth.ts` - Better Auth configuration
 - `/src/utils/auth-client.ts` - Client-side auth helper
-- `/src/services/authService.ts` - Authentication service functions
-- `/src/controllers/authController.ts` - Express route controllers
-- `/src/routes/auth.ts` - Authentication routes
-- `/src/server.ts` - Updated server with auth integration
-- `/public/auth-test.html` - Test interface for authentication
+- `/src/server.ts` - Updated server with Better Auth integration
 - `/.env.example` - Environment variables template
+- `/src/middleware/auth.ts` - Authentication middleware for protected routes
+
+**Note**: We use Better Auth's native endpoints (`/api/auth/*`) directly. No custom controllers, services, or routes needed.
 
 ## 🔒 Security Notes
 

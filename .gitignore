@@ -3,3 +3,12 @@ node_modules
 .env
 
 /src/generated/prisma
+
+# Build outputs
+dist/
+.next/
+out/
+
+# Generated JS files in frontend (we only want TypeScript)
+frontend/**/*.js
+!frontend/node_modules/**/*.js

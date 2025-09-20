@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { MemoryController } from '../controllers/memoryController';
 import { requireAuth } from '../middleware/auth';
 
@@ -7,7 +7,7 @@ const router = Router();
 // Apply authentication middleware to all routes
 router.use(requireAuth);
 
-// Memory routes
+ 
 router.post('/', MemoryController.createMemory);           // POST /api/memories
 router.get('/', MemoryController.getMemories);             // GET /api/memories
 router.get('/:id', MemoryController.getMemoryById);        // GET /api/memories/:id

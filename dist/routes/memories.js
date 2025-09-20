@@ -6,7 +6,6 @@ const auth_1 = require("../middleware/auth");
 const router = (0, express_1.Router)();
 // Apply authentication middleware to all routes
 router.use(auth_1.requireAuth);
-// Memory routes
 router.post('/', memoryController_1.MemoryController.createMemory); // POST /api/memories
 router.get('/', memoryController_1.MemoryController.getMemories); // GET /api/memories
 router.get('/:id', memoryController_1.MemoryController.getMemoryById); // GET /api/memories/:id

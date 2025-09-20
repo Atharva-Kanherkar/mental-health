@@ -21,12 +21,13 @@ router.get('/page', OnboardingController.getOnboardingPage);
 router.get('/progress', OnboardingController.getOnboardingProgress);
 
 // Step-by-step onboarding process
-router.post('/create-vault', OnboardingController.createMemoryVault);
+router.post('/initialize', OnboardingController.initializeOnboarding);
 router.post('/add-person', OnboardingController.addFavoritePersonOnboarding);
 router.post('/add-memory', OnboardingController.addMemoryOnboarding);
 
-// Complete onboarding (final step)
+// Complete onboarding (creates vault + marks complete)
 router.post('/complete', OnboardingController.completeOnboarding);
+router.post('/create-vault', OnboardingController.createMemoryVaultWithContent); // Alternative endpoint for immediate vault creation
 
 // Update profile during onboarding
 router.put('/profile', OnboardingController.updateProfile);
