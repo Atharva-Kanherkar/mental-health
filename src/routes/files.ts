@@ -39,4 +39,11 @@ router.delete('/:memoryId', FileUploadController.deleteEncryptedMemory);
  */
 router.get('/:memoryId/status', FileUploadController.getUploadStatus);
 
+/**
+ * GET /api/files/serve/:memoryId
+ * Serve server-managed files through pre-signed URLs
+ * This avoids CORS issues and provides proper access control
+ */
+router.get('/serve/:memoryId', FileUploadController.serveFile);
+
 export default router;

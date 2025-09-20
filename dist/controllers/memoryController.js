@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemoryController = void 0;
 const zod_1 = require("zod");
 const prisma_1 = require("../generated/prisma");
+const storage_1 = require("../config/storage");
 const prisma = new prisma_1.PrismaClient();
 // Zod validation schemas
 const CreateMemorySchema = zod_1.z.object({
@@ -105,26 +106,58 @@ class MemoryController {
             if (type && ['text', 'image', 'audio'].includes(type)) {
                 whereClause.type = type;
             }
-            // Get memories with pagination
+            // Get memories with pagination and include encrypted file fields
             const [memories, totalCount] = await Promise.all([
                 prisma.memory.findMany({
                     where: whereClause,
                     orderBy: { createdAt: 'desc' },
                     skip: (page - 1) * limit,
-                    take: limit
+                    take: limit,
+                    include: {
+                        associatedPerson: {
+                            select: {
+                                id: true,
+                                name: true,
+                                relationship: true
+                            }
+                        }
+                    }
                 }),
                 prisma.memory.count({ where: whereClause })
             ]);
+            // Process memories to generate signed URLs with proper bucket routing
+            const processedMemories = await Promise.all(memories.map(async (memory) => {
+                const baseMemory = {
+                    id: memory.id,
+                    type: memory.type,
+                    content: memory.content,
+                    privacyLevel: memory.privacyLevel, // Include privacy level in response
+                    fileUrl: memory.fileUrl,
+                    fileName: memory.fileName,
+                    fileMimeType: memory.fileMimeType,
+                    fileSize: memory.fileSize,
+                    isEncrypted: memory.isEncrypted,
+                    // SECURITY: Only include encryption metadata for zero-knowledge files
+                    encryptionIV: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionIV : undefined,
+                    encryptionAuthTag: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionAuthTag : undefined,
+                    createdAt: memory.createdAt,
+                    associatedPerson: memory.associatedPerson
+                };
+                // If the memory has a file, generate a signed URL from the appropriate bucket
+                if (memory.fileKey) {
+                    const privacyLevel = memory.privacyLevel;
+                    const signedUrl = await (0, storage_1.getSignedUrl)(memory.fileKey, privacyLevel, 3600); // 1 hour expiry
+                    return {
+                        ...baseMemory,
+                        signedUrl
+                    };
+                }
+                return baseMemory;
+            }));
             res.json({
                 success: true,
                 data: {
-                    memories: memories.map(memory => ({
-                        id: memory.id,
-                        type: memory.type,
-                        content: memory.content,
-                        fileUrl: memory.fileUrl,
-                        createdAt: memory.createdAt
-                    })),
+                    memories: processedMemories,
                     pagination: {
                         page,
                         limit,
@@ -177,16 +210,32 @@ class MemoryController {
                     message: 'Memory not found'
                 });
             }
+            // Process memory to include privacy level and signed URL if needed
+            let processedMemory = {
+                id: memory.id,
+                type: memory.type,
+                content: memory.content,
+                privacyLevel: memory.privacyLevel,
+                fileUrl: memory.fileUrl,
+                fileName: memory.fileName,
+                fileMimeType: memory.fileMimeType,
+                fileSize: memory.fileSize,
+                isEncrypted: memory.isEncrypted,
+                // SECURITY: Only include encryption metadata for zero-knowledge files
+                encryptionIV: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionIV : undefined,
+                encryptionAuthTag: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionAuthTag : undefined,
+                createdAt: memory.createdAt
+            };
+            // Generate signed URL if the memory has a file
+            if (memory.fileKey) {
+                const privacyLevel = memory.privacyLevel;
+                const signedUrl = await (0, storage_1.getSignedUrl)(memory.fileKey, privacyLevel, 3600);
+                processedMemory.signedUrl = signedUrl;
+            }
             res.json({
                 success: true,
                 data: {
-                    memory: {
-                        id: memory.id,
-                        type: memory.type,
-                        content: memory.content,
-                        fileUrl: memory.fileUrl,
-                        createdAt: memory.createdAt
-                    }
+                    memory: processedMemory
                 }
             });
         }

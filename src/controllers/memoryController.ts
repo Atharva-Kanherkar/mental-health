@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { PrismaClient } from '../generated/prisma';
-import { getSignedUrl } from '../config/storage';
+import { getSignedUrl, PrivacyLevel, deleteFile } from '../config/storage';
 
 const prisma = new PrismaClient();
 
@@ -141,26 +141,29 @@ export class MemoryController {
         prisma.memory.count({ where: whereClause })
       ]);
 
-      // Process memories to generate signed URLs for encrypted files
-      const processedMemories = memories.map(memory => {
+      // Process memories to generate signed URLs with proper bucket routing
+      const processedMemories = await Promise.all(memories.map(async (memory) => {
         const baseMemory = {
           id: memory.id,
           type: memory.type,
           content: memory.content,
+          privacyLevel: memory.privacyLevel, // Include privacy level in response
           fileUrl: memory.fileUrl,
           fileName: memory.fileName,
           fileMimeType: memory.fileMimeType,
           fileSize: memory.fileSize,
           isEncrypted: memory.isEncrypted,
-          encryptionIV: memory.encryptionIV,
-          encryptionAuthTag: memory.encryptionAuthTag,
+          // SECURITY: Only include encryption metadata for zero-knowledge files
+          encryptionIV: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionIV : undefined,
+          encryptionAuthTag: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionAuthTag : undefined,
           createdAt: memory.createdAt,
           associatedPerson: memory.associatedPerson
         };
 
-        // If the memory has an encrypted file, generate a signed URL
-        if (memory.isEncrypted && memory.fileKey) {
-          const signedUrl = getSignedUrl(memory.fileKey, 3600); // 1 hour expiry
+        // If the memory has a file, generate a signed URL from the appropriate bucket
+        if (memory.fileKey) {
+          const privacyLevel = memory.privacyLevel as PrivacyLevel;
+          const signedUrl = await getSignedUrl(memory.fileKey, privacyLevel, 3600); // 1 hour expiry
           return {
             ...baseMemory,
             signedUrl
@@ -168,7 +171,7 @@ export class MemoryController {
         }
 
         return baseMemory;
-      });
+      }));
 
       res.json({
         success: true,
@@ -232,16 +235,34 @@ export class MemoryController {
         });
       }
 
+      // Process memory to include privacy level and signed URL if needed
+      let processedMemory: any = {
+        id: memory.id,
+        type: memory.type,
+        content: memory.content,
+        privacyLevel: memory.privacyLevel,
+        fileUrl: memory.fileUrl,
+        fileName: memory.fileName,
+        fileMimeType: memory.fileMimeType,
+        fileSize: memory.fileSize,
+        isEncrypted: memory.isEncrypted,
+        // SECURITY: Only include encryption metadata for zero-knowledge files
+        encryptionIV: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionIV : undefined,
+        encryptionAuthTag: memory.privacyLevel === 'zero_knowledge' ? memory.encryptionAuthTag : undefined,
+        createdAt: memory.createdAt
+      };
+
+      // Generate signed URL if the memory has a file
+      if (memory.fileKey) {
+        const privacyLevel = memory.privacyLevel as PrivacyLevel;
+        const signedUrl = await getSignedUrl(memory.fileKey, privacyLevel, 3600);
+        processedMemory.signedUrl = signedUrl;
+      }
+
       res.json({
         success: true,
         data: {
-          memory: {
-            id: memory.id,
-            type: memory.type,
-            content: memory.content,
-            fileUrl: memory.fileUrl,
-            createdAt: memory.createdAt
-          }
+          memory: processedMemory
         }
       });
     } catch (error: any) {
@@ -378,14 +399,27 @@ export class MemoryController {
         });
       }
 
-      // Delete the memory
+      // SECURITY: Delete file from appropriate bucket if it exists
+      if (existingMemory.fileKey) {
+        try {
+          const privacyLevel = existingMemory.privacyLevel as PrivacyLevel;
+          await deleteFile(existingMemory.fileKey, privacyLevel);
+          console.log(`File deleted from ${privacyLevel} bucket: ${existingMemory.fileKey}`);
+        } catch (storageError) {
+          console.error('Error deleting file from storage:', storageError);
+          // Continue with database deletion even if storage deletion fails
+          // Log this for manual cleanup if needed
+        }
+      }
+
+      // Delete the memory from database
       await prisma.memory.delete({
         where: { id: memoryId }
       });
 
       res.json({
         success: true,
-        message: 'Memory deleted successfully'
+        message: 'Memory and associated file deleted successfully'
       });
     } catch (error: any) {
       res.status(500).json({

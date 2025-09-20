@@ -45,6 +45,9 @@ model Memory {
   type      String // "text" | "image" | "audio" | "video"
   content   String? // text content
   
+  // Privacy level determines bucket and access permissions
+  privacyLevel String @default("server_managed") // "zero_knowledge" | "server_managed"
+  
   // Encrypted file storage fields
   fileUrl   String? // DigitalOcean Spaces URL (for encrypted files)
   fileKey   String? // Storage key in DigitalOcean Spaces
@@ -52,7 +55,7 @@ model Memory {
   fileMimeType String? // Original MIME type
   fileSize  Int? // File size in bytes
   
-  // Client-side encryption metadata
+  // Client-side encryption metadata (only for zero_knowledge)
   encryptionIV String? // Initialization Vector for decryption
   encryptionAuthTag String? // Authentication tag for AES-GCM (optional)
   isEncrypted Boolean @default(false) // Flag to indicate if file is encrypted

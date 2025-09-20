@@ -71,30 +71,35 @@ export const handleEncryptedUpload = (req: EncryptedFileRequest, res: Response, 
       });
     }
 
-    // Validate required encryption metadata
+    // Validate encryption metadata based on privacy level
+    const privacyLevel = req.body.privacyLevel || 'server_managed';
     const iv = req.body.iv;
-    if (!iv) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing encryption metadata (IV)'
-      });
+    
+    // SECURITY: Only require IV for zero-knowledge uploads (client-side encryption)
+    if (privacyLevel === 'zero_knowledge') {
+      if (!iv) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing encryption metadata (IV) - required for zero-knowledge privacy level'
+        });
+      }
+
+      // Validate IV format (should be hex string)
+      if (!/^[a-fA-F0-9]{32}$/.test(iv)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid encryption metadata format'
+        });
+      }
     }
 
-    // Validate IV format (should be hex string)
-    if (!/^[a-fA-F0-9]{32}$/.test(iv)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid encryption metadata format'
-      });
-    }
-
-    // Store encrypted file data and metadata
+    // Store file data and metadata
     req.encryptedFile = {
       buffer: req.file.buffer,
       originalName: req.file.originalname,
       mimeType: req.file.mimetype,
       size: req.file.size,
-      iv: iv,
+      iv: iv || '', // Empty string for server-managed uploads
       authTag: req.body.authTag // Optional for AES-GCM
     };
 

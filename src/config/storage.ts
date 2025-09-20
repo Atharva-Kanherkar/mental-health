@@ -1,21 +1,39 @@
-import AWS from 'aws-sdk';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl as awsGetSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { config } from 'dotenv';
 
 config();
 
-// Configure DigitalOcean Spaces (S3-compatible)
-const spacesEndpoint = new AWS.Endpoint(process.env.DO_SPACES_ENDPOINT!);
-const s3 = new AWS.S3({
-  endpoint: spacesEndpoint,
-  accessKeyId: process.env.DO_SPACES_KEY!,
-  secretAccessKey: process.env.DO_SPACES_SECRET!,
+// SECURITY: Separate S3 clients for zero-knowledge and server-managed buckets
+// This ensures physical isolation and prevents accidental cross-bucket access
+const s3ZeroKnowledge = new S3Client({
+  endpoint: `https://${process.env.DO_SPACES_ENDPOINT!}`,
+  credentials: {
+    accessKeyId: process.env.DO_SPACES_ZK_KEY!, // Restricted key: only PUT/DELETE
+    secretAccessKey: process.env.DO_SPACES_ZK_SECRET!,
+  },
   region: process.env.DO_SPACES_REGION || 'nyc3',
-  s3ForcePathStyle: false, // DigitalOcean Spaces uses virtual-hosted-style URLs
-  signatureVersion: 'v4'
+  forcePathStyle: false,
 });
 
+const s3ServerManaged = new S3Client({
+  endpoint: `https://${process.env.DO_SPACES_ENDPOINT!}`,
+  credentials: {
+    accessKeyId: process.env.DO_SPACES_SM_KEY!, // Full permissions key: GET/PUT/DELETE
+    secretAccessKey: process.env.DO_SPACES_SM_SECRET!,
+  },
+  region: process.env.DO_SPACES_REGION || 'nyc3',
+  forcePathStyle: false,
+});
+
+// Legacy S3 client for backward compatibility (uses server-managed config)
+const s3 = s3ServerManaged;
+
 export const SPACES_CONFIG = {
-  bucket: process.env.DO_SPACES_BUCKET!,
+  // Zero-knowledge bucket: server cannot read files, only store/delete
+  zeroKnowledgeBucket: process.env.DO_SPACES_ZK_BUCKET!,
+  // Server-managed bucket: server can read files for LLM processing
+  serverManagedBucket: process.env.DO_SPACES_SM_BUCKET!,
   region: process.env.DO_SPACES_REGION || 'nyc3',
   maxFileSize: 50 * 1024 * 1024, // 50MB max file size
   allowedMimeTypes: {
@@ -48,7 +66,41 @@ export const SPACES_CONFIG = {
   }
 };
 
-export { s3 };
+// Export all S3 clients for different use cases
+export { s3, s3ZeroKnowledge, s3ServerManaged };
+
+/**
+ * Privacy level type definition
+ */
+export type PrivacyLevel = 'zero_knowledge' | 'server_managed';
+
+/**
+ * Get the appropriate S3 client based on privacy level
+ * SECURITY: This enforces bucket isolation at the client level
+ */
+export function getS3Client(privacyLevel: PrivacyLevel): S3Client {
+  return privacyLevel === 'zero_knowledge' ? s3ZeroKnowledge : s3ServerManaged;
+}
+
+/**
+ * Get the appropriate bucket name based on privacy level
+ * SECURITY: This ensures files go to the correct isolated bucket
+ */
+export function getBucketName(privacyLevel: PrivacyLevel): string {
+  const bucketName = privacyLevel === 'zero_knowledge' 
+    ? SPACES_CONFIG.zeroKnowledgeBucket 
+    : SPACES_CONFIG.serverManagedBucket;
+    
+  // DEBUG: Log bucket selection
+  console.log(`🔍 DEBUG: Bucket selection:`, {
+    privacyLevel,
+    bucketName,
+    zkBucket: SPACES_CONFIG.zeroKnowledgeBucket,
+    smBucket: SPACES_CONFIG.serverManagedBucket
+  });
+  
+  return bucketName;
+}
 
 /**
  * Generate a secure, unique file key for storage
@@ -63,22 +115,33 @@ export function generateFileKey(userId: string, fileType: string, originalName: 
 }
 
 /**
- * Generate a pre-signed URL for secure file access
+ * Generate a pre-signed URL for secure file access with proper bucket routing
+ * SECURITY: Uses the correct S3 client for the privacy level
  */
-export function getSignedUrl(key: string, expiresIn: number = 3600): string {
-  return s3.getSignedUrl('getObject', {
-    Bucket: SPACES_CONFIG.bucket,
+export async function getSignedUrl(key: string, privacyLevel: PrivacyLevel, expiresIn: number = 3600): Promise<string> {
+  const client = getS3Client(privacyLevel);
+  const bucket = getBucketName(privacyLevel);
+  
+  const command = new GetObjectCommand({
+    Bucket: bucket,
     Key: key,
-    Expires: expiresIn // Default: 1 hour
   });
+  
+  return await awsGetSignedUrl(client, command, { expiresIn });
 }
 
 /**
- * Delete a file from DigitalOcean Spaces
+ * Delete a file from the appropriate bucket based on privacy level
+ * SECURITY: Ensures deletion happens in the correct isolated bucket
  */
-export async function deleteFile(key: string): Promise<void> {
-  await s3.deleteObject({
-    Bucket: SPACES_CONFIG.bucket,
+export async function deleteFile(key: string, privacyLevel: PrivacyLevel): Promise<void> {
+  const client = getS3Client(privacyLevel);
+  const bucket = getBucketName(privacyLevel);
+  
+  const command = new DeleteObjectCommand({
+    Bucket: bucket,
     Key: key
-  }).promise();
+  });
+  
+  await client.send(command);
 }
