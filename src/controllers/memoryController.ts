@@ -10,6 +10,7 @@ const CreateMemorySchema = z.object({
   type: z.enum(['text', 'image', 'audio', 'video']),
   content: z.string().optional(),
   fileUrl: z.string().url().optional(),
+  associatedPersonId: z.string().uuid().optional(),
 }).refine(
   (data) => {
     if (data.type === 'text' && !data.content) {
@@ -48,7 +49,7 @@ export class MemoryController {
         });
       }
 
-      const { type, content, fileUrl } = validationResult.data;
+      const { type, content, fileUrl, associatedPersonId } = validationResult.data;
 
       // Check if user has a memory vault
       const memoryVault = await prisma.memoryVault.findUnique({
@@ -62,13 +63,31 @@ export class MemoryController {
         });
       }
 
+      // Validate associatedPersonId if provided
+      if (associatedPersonId) {
+        const associatedPerson = await prisma.favPerson.findFirst({
+          where: {
+            id: associatedPersonId,
+            vaultId: memoryVault.id
+          }
+        });
+
+        if (!associatedPerson) {
+          return res.status(400).json({
+            success: false,
+            message: 'Associated person not found in your vault'
+          });
+        }
+      }
+
       // Create the memory
       const memory = await prisma.memory.create({
         data: {
           vaultId: memoryVault.id,
           type,
           content,
-          fileUrl
+          fileUrl,
+          associatedPersonId: associatedPersonId || null
         }
       });
 
