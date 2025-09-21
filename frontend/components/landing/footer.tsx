@@ -73,7 +73,7 @@ export function Footer() {
               </div>
               
               <div className="text-sm text-[#8B86B8] font-light opacity-50">
-                Follow the creator: <a href="https://twitter.com/yourusername" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">@yourusername</a>
+                Follow the creator: <a href="https://x.com/attharrva15" target="_blank" rel="noopener noreferrer" className="underline hover:opacity-70 transition-opacity">@attharrva15</a>
               </div>
             </div>
             

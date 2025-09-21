@@ -1,4 +1,5 @@
  import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import { Button } from '../ui/button';
 import { Volume2, VolumeX } from 'lucide-react';
 
@@ -73,16 +74,20 @@ export function Hero() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 md:gap-6 px-4 md:px-0">
-            <Button className="w-full sm:w-auto px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-light rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 shadow-sm hover:shadow-md border-0">
-              Find Your Safe Space
-            </Button>
+            <Link href="/auth/signup">
+              <Button className="w-full sm:w-auto px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-light rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 shadow-sm hover:shadow-md border-0">
+                Find Your Safe Space
+              </Button>
+            </Link>
 
-            <Button
-              variant="ghost"
-              className="w-full sm:w-auto px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-light rounded-full text-[#8B86B8] hover:bg-[#F5F3FA] transition-all duration-300"
-            >
-              I Need Help
-            </Button>
+            <Link href="/resources">
+              <Button
+                variant="ghost"
+                className="w-full sm:w-auto px-8 md:px-10 py-3 md:py-4 text-base md:text-lg font-light rounded-full text-[#8B86B8] hover:bg-[#F5F3FA] transition-all duration-300"
+              >
+                I Need Help
+              </Button>
+            </Link>
           </div>
 
           {/* Gentle message */}

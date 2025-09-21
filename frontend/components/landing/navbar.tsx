@@ -17,10 +17,26 @@ export function Navbar() {
 
         {/* Desktop Links */}
         <ul className="hidden lg:flex items-center gap-6 text-[#6E6B95] font-light text-sm">
-          <li className="hover:text-[#4C4977] transition-colors cursor-pointer">Home</li>
-          <li className="hover:text-[#4C4977] transition-colors cursor-pointer">About</li>
-          <li className="hover:text-[#4C4977] transition-colors cursor-pointer">Resources</li>
-          <li className="hover:text-[#4C4977] transition-colors cursor-pointer">Contact</li>
+          <li>
+            <Link href="/" className="hover:text-[#4C4977] transition-colors cursor-pointer">
+              Home
+            </Link>
+          </li>
+          <li>
+            <Link href="/about" className="hover:text-[#4C4977] transition-colors cursor-pointer">
+              About
+            </Link>
+          </li>
+          <li>
+            <Link href="/resources" className="hover:text-[#4C4977] transition-colors cursor-pointer">
+              Resources
+            </Link>
+          </li>
+          <li>
+            <Link href="/contact" className="hover:text-[#4C4977] transition-colors cursor-pointer">
+              Contact
+            </Link>
+          </li>
         </ul>
 
         {/* Separator */}
@@ -33,7 +49,7 @@ export function Navbar() {
               href="/dashboard" 
               className="px-3 py-1.5 md:px-4 md:py-1.5 rounded-full bg-[#E6E1F7] text-[#4C4977] hover:bg-[#D8D2F2] transition-colors text-xs md:text-sm font-normal whitespace-nowrap"
             >
-              Dashboard
+              Find Peace
             </Link>
             <button 
               onClick={logout}
