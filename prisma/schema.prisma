@@ -22,6 +22,17 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
+  // Journaling & Mental Health
+  journalEntries    JournalEntry[]
+  dailyCheckIns     DailyCheckIn[]
+  userRewards       UserReward[]
+  streaks           Streak[]
+  achievements      UserAchievement[]
+  
+  // Gamification stats
+  totalPoints       Int @default(0)
+  currentLevel      Int @default(1)
+  
   @@map("user")
 }
 
@@ -37,6 +48,179 @@ model MemoryVault {
   //what remains is just the AI meta data for now. 
 }
 
+model JournalEntry {
+  id        String @id @default(uuid())
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+  
+  // Content
+  title     String
+  content   String
+  mediaType String? // "image" | "audio" | "video"
+  mediaUrl  String?
+  
+  // AI Analysis
+  aiSentiment      String? // "positive" | "neutral" | "negative"
+  aiMoodTags       String[] // ["happy", "anxious", "calm"]
+  aiWellnessScore  Float?   // 0.0 to 10.0
+  aiInsights       String?  // AI-generated insights
+  aiThemes         String[] // ["gratitude", "stress", "achievement"]
+  
+  // Mental Health Tracking
+  overallMood      Int?     // 1-10 scale
+  energyLevel      Int?     // 1-10 scale  
+  anxietyLevel     Int?     // 1-10 scale
+  stressLevel      Int?     // 1-10 scale
+  
+  // Privacy & Memory
+  privacyLevel              String @default("server_managed") // "zero_knowledge" | "server_managed"
+  convertToMemory           Boolean @default(false)
+  associatedMemoryId        String?
+  
+  // Rewards earned from this entry
+  pointsEarned              Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Daily mental health check-ins with specific questions
+model DailyCheckIn {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  
+  date   DateTime @default(now()) // Date of check-in
+  
+  // Core mental health questions
+  overallMood        Int     // 1-10: How do you feel today?
+  energyLevel        Int     // 1-10: Energy level
+  sleepQuality       Int?    // 1-10: How well did you sleep?
+  stressLevel        Int     // 1-10: Stress level
+  anxietyLevel       Int     // 1-10: Anxiety level
+  
+  // Safety questions (critical for mental health)
+  hadSelfHarmThoughts  Boolean @default(false) // Did you have thoughts of self-harm?
+  hadSuicidalThoughts  Boolean @default(false) // Did you have suicidal thoughts?
+  actedOnHarm         Boolean @default(false) // Did you engage in self-harm?
+  
+  // Positive behaviors
+  exercised           Boolean @default(false) // Did you exercise?
+  ateWell            Boolean @default(false) // Did you eat well?
+  socializedHealthily Boolean @default(false) // Did you connect with others?
+  practicedSelfCare   Boolean @default(false) // Did you practice self-care?
+  tookMedication      Boolean @default(false) // Did you take prescribed medication?
+  
+  // Optional reflection
+  gratefulFor         String? // What are you grateful for?
+  challengesToday     String? // What challenged you?
+  accomplishments     String? // What did you accomplish?
+  
+  // Points earned for this check-in
+  pointsEarned        Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Ensure one check-in per user per day
+  @@unique([userId, date])
+}
+
+// Reward definitions
+model Reward {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  type        String // "streak" | "milestone" | "behavior" | "wellness"
+  
+  // Reward conditions
+  pointValue       Int     // Points awarded
+  requiredCount    Int?    // Required count for milestone rewards
+  requiredDays     Int?    // Required days for streak rewards
+  behaviorType     String? // Type of behavior needed
+  
+  // Availability
+  isActive         Boolean @default(true)
+  maxClaimsPerUser Int?    // Null = unlimited
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  userRewards UserReward[]
+}
+
+// User's earned rewards
+model UserReward {
+  id       String @id @default(uuid())
+  userId   String
+  rewardId String
+  user     User   @relation(fields: [userId], references: [id])
+  reward   Reward @relation(fields: [rewardId], references: [id])
+  
+  pointsEarned Int
+  earnedAt     DateTime @default(now())
+  
+  // Prevent duplicate rewards
+  @@unique([userId, rewardId])
+}
+
+// Streak tracking for consistent behaviors
+model Streak {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+  
+  type           String   // "journaling" | "checkin" | "no_self_harm" | "positive_mood"
+  currentStreak  Int      @default(0)
+  longestStreak  Int      @default(0)
+  lastActiveDate DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // One streak per user per type
+  @@unique([userId, type])
+}
+
+// Achievement definitions
+model Achievement {
+  id          String @id @default(uuid())
+  name        String
+  description String
+  category    String // "writing" | "wellness" | "safety" | "consistency"
+  
+  // Achievement conditions
+  requiredValue    Int?    // Required value to unlock
+  requiredStreak   Int?    // Required streak length
+  behaviorType     String? // Specific behavior required
+  
+  // Metadata
+  iconName    String? // Icon for frontend
+  rarity      String @default("common") // "common" | "rare" | "epic" | "legendary"
+  pointReward Int @default(0)
+  
+  isActive Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  
+  // Relations
+  userAchievements UserAchievement[]
+}
+
+// User's unlocked achievements
+model UserAchievement {
+  id            String @id @default(uuid())
+  userId        String
+  achievementId String
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  
+  unlockedAt DateTime @default(now())
+  
+  // Prevent duplicate achievements
+  @@unique([userId, achievementId])
+}
 model Memory {
   id      String      @id @default(uuid())
   vaultId String
@@ -134,3 +318,4 @@ model Verification {
 
   @@map("verification")
 }
+

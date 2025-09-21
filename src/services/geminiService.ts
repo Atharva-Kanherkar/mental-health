@@ -368,4 +368,29 @@ You have access to the actual video from this memory. Use both visual and audio 
         return '';
     }
   }
+    /**
+   * A generic function to send a prompt to the AI and get a structured JSON object back.
+   * @param prompt The detailed prompt instructing the AI to return JSON.
+   * @returns The raw string of the JSON response from the AI.
+   */
+  static async generateJson(prompt: string): Promise<string> {
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      // Basic cleanup to extract the JSON block
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        console.error("AI did not return a valid JSON block. Response:", text);
+        throw new Error('No JSON object found in the AI response.');
+      }
+      
+      return jsonMatch[0];
+
+    } catch (error) {
+      console.error('Error in GeminiService.generateJson:', error);
+      throw new Error('Failed to generate JSON response from AI.');
+    }
+  }
 }
