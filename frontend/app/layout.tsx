@@ -16,8 +16,32 @@ const geistMono = Geist_Mono({
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: "Mental Health App - Your Safe Space",
-  description: "A supportive platform for mental wellness and memory preservation",
+  title: {
+    default: "Echoes",
+    template: "%s | Echoes",
+  },
+  description: "Echoes — a gentle space where your memories become medicine and music becomes your companion on the hardest days.",
+  openGraph: {
+    title: 'Echoes',
+    description: 'Echoes — a gentle space where your memories become medicine and music becomes your companion on the hardest days.',
+    siteName: 'Echoes',
+    images: [
+      {
+        url: '/preview.png',
+        width: 1400,
+        height: 720,
+        alt: 'Echoes — gentle landing preview',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Echoes',
+    description: 'A gentle space where your memories become medicine.',
+    images: ['/preview.png'],
+  },
 };
 
 export default function RootLayout({
