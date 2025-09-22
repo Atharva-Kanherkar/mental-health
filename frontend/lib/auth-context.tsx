@@ -48,9 +48,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Auth check response status:', response.status);
       
       if (response.ok) {
-        const data = await response.json();
+        // Parse JSON safely — protect against non-JSON or null responses
+        const data = await response.json().catch((err) => {
+          console.error('Failed to parse auth check response JSON:', err);
+          return null;
+        });
         console.log('Auth check data:', data);
-        if (data.user) {
+        if (data?.user) {
           const userData = {
             id: data.user.id || data.user.userId,
             email: data.user.email,
