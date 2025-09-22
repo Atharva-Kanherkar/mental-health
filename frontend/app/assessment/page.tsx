@@ -5,22 +5,24 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { mentalHealthApi, type MentalHealthProfile } from '@/lib/mental-health-api';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import { useTheme } from '@/lib/theme-context';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { 
-  ArrowLeft, 
-  Brain,
   Shield,
   Heart,
   FileText,
   Clock,
   CheckCircle,
   AlertTriangle,
-  Users,
-  PlusCircle
+  Pill,
+  User,
+  Home
 } from 'lucide-react';
 
 function MentalHealthAssessmentContent() {
   const [profile, setProfile] = useState<MentalHealthProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { getBackgroundClass, getCardClass, getTextClass, getAccentClass, isDark } = useTheme();
 
   useEffect(() => {
     loadProfile();
@@ -60,20 +62,30 @@ function MentalHealthAssessmentContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FAFAFE] via-[#F6F4FC] to-[#F0EDFA]">
+      <div className={getBackgroundClass()}>
         <div className="flex justify-center items-center py-20">
-          <div className="animate-spin rounded-full h-12 w-12 border-2 border-[#6B5FA8]/20 border-t-[#6B5FA8]"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-2 ${
+            isDark ? 'border-purple-500/20 border-t-purple-400' : 'border-[#6B5FA8]/20 border-t-[#6B5FA8]'
+          }`}></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAFAFE] via-[#F6F4FC] to-[#F0EDFA]">
+    <div className={getBackgroundClass()}>
       {/* Gentle floating elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-br from-[#EBE7F8]/10 to-[#E0DBF3]/10 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '12s' }}></div>
-        <div className="absolute bottom-1/3 right-1/4 w-48 h-48 bg-gradient-to-br from-[#F0EDFA]/10 to-[#EBE7F8]/10 rounded-full blur-2xl animate-pulse" style={{ animationDuration: '10s' }}></div>
+        <div className={`absolute top-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl animate-pulse ${
+          isDark 
+            ? 'bg-gradient-to-br from-purple-800/10 to-indigo-800/10' 
+            : 'bg-gradient-to-br from-[#EBE7F8]/10 to-[#E0DBF3]/10'
+        }`} style={{ animationDuration: '12s' }}></div>
+        <div className={`absolute bottom-1/3 right-1/4 w-48 h-48 rounded-full blur-2xl animate-pulse ${
+          isDark
+            ? 'bg-gradient-to-br from-indigo-800/10 to-purple-800/10'
+            : 'bg-gradient-to-br from-[#F0EDFA]/10 to-[#EBE7F8]/10'
+        }`} style={{ animationDuration: '10s' }}></div>
       </div>
 
       {/* Header */}
@@ -82,14 +94,23 @@ function MentalHealthAssessmentContent() {
           <div className="flex items-center justify-between">
             <Link
               href="/dashboard"
-              className="flex items-center space-x-2 text-[#8B86B8] hover:text-[#6B5FA8] transition-colors group"
+              className={`flex items-center space-x-2 transition-colors group ${
+                isDark 
+                  ? 'text-purple-300 hover:text-purple-200' 
+                  : 'text-[#8B86B8] hover:text-[#6B5FA8]'
+              }`}
             >
-              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+              <Home className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
               <span className="font-light">Back to dashboard</span>
             </Link>
-            <div className="flex items-center space-x-2 text-[#8B86B8]">
-              <Shield className="h-4 w-4" />
-              <span className="font-light text-sm">Secure & Private</span>
+            <div className="flex items-center space-x-4">
+              <div className={`flex items-center space-x-2 ${
+                isDark ? 'text-purple-300' : 'text-[#8B86B8]'
+              }`}>
+                <Shield className="h-4 w-4" />
+                <span className="font-light text-sm">Secure & Private</span>
+              </div>
+              <ThemeToggle />
             </div>
           </div>
         </div>
@@ -99,28 +120,38 @@ function MentalHealthAssessmentContent() {
         <div className="max-w-6xl mx-auto px-6">
           {/* Page Title */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/40 backdrop-blur-sm rounded-full mb-6 border border-[#8B86B8]/10">
-              <Brain className="h-7 w-7 text-[#6B5FA8]" />
+            <div className={`inline-flex items-center justify-center w-16 h-16 backdrop-blur-sm rounded-full mb-6 border ${
+              isDark 
+                ? 'bg-gray-800/40 border-purple-400/20' 
+                : 'bg-white/40 border-[#8B86B8]/20'
+            }`}>
+              <Heart className={`h-7 w-7 ${getAccentClass()}`} />
             </div>
-            <h1 className="text-4xl font-serif text-[#6B5FA8] mb-4 font-light">
-              Mental Health Assessment
+            <h1 className={`text-4xl md:text-5xl font-serif font-light mb-4 ${getAccentClass()}`} style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+              Your Wellness Journey
             </h1>
-            <p className="text-[#8B86B8] text-lg font-light max-w-2xl mx-auto">
-              A comprehensive, scientifically-based assessment to help us understand your mental health journey and provide personalized insights.
+            <p className={`text-lg font-light max-w-2xl mx-auto opacity-90 ${
+              isDark ? 'text-purple-200' : 'text-[#8B86B8]'
+            }`}>
+              A comprehensive, scientifically-based assessment to understand your mental health journey and provide personalized healing insights.
             </p>
           </div>
 
           {/* Profile Status */}
           {profile && (
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#8B86B8]/10 p-6 mb-8">
+            <div className={`${getCardClass()} rounded-2xl p-6 mb-8 shadow-lg`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] rounded-full flex items-center justify-center">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    isDark 
+                      ? 'bg-gradient-to-br from-purple-500 to-indigo-500' 
+                      : 'bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8]'
+                  }`}>
                     <Heart className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-[#6B5FA8]">Profile Status</h3>
-                    <p className="text-sm text-[#8B86B8]">
+                    <h3 className={`text-lg font-medium ${getAccentClass()}`}>Profile Status</h3>
+                    <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-[#8B86B8]'}`}>
                       {Math.round(profile.profileCompleteness * 100)}% complete • 
                       Last updated {profile.lastAssessmentDate ? new Date(profile.lastAssessmentDate).toLocaleDateString() : 'Never'}
                     </p>
@@ -141,123 +172,94 @@ function MentalHealthAssessmentContent() {
           )}
 
           {/* Assessment Options */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            {/* Initial Profile Setup */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#8B86B8]/10 p-6 hover:bg-white/80 transition-colors">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] rounded-lg flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-white" />
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            {/* Clinical Assessment */}
+            <div className={`${getCardClass()} rounded-2xl p-8 text-center transition-all duration-300 hover:scale-105 hover:shadow-xl group`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+                isDark 
+                  ? 'bg-gradient-to-br from-purple-500 to-indigo-500' 
+                  : 'bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8]'
+              }`}>
+                <FileText className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-serif text-[#6B5FA8] mb-2">
-                {profile ? 'Update Profile' : 'Initial Profile'}
+              <h3 className={`text-xl font-serif mb-4 ${getAccentClass()}`}>
+                Clinical Assessment
               </h3>
-              <p className="text-[#8B86B8] text-sm mb-4 leading-relaxed">
-                {profile 
-                  ? 'Update your personal information, mental health history, and treatment details.'
-                  : 'Complete your comprehensive mental health profile with demographics, history, and current status.'
-                }
-              </p>
-              <Link href="/assessment/profile">
-                <Button className="w-full rounded-full bg-[#6B5FA8] hover:bg-[#5A4F96] text-white font-light">
-                  {profile ? 'Update Profile' : 'Start Profile'}
-                </Button>
-              </Link>
-            </div>
-
-            {/* Standardized Assessments */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#8B86B8]/10 p-6 hover:bg-white/80 transition-colors">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] rounded-lg flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-serif text-[#6B5FA8] mb-2">
-                Clinical Assessments
-              </h3>
-              <p className="text-[#8B86B8] text-sm mb-4 leading-relaxed">
-                Take scientifically validated assessments like PHQ-9 (depression), GAD-7 (anxiety), and others for accurate insights.
+              <p className={`text-sm mb-6 leading-relaxed ${
+                isDark ? 'text-gray-300' : 'text-[#8B86B8]'
+              }`}>
+                Take our comprehensive, scientifically validated mental health assessment.
               </p>
               <Link href="/assessment/clinical">
-                <Button className="w-full rounded-full bg-[#6B5FA8] hover:bg-[#5A4F96] text-white font-light">
-                  Take Assessment
+                <Button className={`w-full rounded-full font-light py-3 transition-all duration-200 ${
+                  isDark 
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                    : 'bg-[#6B5FA8] hover:bg-[#5A4F96] text-white'
+                }`}>
+                  Begin Assessment
                 </Button>
               </Link>
             </div>
 
-            {/* Medication Tracking */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#8B86B8]/10 p-6 hover:bg-white/80 transition-colors">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] rounded-lg flex items-center justify-center mb-4">
-                <PlusCircle className="h-6 w-6 text-white" />
+            {/* Medications Assessment */}
+            <div className={`${getCardClass()} rounded-2xl p-8 text-center transition-all duration-300 hover:scale-105 hover:shadow-xl group`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+                isDark 
+                  ? 'bg-gradient-to-br from-purple-500 to-indigo-500' 
+                  : 'bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8]'
+              }`}>
+                <Pill className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-serif text-[#6B5FA8] mb-2">
-                Medication History
+              <h3 className={`text-xl font-serif mb-4 ${getAccentClass()}`}>
+                Medications
               </h3>
-              <p className="text-[#8B86B8] text-sm mb-4 leading-relaxed">
-                Track your current medications, dosages, effectiveness, and side effects for better treatment insights.
+              <p className={`text-sm mb-6 leading-relaxed ${
+                isDark ? 'text-gray-300' : 'text-[#8B86B8]'
+              }`}>
+                Track and manage your medications and treatment information.
               </p>
               <Link href="/assessment/medications">
-                <Button className="w-full rounded-full bg-[#6B5FA8] hover:bg-[#5A4F96] text-white font-light">
+                <Button className={`w-full rounded-full font-light py-3 transition-all duration-200 ${
+                  isDark 
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                    : 'bg-[#6B5FA8] hover:bg-[#5A4F96] text-white'
+                }`}>
                   Manage Medications
                 </Button>
               </Link>
             </div>
 
-            {/* Therapy History */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#8B86B8]/10 p-6 hover:bg-white/80 transition-colors">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] rounded-lg flex items-center justify-center mb-4">
-                <Heart className="h-6 w-6 text-white" />
+            {/* Profile Assessment */}
+            <div className={`${getCardClass()} rounded-2xl p-8 text-center transition-all duration-300 hover:scale-105 hover:shadow-xl group`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${
+                isDark 
+                  ? 'bg-gradient-to-br from-purple-500 to-indigo-500' 
+                  : 'bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8]'
+              }`}>
+                <User className="h-8 w-8 text-white" />
               </div>
-              <h3 className="text-xl font-serif text-[#6B5FA8] mb-2">
-                Therapy History
+              <h3 className={`text-xl font-serif mb-4 ${getAccentClass()}`}>
+                Profile
               </h3>
-              <p className="text-[#8B86B8] text-sm mb-4 leading-relaxed">
-                Document your therapy experiences, types of treatment, and outcomes to inform future care decisions.
+              <p className={`text-sm mb-6 leading-relaxed ${
+                isDark ? 'text-gray-300' : 'text-[#8B86B8]'
+              }`}>
+                Complete your personal profile and preferences settings.
               </p>
-              <Link href="/assessment/therapy">
-                <Button className="w-full rounded-full bg-[#6B5FA8] hover:bg-[#5A4F96] text-white font-light">
-                  Add Therapy Info
+              <Link href="/assessment/profile">
+                <Button className={`w-full rounded-full font-light py-3 transition-all duration-200 ${
+                  isDark 
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                    : 'bg-[#6B5FA8] hover:bg-[#5A4F96] text-white'
+                }`}>
+                  Update Profile
                 </Button>
               </Link>
             </div>
-
-            {/* Crisis Support */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#8B86B8]/10 p-6 hover:bg-white/80 transition-colors">
-              <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-lg flex items-center justify-center mb-4">
-                <AlertTriangle className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-serif text-[#6B5FA8] mb-2">
-                Crisis Support
-              </h3>
-              <p className="text-[#8B86B8] text-sm mb-4 leading-relaxed">
-                If you&apos;re experiencing a mental health crisis, get immediate help and record the event for future reference.
-              </p>
-              <Link href="/assessment/crisis">
-                <Button className="w-full rounded-full bg-red-500 hover:bg-red-600 text-white font-light">
-                  Crisis Support
-                </Button>
-              </Link>
-            </div>
-
-            {/* Data Management */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl border border-[#8B86B8]/10 p-6 hover:bg-white/80 transition-colors">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] rounded-lg flex items-center justify-center mb-4">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <h3 className="text-xl font-serif text-[#6B5FA8] mb-2">
-                Privacy & Data
-              </h3>
-              <p className="text-[#8B86B8] text-sm mb-4 leading-relaxed">
-                Manage your privacy settings, export your data, or securely delete your mental health information.
-              </p>
-              <Link href="/assessment/privacy">
-                <Button className="w-full rounded-full bg-[#6B5FA8] hover:bg-[#5A4F96] text-white font-light">
-                  Manage Data
-                </Button>
-              </Link>
-            </div>
-
           </div>
 
           {/* Important Notice */}
-          <div className="mt-12 bg-blue-50 border border-blue-200 rounded-2xl p-6">
+          {/* <div className="mt-12 bg-blue-50 border border-blue-200 rounded-2xl p-6">
             <div className="flex items-start space-x-3">
               <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                 <Shield className="h-3 w-3 text-white" />
@@ -270,7 +272,7 @@ function MentalHealthAssessmentContent() {
                 </p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </main>
     </div>

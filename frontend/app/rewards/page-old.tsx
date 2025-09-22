@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { rewardsApi, achievementsApi, UserReward, UserAchievement, GamificationStats } from '@/lib/api-client';
@@ -20,6 +21,91 @@ import {
   TrendingUp,
   Lock
 } from 'lucide-react';
+
+// Mock data for rewards (will be replaced with API calls)
+const mockRewards = [
+  {
+    id: '1',
+    name: 'First Journal Entry',
+    description: 'Write your very first journal entry',
+    type: 'milestone',
+    pointValue: 10,
+    isEarned: true,
+    rarity: 'common',
+    icon: '📝'
+  },
+  {
+    id: '2',
+    name: '7-Day Streak',
+    description: 'Journal for 7 consecutive days',
+    type: 'streak',
+    pointValue: 50,
+    requiredDays: 7,
+    currentProgress: 3,
+    isEarned: false,
+    rarity: 'rare',
+    icon: '🔥'
+  },
+  {
+    id: '3',
+    name: 'Wellness Warrior',
+    description: 'Maintain a wellness score above 70 for 5 entries',
+    type: 'wellness',
+    pointValue: 30,
+    requiredCount: 5,
+    currentProgress: 2,
+    isEarned: false,
+    rarity: 'epic',
+    icon: '💪'
+  },
+  {
+    id: '4',
+    name: 'Gratitude Master',
+    description: 'Write about gratitude 10 times',
+    type: 'behavior',
+    pointValue: 25,
+    requiredCount: 10,
+    currentProgress: 6,
+    isEarned: false,
+    rarity: 'rare',
+    icon: '🙏'
+  },
+  {
+    id: '5',
+    name: 'Safety Champion',
+    description: 'Complete 30 days without safety concerns',
+    type: 'safety',
+    pointValue: 100,
+    requiredDays: 30,
+    currentProgress: 12,
+    isEarned: false,
+    rarity: 'legendary',
+    icon: '🛡️'
+  }
+];
+
+const mockAchievements = [
+  {
+    id: '1',
+    name: 'Journaling Novice',
+    description: 'Completed your first week of journaling',
+    category: 'consistency',
+    rarity: 'common',
+    pointReward: 20,
+    unlockedAt: '2025-09-15T10:00:00Z',
+    icon: '📚'
+  },
+  {
+    id: '2',
+    name: 'Mood Tracker',
+    description: 'Tracked your mood 10 times',
+    category: 'wellness',
+    rarity: 'rare',
+    pointReward: 35,
+    unlockedAt: '2025-09-20T14:30:00Z',
+    icon: '🎭'
+  }
+];
 
 function RewardsPageContent() {
   const [activeTab, setActiveTab] = useState<'rewards' | 'achievements'>('rewards');
@@ -68,10 +154,10 @@ function RewardsPageContent() {
       await rewardsApi.claimReward(rewardId);
       // Reload data to reflect the claim
       await loadData();
-      alert('Reward claimed successfully!');
+      toast.success('Reward claimed successfully!');
     } catch (error) {
       console.error('Failed to claim reward:', error);
-      alert('Failed to claim reward. Please try again.');
+      toast.error('Failed to claim reward. Please try again.');
     }
   };
 
@@ -199,31 +285,21 @@ function RewardsPageContent() {
                 </div>
               ) : rewards.map((userReward) => {
                 const reward = userReward.reward;
-                const canClaim = userReward.isEarned && !userReward.claimedAt;
-                const isClaimed = userReward.claimedAt !== null;
-                const totalRequired = reward.requiredCount || reward.requiredDays || reward.requiredValue || 1;
-                
                 return (
                 <div
-                  key={userReward.id}
+                  key={reward.id}
                   className={`bg-white/80 backdrop-blur-sm rounded-2xl p-6 border transition-all duration-300 hover:shadow-lg ${
-                    isClaimed 
+                    reward.isEarned 
                       ? 'border-green-200 bg-green-50/50' 
-                      : canClaim
-                      ? 'border-yellow-200 bg-yellow-50/50'
                       : 'border-[#8B86B8]/10 hover:border-[#6B5FA8]/30'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-4">
-                    <div className="text-3xl">{reward.icon || '🏆'}</div>
+                    <div className="text-3xl">{reward.icon}</div>
                     <div className="flex items-center space-x-2">
-                      {isClaimed ? (
+                      {reward.isEarned ? (
                         <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
-                          Claimed
-                        </span>
-                      ) : canClaim ? (
-                        <span className="bg-yellow-100 text-yellow-700 text-xs px-2 py-1 rounded-full">
-                          Ready to Claim!
+                          Earned
                         </span>
                       ) : (
                         <Lock className="h-4 w-4 text-[#8B86B8]" />
@@ -238,21 +314,21 @@ function RewardsPageContent() {
                   <p className="text-[#8B86B8] text-sm mb-4">{reward.description}</p>
 
                   {/* Progress Bar */}
-                  {!isClaimed && (
+                  {!reward.isEarned && (reward.currentProgress !== undefined) && (
                     <div className="mb-4">
                       <div className="flex justify-between text-xs text-[#8B86B8] mb-1">
                         <span>Progress</span>
                         <span>
-                          {userReward.progress}/{totalRequired}
+                          {reward.currentProgress}/{reward.requiredCount || reward.requiredDays}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full transition-all duration-500 ${
-                            getProgressColor(userReward.progress, totalRequired)
+                            getProgressColor(reward.currentProgress, reward.requiredCount || reward.requiredDays || 1)
                           }`}
                           style={{ 
-                            width: `${Math.min(100, (userReward.progress / totalRequired) * 100)}%` 
+                            width: `${Math.min(100, (reward.currentProgress / (reward.requiredCount || reward.requiredDays || 1)) * 100)}%` 
                           }}
                         ></div>
                       </div>
@@ -264,16 +340,7 @@ function RewardsPageContent() {
                       <Star className="h-4 w-4 text-yellow-500" />
                       <span className="text-[#6B5FA8] font-medium">{reward.pointValue} points</span>
                     </div>
-                    {canClaim ? (
-                      <Button
-                        size="sm"
-                        onClick={() => handleClaimReward(reward.id)}
-                        className="rounded-full bg-[#6B5FA8] hover:bg-[#5A4F98] text-white"
-                      >
-                        <Gift className="h-3 w-3 mr-1" />
-                        Claim
-                      </Button>
-                    ) : isClaimed ? (
+                    {reward.isEarned && (
                       <Button
                         size="sm"
                         disabled
@@ -282,22 +349,17 @@ function RewardsPageContent() {
                         <Trophy className="h-3 w-3 mr-1" />
                         Claimed
                       </Button>
-                    ) : null}
+                    )}
                   </div>
                 </div>
-                );
-              })}
+              ))}
             </div>
           )}
 
           {/* Achievements Tab */}
           {activeTab === 'achievements' && (
             <div className="space-y-6">
-              {loading ? (
-                <div className="text-center py-8">
-                  <div className="animate-pulse text-[#8B86B8]">Loading achievements...</div>
-                </div>
-              ) : achievements.length === 0 ? (
+              {mockAchievements.length === 0 ? (
                 <div className="text-center py-20">
                   <Award className="mx-auto h-16 w-16 text-[#8B86B8]/40 mb-4" />
                   <h3 className="text-xl font-light text-[#6B5FA8] mb-2">No achievements yet</h3>
@@ -305,40 +367,37 @@ function RewardsPageContent() {
                 </div>
               ) : (
                 <div className="grid gap-6 md:grid-cols-2">
-                  {achievements.map((userAchievement) => {
-                    const achievement = userAchievement.achievement;
-                    return (
-                      <div
-                        key={userAchievement.id}
-                        className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-200 bg-green-50/50 transition-all duration-300 hover:shadow-lg"
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="text-3xl">{achievement.icon || '🏅'}</div>
-                          <div className="flex items-center space-x-2">
-                            <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
-                              Unlocked
-                            </span>
-                            <span className={`text-xs px-2 py-1 rounded-full border ${getRarityColor(achievement.rarity)}`}>
-                              {achievement.rarity}
-                            </span>
-                          </div>
-                        </div>
-
-                        <h3 className="font-medium text-[#6B5FA8] mb-2">{achievement.name}</h3>
-                        <p className="text-[#8B86B8] text-sm mb-4">{achievement.description}</p>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-1">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            <span className="text-[#6B5FA8] font-medium">{achievement.pointReward} points</span>
-                          </div>
-                          <span className="text-xs text-[#8B86B8]">
-                            Unlocked {new Date(userAchievement.unlockedAt).toLocaleDateString()}
+                  {mockAchievements.map((achievement) => (
+                    <div
+                      key={achievement.id}
+                      className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-200 bg-green-50/50 transition-all duration-300 hover:shadow-lg"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="text-3xl">{achievement.icon}</div>
+                        <div className="flex items-center space-x-2">
+                          <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
+                            Unlocked
+                          </span>
+                          <span className={`text-xs px-2 py-1 rounded-full border ${getRarityColor(achievement.rarity)}`}>
+                            {achievement.rarity}
                           </span>
                         </div>
                       </div>
-                    );
-                  })}
+
+                      <h3 className="font-medium text-[#6B5FA8] mb-2">{achievement.name}</h3>
+                      <p className="text-[#8B86B8] text-sm mb-4">{achievement.description}</p>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                          <span className="text-[#6B5FA8] font-medium">{achievement.pointReward} points</span>
+                        </div>
+                        <span className="text-xs text-[#8B86B8]">
+                          Unlocked {new Date(achievement.unlockedAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

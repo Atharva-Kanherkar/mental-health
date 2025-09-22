@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth';
 import db from '../prisma/client';
 import { GeminiService, MemoryWithPerson } from '../services/geminiService';
 import { Memory, FavPerson } from '../generated/prisma';
+import { getUserContextForAI } from '../utils/userContextHelper';
 
 const router = express.Router();
 
@@ -52,8 +53,11 @@ router.post('/memory/:memoryId', async (req, res) => {
       });
     }
 
-    // Generate walkthrough using Gemini AI (memory already includes associatedPerson)
-    const walkthrough = await GeminiService.generateMemoryWalkthrough(memory);
+    // Fetch comprehensive user context for personalized therapy
+    const userContext = await getUserContextForAI(userId);
+
+    // Generate personalized walkthrough with full user context
+    const walkthrough = await GeminiService.generateMemoryWalkthrough(memory, userContext || undefined);
 
     res.json({
       success: true,
@@ -108,17 +112,20 @@ router.post('/panic-mode', async (req, res) => {
       });
     }
 
-    // Generate intelligent memory selection and overall narrative
-    const panicModeData = await GeminiService.generatePanicModeWalkthrough(memories);
+    // Get comprehensive user context for personalized selection
+    const userContext = await getUserContextForAI(userId);
 
-    // Generate individual walkthroughs for each selected memory
+    // Generate intelligent memory selection with user context
+    const panicModeData = await GeminiService.generatePanicModeWalkthrough(memories, userContext || undefined);
+
+    // Generate individual walkthroughs for each selected memory with user context
     const selectedMemoryObjects = memories.filter((m: MemoryWithPerson) => 
       panicModeData.selectedMemories.includes(m.id)
     );
 
     const walkthroughs = await Promise.all(
       selectedMemoryObjects.map((memory: MemoryWithPerson) => 
-        GeminiService.generateMemoryWalkthrough(memory)
+        GeminiService.generateMemoryWalkthrough(memory, userContext || undefined)
       )
     );
 

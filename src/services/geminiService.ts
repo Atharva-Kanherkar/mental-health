@@ -2,6 +2,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from 'dotenv';
 import { Memory, FavPerson } from '../generated/prisma';
 import { getSignedUrl, PrivacyLevel } from '../config/storage';
+import { UserContextForAI, MemoryWithPersonForAI, PersonalizedWalkthrough } from '../types/userContext';
 
 config();
 
@@ -34,13 +35,17 @@ export interface MemoryWalkthrough {
 export class GeminiService {
   
   /**
-   * Generate a calming, immersive walkthrough for a single memory
+   * Generate a personalized, therapeutic walkthrough for a single memory
    * This creates guided text that helps the user engage deeply with the memory
-   * Now supports multimodal input (images, audio, video) for richer experiences
+   * Now includes comprehensive user context for personalized healing experiences
+   * Supports multimodal input (images, audio, video) for richer experiences
    */
-  static async generateMemoryWalkthrough(memory: MemoryWithPerson): Promise<MemoryWalkthrough> {
+  static async generateMemoryWalkthrough(
+    memory: MemoryWithPerson, 
+    userContext?: UserContextForAI
+  ): Promise<MemoryWalkthrough> {
     try {
-      const { textPrompt, mediaData } = await this.buildMultimodalPrompt(memory);
+      const { textPrompt, mediaData } = await this.buildMultimodalPrompt(memory, userContext);
       
       // Create content array for multimodal input
       const contentParts: any[] = [{ text: textPrompt }];
@@ -68,17 +73,20 @@ export class GeminiService {
   }
 
   /**
-   * Select the best memories for panic mode and create a curated journey
-   * This analyzes all user memories and intelligently selects the most calming ones
-   * Enhanced with multimodal awareness for better memory selection
+   * Select the best memories for panic mode using comprehensive user context
+   * This analyzes all user memories and intelligently selects the most therapeutic ones
+   * Enhanced with user's mental health profile for personalized crisis intervention
    */
-  static async generatePanicModeWalkthrough(memories: MemoryWithPerson[]): Promise<{
+  static async generatePanicModeWalkthrough(
+    memories: MemoryWithPerson[], 
+    userContext?: UserContextForAI
+  ): Promise<{
     selectedMemories: string[]; // memory IDs in order
     overallNarrative: string;
     estimatedDuration: number;
   }> {
     try {
-      const prompt = this.buildEnhancedPanicModePrompt(memories);
+      const prompt = this.buildEnhancedPanicModePrompt(memories, userContext);
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
@@ -93,9 +101,12 @@ export class GeminiService {
   }
 
   /**
-   * Build multimodal prompt and fetch media data for memory walkthrough
+   * Build multimodal prompt with user context and fetch media data for personalized walkthrough
    */
-  private static async buildMultimodalPrompt(memory: MemoryWithPerson): Promise<{
+  private static async buildMultimodalPrompt(
+    memory: MemoryWithPerson, 
+    userContext?: UserContextForAI
+  ): Promise<{
     textPrompt: string;
     mediaData?: { base64Data: string; mimeType: string };
   }> {
@@ -111,17 +122,29 @@ export class GeminiService {
       }
     }
 
-    const textPrompt = this.buildEnhancedWalkthroughPrompt(memory, !!mediaData);
+    const textPrompt = this.buildEnhancedWalkthroughPrompt(memory, !!mediaData, userContext);
     return { textPrompt, mediaData };
   }
 
   /**
-   * Build the enhanced text prompt for memory walkthrough (multimodal aware)
+   * Build the enhanced text prompt for memory walkthrough with comprehensive user context
    */
-  private static buildEnhancedWalkthroughPrompt(memory: MemoryWithPerson, hasMediaData: boolean): string {
+  private static buildEnhancedWalkthroughPrompt(
+    memory: MemoryWithPerson, 
+    hasMediaData: boolean, 
+    userContext?: UserContextForAI
+  ): string {
     const mediaPrompt = hasMediaData ? this.getMediaSpecificPrompt(memory.type) : '';
     
-    return `You are a gentle, caring therapist creating an immersive, calming walkthrough experience for someone who wants to deeply engage with a cherished memory. Your goal is to help them feel grounded, peaceful, and connected to this positive moment.
+    // Build comprehensive user context section for personalized therapy
+    let contextSection = '';
+    if (userContext) {
+      contextSection = this.buildUserContextSection(userContext);
+    }
+    
+    return `You are a licensed clinical psychologist creating a deeply personalized, therapeutic memory walkthrough. You have access to the user's complete mental health profile and current state to provide the most helpful, healing experience possible.
+
+${contextSection}
 
 MEMORY DETAILS:
 - Type: ${memory.type}
@@ -132,65 +155,156 @@ MEMORY DETAILS:
 
 ${mediaPrompt}
 
-INSTRUCTIONS:
-Create a guided walkthrough that helps the user immerse themselves in this memory. The walkthrough should:
-1. Be deeply calming and grounding
-2. Use specific sensory details to help them "step into" the memory
-3. ${hasMediaData ? 'Reference specific visual/audio details you can observe in the media' : 'Use imagination to create vivid sensory details'}
-4. Guide them through different aspects of the memory slowly
-5. Include moments of reflection and appreciation
-6. Use a warm, gentle, therapeutic tone
-7. Be broken into 4-6 steps, each lasting 8-15 seconds when read aloud
-8. End with a sense of gratitude and peace
+PERSONALIZED THERAPEUTIC INSTRUCTIONS:
+1. Use the user's mental health profile to inform your therapeutic approach
+2. Consider their current symptom severity and adjust intensity accordingly
+3. Reference their support system and coping resources appropriately
+4. If they have therapy experience, use more advanced therapeutic techniques
+5. For high-risk users, focus heavily on safety and grounding
+6. Adapt your language to their age and educational background
+7. Consider their sleep and lifestyle factors when suggesting techniques
+8. Use specific sensory details to help them "step into" the memory safely
+9. ${hasMediaData ? 'Reference specific visual/audio details you can observe in the media' : 'Use imagination to create vivid sensory details'}
+10. Guide them through different aspects of the memory at a pace suitable for their needs
+11. Include personalized grounding techniques based on their profile
+12. Use a warm, therapeutic tone appropriate for their situation
+13. End with personalized affirmations and coping strategies
 
 FORMAT YOUR RESPONSE AS JSON:
 {
-  "title": "A short, beautiful title for this memory experience",
-  "introduction": "A gentle opening sentence to prepare them for the journey",
+  "title": "A personalized title that reflects their healing journey",
+  "introduction": "A gentle opening that acknowledges their current state and prepares them",
   "steps": [
     {
-      "text": "First guided step (1-2 sentences, very gentle and immersive)",
+      "text": "Personalized guided step referencing their specific needs and context",
       "duration": 10000,
       "pauseAfter": false
-    },
-    {
-      "text": "Second step with deeper engagement",
-      "duration": 12000,
-      "pauseAfter": true
     }
-    // ... continue for 4-6 steps total
+    // ... 4-6 steps total, each tailored to their mental health profile
   ],
-  "conclusion": "A peaceful closing thought that leaves them feeling calm and grateful",
+  "conclusion": "A personalized closing that reinforces their strengths and coping resources",
   "estimatedDuration": 90
 }
 
-Remember: This is for someone seeking calm and grounding. Every word should contribute to their sense of peace.`;
+Remember: This person is seeking healing. Every word should contribute to their therapeutic journey based on their specific mental health profile and current needs.`;
   }
 
   /**
-   * Build the enhanced prompt for panic mode memory selection (multimodal aware)
+   * Build comprehensive user context section for personalized AI therapy
    */
-  private static buildEnhancedPanicModePrompt(memories: MemoryWithPerson[]): string {
+  private static buildUserContextSection(userContext: UserContextForAI): string {
+    const profile = userContext.mentalHealthProfile;
+    let contextSection = `
+USER CONTEXT FOR PERSONALIZED THERAPY:`;
+
+    if (profile) {
+      contextSection += `
+MENTAL HEALTH PROFILE:
+- Age: ${profile.age || 'Not specified'}
+- Current Concerns: ${userContext.primaryConcerns?.join(', ') || 'Not specified'}
+- Symptom Severity: ${profile.symptomSeverity || 'Not specified'}
+- Support System: Family (${profile.familySupport}), Friends (${profile.friendSupport})
+- Professional Support: ${profile.professionalSupport || 'unknown'}
+- Therapy History: ${profile.hasTherapyHistory ? 'Yes' : 'No/Unknown'}
+- Current Risk Level: ${userContext.currentRiskLevel || 'Not assessed'}
+- Sleep Quality: ${profile.sleepQuality || 'Not specified'}
+- Exercise Frequency: ${profile.exerciseFrequency || 'Not specified'}`;
+    }
+
+    if (userContext.recentAssessments?.length) {
+      contextSection += `
+
+RECENT ASSESSMENTS:
+${userContext.recentAssessments.map(assessment => 
+  `- ${assessment.assessmentType}: Score ${assessment.totalScore || 'N/A'} (${assessment.severity || 'Not rated'})`
+).join('\n')}`;
+    }
+
+    if (userContext.associatedPeople?.length) {
+      contextSection += `
+
+IMPORTANT RELATIONSHIPS:
+${userContext.associatedPeople.map(person => 
+  `- ${person.name} (${person.relationship}): ${person.description || 'No description'}`
+).join('\n')}`;
+    }
+
+    contextSection += `
+
+THERAPEUTIC GUIDANCE NOTES:
+- Tailor language and pacing to user's current mental state
+- Consider their support system strength when suggesting coping strategies  
+- Be extra gentle if high risk levels or severe symptoms are indicated
+- Reference their specific concerns and therapeutic background
+- Adapt breathing exercises and grounding techniques to their needs
+- Use their relationship context to enhance memory engagement
+- Consider their age and life situation for appropriate guidance
+`;
+
+    return contextSection;
+  }
+
+  /**
+   * Build the enhanced prompt for panic mode memory selection with user context
+   */
+  private static buildEnhancedPanicModePrompt(
+    memories: MemoryWithPerson[], 
+    userContext?: UserContextForAI
+  ): string {
     const memoryDescriptions = memories.map((m, index) => {
       const hasMedia = m.fileKey && m.type !== 'text';
-      const mediaInfo = hasMedia ? ` [HAS ${m.type.toUpperCase()} FILE - AI can analyze visual/audio content]` : '';
-      return `${index + 1}. [${m.id}] ${m.type} - ${m.content || m.fileName || 'Media file'} (${m.associatedPerson?.name || 'No person'}) - Created: ${m.createdAt.toLocaleDateString()}${mediaInfo}`;
+      const mediaInfo = hasMedia ? ` [HAS ${m.type.toUpperCase()} FILE - AI can analyze content]` : '';
+      const personInfo = m.associatedPerson ? ` (with ${m.associatedPerson.name} - ${m.associatedPerson.relationship})` : '';
+      return `${index + 1}. [${m.id}] ${m.type} - ${m.content?.substring(0, 100) || m.fileName || 'Media file'}${personInfo} - ${m.createdAt.toLocaleDateString()}${mediaInfo}`;
     }).join('\n');
 
-    return `You are an expert therapist selecting the most calming, grounding memories for someone in a panic state or a self harm urge. Your goal is to choose 2-3 memories that will most effectively help them return to a state of calm and safety.
+    // Build user context section for personalized crisis intervention
+    let contextSection = '';
+    if (userContext?.mentalHealthProfile) {
+      const profile = userContext.mentalHealthProfile;
+      contextSection = `
+USER'S CURRENT MENTAL HEALTH STATE:
+- Primary Concerns: ${userContext.primaryConcerns?.join(', ') || 'Not specified'}
+- Symptom Severity: ${profile.symptomSeverity || 'Not specified'}
+- Current Risk Level: ${userContext.currentRiskLevel || 'Not assessed'}
+- Support System Strength: Family (${profile.familySupport}), Friends (${profile.friendSupport})
+- Therapy Background: ${profile.hasTherapyHistory ? 'Has therapy experience' : 'No formal therapy'}
+- Sleep Quality: ${profile.sleepQuality || 'Not specified'}
+- Recent Crisis Events: ${userContext.recentAssessments?.some(a => a.severity === 'severe') ? 'Recent high-severity assessments' : 'No recent crisis indicators'}
+
+THERAPEUTIC SELECTION CRITERIA:
+- Choose memories that counteract their specific mental health concerns
+- Consider their support system when selecting relationship-based memories
+- If high-risk, prioritize deeply grounding and safety-focused memories
+- Match memory emotional tone to their therapy readiness level
+- Consider their age and life context when selecting relevance
+`;
+    }
+
+    return `You are a crisis intervention specialist with access to a person's complete mental health profile. They are in a panic state or having self-harm urges. Your goal is to select 2-3 memories that will most effectively help them return to safety and calm, based on their specific mental health needs.
+
+${contextSection}
 
 AVAILABLE MEMORIES:
 ${memoryDescriptions}
 
+PERSONALIZED SELECTION INSTRUCTIONS:
+1. Analyze their mental health profile to understand their specific triggers and needs
+2. Choose memories that directly counteract their primary concerns (e.g., if depressed, choose uplifting memories)
+3. Consider relationship memories carefully - match to their support system strength
+4. If they have trauma history, avoid potentially triggering content
+5. For anxiety, choose deeply grounding, sensory-rich memories
+6. For depression, choose memories that highlight their worth and connection
+7. If they have therapy experience, you can use more sophisticated therapeutic approaches
+8. Consider their age - choose age-appropriate emotional regulation strategies
+9. Prioritize memories with strong positive emotional associations
+10. Select memories that remind them of their coping resources and support system
+
 SELECTION CRITERIA:
-- Choose memories that are most likely to be deeply calming and grounding
-- Prioritize memories with positive emotional associations
-- Consider variety (don't pick all the same type)
-- Select memories that can build on each other for maximum calming effect
-- Think about sensory richness and peaceful content
-- Prefer memories with people who bring comfort
-- ENHANCED: Prioritize memories with media files when possible - images, audio, and video can be analyzed by AI for much more specific and immersive therapeutic experiences
-- Consider how visual/audio content can enhance the calming effect
+- Strongest emotional safety and grounding potential
+- Most relevant to their specific mental health profile
+- Greatest therapeutic impact for their current state
+- Best match for their support system and coping abilities
 
 INSTRUCTIONS:
 1. Analyze each memory for its calming potential
@@ -199,10 +313,11 @@ INSTRUCTIONS:
 4. Estimate total time needed for the complete experience
 
 FORMAT YOUR RESPONSE AS JSON:
+FORMAT AS JSON:
 {
-  "selectedMemories": ["memory-id-1", "memory-id-2", "memory-id-3"],
-  "overallNarrative": "A brief explanation of why these memories were chosen and how they work together to create calm",
-  "estimatedDuration": 180
+  "selectedMemories": ["memory-id-1", "memory-id-2"],
+  "overallNarrative": "Personalized therapeutic explanation of why these specific memories were chosen for their mental health profile and current crisis state",
+  "estimatedDuration": 120
 }
 
 Focus on maximum therapeutic impact - these memories need to genuinely help someone move from panic to peace.`;
@@ -372,7 +487,10 @@ You have access to the actual video from this memory. Use both visual and audio 
    * Generate comprehensive AI analysis and insights for a mental health profile
    * Uses the existing JSON function calling pattern for structured responses
    */
-  static async generateProfileAnalysis(profileData: any): Promise<{
+  static async generateProfileAnalysis(
+    profileData: any, 
+    userContext?: UserContextForAI
+  ): Promise<{
     overallAssessment: string;
     strengths: string[];
     areasOfConcern: string[];
@@ -385,24 +503,51 @@ You have access to the actual video from this memory. Use both visual and audio 
     supportiveMessage: string;
     nextSteps: string[];
   }> {
-    const prompt = `You are a licensed clinical psychologist providing a comprehensive mental health analysis based on a user's assessment data. Analyze the following profile and provide structured insights.
+    // Build comprehensive context section
+    let contextSection = '';
+    if (userContext) {
+      contextSection = `
+COMPREHENSIVE USER CONTEXT:
+${this.buildUserContextSection(userContext)}
 
-PROFILE DATA:
+ASSESSMENT HISTORY:
+${userContext.recentAssessments?.length ? 
+  userContext.recentAssessments.map(assessment => 
+    `- ${assessment.assessmentType}: ${assessment.severity || 'No severity'} (Score: ${assessment.totalScore || 'N/A'})`
+  ).join('\n') : 'No recent assessments'}
+
+RELATIONSHIP CONTEXT:
+${userContext.associatedPeople?.length ? 
+  userContext.associatedPeople.map(person => 
+    `- ${person.name} (${person.relationship})`
+  ).join('\n') : 'No associated people recorded'}
+`;
+    }
+
+    const prompt = `You are a licensed clinical psychologist providing a comprehensive mental health analysis with access to the complete user profile, assessment history, and relationship context. Use all available information to provide the most personalized, therapeutic guidance possible.
+
+${contextSection}
+
+CURRENT PROFILE DATA:
 ${JSON.stringify(profileData, null, 2)}
 
-ANALYSIS REQUIREMENTS:
-1. Provide a holistic assessment of the person's mental health status
-2. Identify key strengths and protective factors
-3. Highlight areas that may need attention or support
-4. Give evidence-based recommendations following therapeutic best practices
-5. Calculate a wellness score (1-100) based on all factors
-6. Assess risk level and contributing factors
-7. Provide a supportive, non-judgmental message
-8. Suggest concrete next steps
+PERSONALIZED ANALYSIS REQUIREMENTS:
+1. Provide a holistic assessment using their complete mental health history
+2. Identify strengths that build on their support system and past successes
+3. Highlight areas needing attention based on their specific concerns and symptoms
+4. Give evidence-based recommendations tailored to their therapy background and readiness
+5. Calculate wellness score considering their assessment history and current state
+6. Assess risk level using their complete profile and recent crisis indicators
+7. Provide supportive message that acknowledges their journey and validates their efforts
+8. Suggest next steps that match their coping skills level and available resources
 
-IMPORTANT GUIDELINES:
-- Be compassionate and non-judgmental
-- Focus on strengths-based approach while acknowledging challenges
+PERSONALIZED GUIDANCE PRINCIPLES:
+- Use their assessment history to track progress and patterns
+- Consider their relationship context when suggesting support strategies
+- Match recommendations to their therapy experience level
+- Reference their specific concerns and diagnosed conditions
+- Acknowledge their support system strength in recommendations
+- Be extra supportive if recent assessments show high severity
 - Avoid clinical diagnoses - this is supportive analysis only
 - Provide actionable, realistic recommendations
 - Consider cultural sensitivity and individual circumstances

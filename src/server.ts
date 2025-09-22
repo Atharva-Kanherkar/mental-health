@@ -11,6 +11,10 @@ import fileRoutes from "./routes/files";
 import walkthroughRoutes from "./routes/walkthrough";
 import journalRoutes from "./routes/journal";
 import mentalHealthRoutes from "./routes/mentalHealth";
+import rewardRoutes from "./routes/rewards";
+import dailyCheckinRoutes from "./routes/dailyCheckin";
+import questionnaireRoutes from "./routes/questionnaires";
+import userRoutes from "./routes/user";
 
 const app = express();
  
@@ -19,7 +23,7 @@ app.use(cors({
     credentials: true,
 }));
 
-// Add request logging
+ 
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
@@ -53,23 +57,25 @@ app.use('/api/journal', journalRoutes);
 // Mental Health Assessment routes (protected)
 app.use('/api/mental-health', mentalHealthRoutes);
 
+// Rewards & Gamification routes (protected)
+app.use('/api/rewards', rewardRoutes);
+
+// Daily Check-in routes (protected)
+app.use('/api/checkin', dailyCheckinRoutes);
+
+// Assessment Questionnaire routes (protected)
+app.use('/api/questionnaires', questionnaireRoutes);
+
+// User Profile & Management routes (protected)
+app.use('/api/user', userRoutes);
+
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Mental Health API is running' });
 });
 
 const PORT = process.env.PORT || 4000;
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    // Don't exit the process, just log the error
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-    // Don't exit the process, just log the error
-});
+ 
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);

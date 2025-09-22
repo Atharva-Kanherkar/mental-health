@@ -182,7 +182,11 @@ export class MentalHealthController {
         return res.status(404).json({ error: 'Mental health profile not found. Please complete the assessment first.' });
       }
 
-      // Generate AI analysis using Gemini service
+      // Get comprehensive user context for personalized analysis
+      const { getUserContextForAI } = await import('../utils/userContextHelper');
+      const userContext = await getUserContextForAI(userId);
+
+      // Generate personalized AI analysis using comprehensive context
       const { GeminiService } = await import('../services/geminiService');
       const analysis = await GeminiService.generateProfileAnalysis({
         demographics: {
@@ -219,7 +223,7 @@ export class MentalHealthController {
           hasMedicationHistory: profile.hasMedicationHistory,
           hasHospitalization: profile.hasHospitalization
         }
-      });
+      }, userContext || undefined);
 
       res.json({ 
         success: true, 

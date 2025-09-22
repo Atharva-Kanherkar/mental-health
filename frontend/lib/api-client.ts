@@ -7,6 +7,142 @@ export interface OnboardingStatus {
   favoritePersonCount: number;
 }
 
+export interface Reward {
+  id: string;
+  name: string;  
+  description: string;
+  type: 'milestone' | 'streak' | 'wellness' | 'behavior' | 'safety';
+  pointValue: number;
+  requiredValue?: number;
+  requiredDays?: number;
+  requiredCount?: number;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  icon?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface UserReward {
+  id: string;
+  userId: string;
+  rewardId: string;
+  claimedAt?: string;
+  progress: number;
+  isEarned: boolean;
+  reward: Reward;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: 'consistency' | 'wellness' | 'safety' | 'behavior' | 'milestone';
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  pointReward: number;
+  icon?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface UserAchievement {
+  id: string;
+  userId: string;
+  achievementId: string;
+  unlockedAt: string;
+  achievement: Achievement;
+}
+
+export interface GamificationStats {
+  totalPoints: number;
+  currentLevel: number;
+  pointsToNextLevel: number;
+  currentStreak: number;
+  longestStreak: number;
+  totalRewardsEarned: number;
+  totalAchievementsUnlocked: number;
+}
+
+export interface DailyCheckInData {
+  id: string;
+  userId: string;
+  date: string;
+  overallMood?: number;
+  energyLevel?: number;
+  sleepQuality?: number;
+  stressLevel?: number;
+  anxietyLevel?: number;
+  hadSelfHarmThoughts?: boolean;
+  hadSuicidalThoughts?: boolean;
+  actedOnHarm?: boolean;
+  exercised?: boolean;
+  ateWell?: boolean;
+  socializedHealthily?: boolean;
+  practicedSelfCare?: boolean;
+  tookMedication?: boolean;
+  gratefulFor?: string;
+  challengesToday?: string;
+  accomplishments?: string;
+  pointsEarned: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MoodTrend {
+  date: string;
+  overallMood?: number;
+  energyLevel?: number;
+  stressLevel?: number;
+  anxietyLevel?: number;
+}
+
+export interface CrisisResource {
+  name: string;
+  phone: string;
+  text?: string;
+  website?: string;
+  description: string;
+}
+
+export interface AssessmentQuestionnaire {
+  id: string;
+  title: string;
+  type: 'PHQ-9' | 'GAD-7' | 'PCL-5' | 'MDQ' | 'custom';
+  description: string;
+  instructions?: string;
+  questions?: AssessmentQuestion[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface AssessmentQuestion {
+  id: string;
+  questionnaireId: string;
+  text: string;
+  type: 'multiple_choice' | 'scale' | 'yes_no' | 'text';
+  options?: string[];
+  scaleMin?: number;
+  scaleMax?: number;
+  order: number;
+}
+
+export interface AssessmentResponse {
+  id: string;
+  userId: string;
+  questionnaireId: string;
+  questionnaire: AssessmentQuestionnaire;
+  responses: Record<string, string | number>;
+  totalScore?: number;
+  riskLevel?: 'minimal' | 'mild' | 'moderate' | 'moderately_severe' | 'severe';
+  submittedAt: string;
+}
+
+export interface QuestionnairePreview {
+  totalScore: number;
+  riskLevel: 'minimal' | 'mild' | 'moderate' | 'moderately_severe' | 'severe';
+  interpretation: string;
+  recommendations: string[];
+}
+
 export interface MemoryVault {
   id: string;
   userId: string;
@@ -100,7 +236,7 @@ export interface DailyCheckIn {
   updatedAt: string;
 }
 
-export interface Reward {
+export interface RewardOld {
   id: string;
   name: string;
   description: string;
@@ -113,7 +249,7 @@ export interface Reward {
   maxClaimsPerUser?: number;
 }
 
-export interface Achievement {
+export interface AchievementOld {
   id: string;
   name: string;
   description: string;
@@ -170,7 +306,7 @@ export interface MentalHealthAnalysis {
   nextSteps: string[];
 }
 
-export interface AssessmentResponse {
+export interface MentalHealthAssessmentResponse {
   id: string;
   userId: string;
   assessmentType: string;
@@ -549,21 +685,39 @@ export const journalApi = {
   },
 };
 
-// Daily Check-in API calls (placeholder for future implementation)
+// Daily Check-in API calls
 export const checkInApi = {
-  create: async (data: Omit<DailyCheckIn, 'id' | 'createdAt' | 'updatedAt' | 'pointsEarned'>): Promise<DailyCheckIn> => {
-    // TODO: Implement when backend is ready
-    throw new Error('Check-in API not implemented yet');
+  create: async (data: Omit<DailyCheckInData, 'id' | 'createdAt' | 'updatedAt' | 'pointsEarned'>): Promise<DailyCheckInData> => {
+    const response = await api.post('/api/checkin', data);
+    return response.data.checkIn;
   },
 
-  getAll: async (): Promise<DailyCheckIn[]> => {
-    // TODO: Implement when backend is ready
-    throw new Error('Check-in API not implemented yet');
+  getAll: async (): Promise<DailyCheckInData[]> => {
+    const response = await api.get('/api/checkin');
+    return response.data.checkIns;
   },
 
-  getToday: async (): Promise<DailyCheckIn | null> => {
-    // TODO: Implement when backend is ready
-    throw new Error('Check-in API not implemented yet');
+  getToday: async (): Promise<DailyCheckInData | null> => {
+    try {
+      const response = await api.get('/api/checkin/today');
+      return response.data.checkIn;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  getMoodTrends: async (days: number = 30): Promise<MoodTrend[]> => {
+    const response = await api.get(`/api/checkin/trends?days=${days}`);
+    return response.data.trends;
+  },
+
+  getCrisisResources: async (): Promise<CrisisResource[]> => {
+    const response = await api.get('/api/checkin/crisis-resources');
+    return response.data.resources;
   },
 };
 
@@ -574,27 +728,36 @@ export const rewardsApi = {
     throw new Error('Rewards API not implemented yet');
   },
 
-  getUserRewards: async (): Promise<Reward[]> => {
-    // TODO: Implement when backend is ready
-    throw new Error('Rewards API not implemented yet');
+  getUserRewards: async (): Promise<UserReward[]> => {
+    const response = await api.get('/api/rewards');
+    return response.data.rewards;
   },
 
   claimReward: async (rewardId: string): Promise<void> => {
-    // TODO: Implement when backend is ready
-    throw new Error('Rewards API not implemented yet');
+    await api.post(`/api/rewards/claim/${rewardId}`);
+  },
+
+  getGamificationStats: async (): Promise<GamificationStats> => {
+    const response = await api.get('/api/rewards/stats');
+    return response.data.stats;
+  },
+
+  trackBehavior: async (behaviorType: string, value?: number): Promise<{ pointsEarned: number; rewardsEarned: UserReward[] }> => {
+    const response = await api.post('/api/rewards/track', { behaviorType, value });
+    return response.data;
   },
 };
 
-// Achievements API calls (placeholder for future implementation)
+// Achievements API calls
 export const achievementsApi = {
   getAll: async (): Promise<Achievement[]> => {
-    // TODO: Implement when backend is ready
-    throw new Error('Achievements API not implemented yet');
+    const response = await api.get('/api/rewards/achievements/all');
+    return response.data.achievements;
   },
 
-  getUserAchievements: async (): Promise<Achievement[]> => {
-    // TODO: Implement when backend is ready
-    throw new Error('Achievements API not implemented yet');
+  getUserAchievements: async (): Promise<UserAchievement[]> => {
+    const response = await api.get('/api/rewards/achievements');
+    return response.data.achievements;
   },
 };
 
@@ -619,13 +782,46 @@ export const mentalHealthApi = {
     return response.data.analysis;
   },
 
-  getAssessmentHistory: async (): Promise<AssessmentResponse[]> => {
+  getAssessmentHistory: async (): Promise<MentalHealthAssessmentResponse[]> => {
     const response = await api.get('/api/mental-health/assessments');
     return response.data.assessments;
   },
 
-  submitAssessment: async (data: Partial<AssessmentResponse>): Promise<AssessmentResponse> => {
+  submitAssessment: async (data: Partial<MentalHealthAssessmentResponse>): Promise<MentalHealthAssessmentResponse> => {
     const response = await api.post('/api/mental-health/assessments', data);
     return response.data.assessment;
+  },
+};
+
+// Assessment Questionnaire API calls
+export const questionnaireApi = {
+  getAll: async (): Promise<AssessmentQuestionnaire[]> => {
+    const response = await api.get('/api/questionnaires');
+    return response.data.questionnaires;
+  },
+
+  getById: async (id: string): Promise<AssessmentQuestionnaire> => {
+    const response = await api.get(`/api/questionnaires/${id}`);
+    return response.data.questionnaire;
+  },
+
+  submitResponse: async (questionnaireId: string, responses: Record<string, string | number>): Promise<AssessmentResponse> => {
+    const response = await api.post(`/api/questionnaires/${questionnaireId}/submit`, { responses });
+    return response.data.response;
+  },
+
+  previewScore: async (questionnaireId: string, responses: Record<string, string | number>): Promise<QuestionnairePreview> => {
+    const response = await api.post(`/api/questionnaires/${questionnaireId}/preview`, { responses });
+    return response.data.preview;
+  },
+
+  getUserResponses: async (): Promise<AssessmentResponse[]> => {
+    const response = await api.get('/api/questionnaires/responses');
+    return response.data.responses;
+  },
+
+  getStandardQuestionnaires: async (): Promise<AssessmentQuestionnaire[]> => {
+    const response = await api.get('/api/questionnaires/standard');
+    return response.data.questionnaires;
   },
 };

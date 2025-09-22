@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { mentalHealthApi } from '@/lib/mental-health-api';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { ArrowLeft, ArrowRight, CheckCircle, ChevronRight, MessageCircle, User, Heart } from 'lucide-react';
+import { useTheme } from '@/lib/theme-context';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { ArrowLeft, ArrowRight, CheckCircle, ChevronRight, MessageCircle, User, Heart, Home } from 'lucide-react';
 
 interface ProfileFormData {
   age: string;
@@ -36,6 +38,7 @@ interface ProfileFormData {
 
 function ProfileAssessmentContent() {
   const [currentStep, setCurrentStep] = useState(0);
+  const { getBackgroundClass, getCardClass, getTextClass, getAccentClass, isDark } = useTheme();
   const [formData, setFormData] = useState<ProfileFormData>({
     age: '',
     gender: '',
@@ -657,43 +660,91 @@ function ProfileAssessmentContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FAFAFE] to-[#F0EDFA]">
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Progress Header */}
+    <div className={`${getBackgroundClass()} relative overflow-hidden`}>
+      {/* Ambient Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className={`absolute top-20 left-10 w-32 h-32 rounded-full blur-xl animate-pulse ${
+          isDark ? 'bg-purple-500/10' : 'bg-[#6B5FA8]/5'
+        }`}></div>
+        <div className={`absolute bottom-40 right-20 w-24 h-24 rounded-full blur-lg animate-pulse delay-1000 ${
+          isDark ? 'bg-indigo-500/15' : 'bg-purple-300/10'
+        }`}></div>
+        <div className={`absolute top-1/2 left-1/4 w-16 h-16 rounded-full blur-md animate-pulse delay-500 ${
+          isDark ? 'bg-purple-400/20' : 'bg-indigo-200/15'
+        }`}></div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-8 relative z-10">
+        {/* Floating Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <Button
-              variant="ghost"
-              onClick={goBack}
-              disabled={currentStep === 0 || isSubmitting}
-              className="p-2 text-[#6B5FA8] hover:bg-[#6B5FA8]/10 rounded-2xl"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="text-sm text-gray-600 font-serif">
-              Mental Health Profile
+          <div className={`${getCardClass()} rounded-2xl p-6 shadow-lg mb-6`}>
+            {/* Theme Toggle and Home Button */}
+            <div className="flex justify-between items-center mb-6">
+              <Link href="/dashboard">
+                <Button
+                  variant="ghost"
+                  className={`p-3 transition-all duration-200 hover:scale-105 ${
+                    isDark ? 'hover:bg-purple-800/30 text-purple-300' : 'hover:bg-[#6B5FA8]/10 text-[#6B5FA8]'
+                  }`}
+                >
+                  <Home className="h-5 w-5 mr-2" />
+                  Home
+                </Button>
+              </Link>
+              <ThemeToggle />
             </div>
-            <div className="w-8" />
-          </div>
-          
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className="h-2 bg-gradient-to-r from-[#6B5FA8] to-[#8B86B8] rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${getProgressPercentage()}%` }}
-            />
+
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                onClick={goBack}
+                disabled={currentStep === 0 || isSubmitting}
+                className={`p-3 transition-all duration-200 hover:scale-105 ${
+                  isDark ? 'hover:bg-purple-800/30 text-purple-300' : 'hover:bg-[#6B5FA8]/10 text-[#6B5FA8]'
+                }`}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div className="text-center">
+                <div className={`text-sm font-medium ${getAccentClass()}`}>
+                  Mental Health Profile
+                </div>
+                <div className={`text-xs mt-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Assessment</div>
+              </div>
+              <div className="w-8" />
+            </div>
+            
+            {/* Enhanced Progress Bar */}
+            <div className="relative mt-4">
+              <div className={`w-full rounded-full h-3 shadow-inner ${
+                isDark ? 'bg-gray-700/50' : 'bg-[#6B5FA8]/10'
+              }`}>
+                <div 
+                  className={`h-3 rounded-full transition-all duration-700 ease-out shadow-sm ${
+                    isDark 
+                      ? 'bg-gradient-to-r from-purple-500 via-purple-400 to-indigo-400' 
+                      : 'bg-gradient-to-r from-[#6B5FA8] via-[#7C6DB8] to-[#8B7CC8]'
+                  }`}
+                  style={{ width: `${getProgressPercentage()}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Current Step */}
-        <div className={`transition-all duration-300 ${isAnimating ? 'opacity-50 translate-x-4' : 'opacity-100 translate-x-0'}`}>
+        <div className={`transition-all duration-500 ${isAnimating ? 'opacity-50 translate-x-8 scale-95' : 'opacity-100 translate-x-0 scale-100'}`}>
           {renderCurrentStep()}
         </div>
 
         {/* Footer */}
-        <div className="text-center">
-          <p className="text-sm text-gray-500">
-            Your personal information is encrypted and secure
-          </p>
+        <div className="text-center mt-8">
+          <div className={`${getCardClass()} rounded-2xl p-4 shadow-sm`}>
+            <p className={`text-sm flex items-center justify-center ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <User className={`h-4 w-4 mr-2 ${getAccentClass()}`} />
+              Your personal information is encrypted and secure
+            </p>
+          </div>
         </div>
       </div>
     </div>

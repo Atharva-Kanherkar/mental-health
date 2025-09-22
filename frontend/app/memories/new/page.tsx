@@ -10,10 +10,11 @@ import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { PasswordPrompt } from '@/components/PasswordPrompt';
 import { useEncryptedFiles } from '@/lib/use-encrypted-files';
-import { FileText, Image as ImageIcon, Music, Video, Upload, ArrowLeft, Lock, Shield, Brain, Heart, User } from 'lucide-react';
+import { FileText, Image as ImageIcon, Music, Video, Upload, ArrowLeft, Lock, Shield, Heart, User } from 'lucide-react';
 import { favoritesApi, type FavoritePerson } from '@/lib/api-client';
 
 // Memory form validation schema
@@ -224,13 +225,16 @@ export default function NewMemoryPage() {
           </div>
 
           {/* Privacy Level Selection */}
-          <div className="p-8 bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-sm rounded-3xl border border-[#8B86B8]/15">
-            <h2 className="text-2xl font-serif font-light text-[#6B5FA8] mb-4 text-center" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-              Choose Your Privacy Level
-            </h2>
-            <p className="text-[#8B86B8] font-light text-center mb-6 text-sm">
-              This choice affects what features will be available for this memory
-            </p>
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-serif text-gray-800 mb-4 tracking-wide">
+                Choose Your Privacy Level
+              </h2>
+              <p className="text-gray-600 font-light text-lg leading-relaxed max-w-md mx-auto">
+                This choice affects what features will be available for this memory
+              </p>
+              <div className="mt-4 w-24 h-1 bg-gradient-to-r from-[#6B5FA8] to-purple-300 rounded-full mx-auto"></div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Server-Managed Option */}
@@ -241,39 +245,79 @@ export default function NewMemoryPage() {
                   {...register('privacyLevel')}
                   className="sr-only"
                 />
-                <div className={`
-                  p-6 rounded-3xl transition-all duration-500 group-hover:scale-105 border-2
-                  ${selectedPrivacyLevel === 'server_managed' 
-                    ? 'bg-[#EBE7F8] text-[#6B5FA8] border-[#6B5FA8]/30 shadow-lg' 
-                    : 'bg-white/30 text-[#8B86B8] border-transparent hover:bg-white/50'
-                  }
-                `}>
-                  <div className="flex items-center justify-center mb-4">
-                    <Brain className="w-8 h-8" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2 text-center">Smart Memory</h3>
-                  <p className="text-sm font-light leading-relaxed text-center mb-4">
-                    Enable AI-powered features like personalized insights, memory analysis, and intelligent recommendations.
-                  </p>
-                  <div className="text-xs font-light text-center opacity-75 space-y-1">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>LLM walkthrough features</span>
+                <Card className={`transition-all duration-300 group-hover:shadow-lg ${
+                  selectedPrivacyLevel === 'server_managed' 
+                    ? 'ring-2 ring-[#6B5FA8]/50 shadow-lg bg-gradient-to-br from-[#6B5FA8]/5 to-purple-50/50' 
+                    : 'hover:ring-2 hover:ring-[#6B5FA8]/30'
+                }`}>
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                        selectedPrivacyLevel === 'server_managed' 
+                          ? 'bg-gradient-to-br from-[#6B5FA8]/20 to-purple-200/30' 
+                          : 'bg-gradient-to-br from-indigo-100 to-purple-100 group-hover:from-[#6B5FA8]/15 group-hover:to-purple-200/25'
+                      }`}>
+                        <Heart className={`w-7 h-7 ${selectedPrivacyLevel === 'server_managed' ? 'text-[#6B5FA8]' : 'text-indigo-600 group-hover:text-[#6B5FA8]'}`} />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className={`text-xl ${selectedPrivacyLevel === 'server_managed' ? 'text-[#6B5FA8]' : 'text-gray-800'}`}>
+                          Smart Memory
+                        </CardTitle>
+                        <CardDescription className="text-sm font-medium">
+                          AI-Enhanced Experience
+                        </CardDescription>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>AI-powered insights</span>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-6">
+                    <p className="text-gray-700 leading-relaxed">
+                      Enable AI-powered features like personalized therapeutic insights, memory analysis, and intelligent recommendations tailored to your healing journey.
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium text-gray-600">What you get:</div>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-800 text-sm">Personalized AI Walkthroughs</div>
+                            <div className="text-xs text-gray-600 mt-1">Guided therapeutic experiences based on your memory</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-800 text-sm">Intelligent Insights</div>
+                            <div className="text-xs text-gray-600 mt-1">AI analyzes patterns to offer meaningful reflections</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-800 text-sm">Memory Connections</div>
+                            <div className="text-xs text-gray-600 mt-1">Links similar memories for deeper understanding</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-700 text-sm">Privacy Note</div>
+                            <div className="text-xs text-gray-600 mt-1">Content processed on secure servers for AI features</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span>Memory analysis</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                      <span>Server can access file contents</span>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </label>
 
               {/* Zero-Knowledge Option */}
@@ -284,39 +328,79 @@ export default function NewMemoryPage() {
                   {...register('privacyLevel')}
                   className="sr-only"
                 />
-                <div className={`
-                  p-6 rounded-3xl transition-all duration-500 group-hover:scale-105 border-2
-                  ${selectedPrivacyLevel === 'zero_knowledge' 
-                    ? 'bg-[#EBE7F8] text-[#6B5FA8] border-[#6B5FA8]/30 shadow-lg' 
-                    : 'bg-white/30 text-[#8B86B8] border-transparent hover:bg-white/50'
-                  }
-                `}>
-                  <div className="flex items-center justify-center mb-4">
-                    <Shield className="w-8 h-8" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2 text-center">Private Memory</h3>
-                  <p className="text-sm font-light leading-relaxed text-center mb-4">
-                    Maximum privacy with client-side encryption. Only you can decrypt and view this memory.
-                  </p>
-                  <div className="text-xs font-light text-center opacity-75 space-y-1">
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span>Complete privacy</span>
+                <Card className={`transition-all duration-300 group-hover:shadow-lg ${
+                  selectedPrivacyLevel === 'zero_knowledge' 
+                    ? 'ring-2 ring-slate-400/50 shadow-lg bg-gradient-to-br from-slate-50/50 to-blue-50/30' 
+                    : 'hover:ring-2 hover:ring-slate-400/30'
+                }`}>
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                        selectedPrivacyLevel === 'zero_knowledge' 
+                          ? 'bg-gradient-to-br from-slate-200/50 to-blue-100/40' 
+                          : 'bg-gradient-to-br from-slate-100 to-blue-100 group-hover:from-slate-200/40 group-hover:to-blue-100/50'
+                      }`}>
+                        <Shield className={`w-7 h-7 ${selectedPrivacyLevel === 'zero_knowledge' ? 'text-slate-600' : 'text-slate-500 group-hover:text-slate-600'}`} />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className={`text-xl ${selectedPrivacyLevel === 'zero_knowledge' ? 'text-slate-700' : 'text-gray-800'}`}>
+                          Private Memory
+                        </CardTitle>
+                        <CardDescription className="text-sm font-medium">
+                          Maximum Privacy
+                        </CardDescription>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span>Client-side encryption</span>
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-6">
+                    <p className="text-gray-700 leading-relaxed">
+                      Complete privacy with client-side encryption. Your memory is encrypted on your device and only you hold the key to decrypt and view it.
+                    </p>
+                    
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium text-gray-600">Privacy features:</div>
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-800 text-sm">End-to-End Encryption</div>
+                            <div className="text-xs text-gray-600 mt-1">Your data is encrypted before leaving your device</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-800 text-sm">Zero Server Access</div>
+                            <div className="text-xs text-gray-600 mt-1">Server cannot read or analyze your content</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-800 text-sm">Your Keys Only</div>
+                            <div className="text-xs text-gray-600 mt-1">Only you can decrypt and access your memories</div>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5 flex-shrink-0">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-700 text-sm">Trade-off</div>
+                            <div className="text-xs text-gray-600 mt-1">AI features unavailable due to encryption</div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span>Server cannot read contents</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span>No LLM features available</span>
-                    </div>
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
               </label>
             </div>
             
