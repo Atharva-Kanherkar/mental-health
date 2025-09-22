@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "prisma generate && tsc",
+    "build": "prisma generate && tsc && node -e \"require('fs').cpSync('src/generated', 'dist/generated', {recursive: true})\"",
     "start": "node dist/server.js",
     "postinstall": "prisma generate"
   },
