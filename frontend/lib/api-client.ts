@@ -125,6 +125,67 @@ export interface Achievement {
   unlockedAt?: string;
 }
 
+export interface MentalHealthProfile {
+  id: string;
+  userId: string;
+  age?: number;
+  gender?: 'male' | 'female' | 'non-binary' | 'prefer-not-to-say' | 'other';
+  occupation?: string;
+  educationLevel?: 'high-school' | 'some-college' | 'bachelor' | 'master' | 'doctorate' | 'other';
+  relationshipStatus?: 'single' | 'partnered' | 'married' | 'divorced' | 'widowed' | 'other';
+  livingArrangement?: 'alone' | 'family' | 'roommates' | 'partner' | 'other';
+  primaryConcerns?: string[];
+  diagnosedConditions?: string[];
+  symptomSeverity?: 'mild' | 'moderate' | 'severe' | 'very-severe';
+  symptomDuration?: 'days' | 'weeks' | 'months' | 'years';
+  substanceUseRisk?: 'none' | 'low' | 'moderate' | 'high';
+  eatingDisorderRisk?: 'none' | 'low' | 'moderate' | 'high';
+  hasTherapyHistory?: boolean;
+  hasMedicationHistory?: boolean;
+  hasHospitalization?: boolean;
+  familySupport?: 'none' | 'limited' | 'moderate' | 'strong';
+  friendSupport?: 'none' | 'limited' | 'moderate' | 'strong';
+  professionalSupport?: 'none' | 'limited' | 'moderate' | 'strong';
+  sleepQuality?: 'very-poor' | 'poor' | 'fair' | 'good' | 'excellent';
+  exerciseFrequency?: 'never' | 'rarely' | 'sometimes' | 'often' | 'daily';
+  nutritionQuality?: 'very-poor' | 'poor' | 'fair' | 'good' | 'excellent';
+  socialConnection?: 'very-isolated' | 'isolated' | 'some-connection' | 'well-connected' | 'very-connected';
+  consentToAnalysis?: boolean;
+  consentToInsights?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MentalHealthAnalysis {
+  overallAssessment: string;
+  strengths: string[];
+  areasOfConcern: string[];
+  recommendations: string[];
+  wellnessScore: number;
+  riskAssessment: {
+    level: 'low' | 'moderate' | 'high';
+    factors: string[];
+  };
+  supportiveMessage: string;
+  nextSteps: string[];
+}
+
+export interface AssessmentResponse {
+  id: string;
+  userId: string;
+  assessmentType: string;
+  responses: Record<string, unknown>;
+  totalScore?: number;
+  severity?: string;
+  interpretation?: string;
+  recommendations?: string[];
+  triggeredBy?: string;
+  notes?: string;
+  flagged: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FavoritePerson {
   id: string;
   name: string;
@@ -534,5 +595,37 @@ export const achievementsApi = {
   getUserAchievements: async (): Promise<Achievement[]> => {
     // TODO: Implement when backend is ready
     throw new Error('Achievements API not implemented yet');
+  },
+};
+
+// Mental Health Profile API calls
+export const mentalHealthApi = {
+  getProfile: async (): Promise<MentalHealthProfile> => {
+    const response = await api.get('/api/mental-health/profile');
+    return response.data.profile;
+  },
+
+  updateProfile: async (data: Partial<MentalHealthProfile>): Promise<MentalHealthProfile> => {
+    const response = await api.post('/api/mental-health/profile', data);
+    return response.data.profile;
+  },
+
+  deleteProfile: async (): Promise<void> => {
+    await api.delete('/api/mental-health/profile');
+  },
+
+  generateAnalysis: async (): Promise<MentalHealthAnalysis> => {
+    const response = await api.post('/api/mental-health/profile/analysis');
+    return response.data.analysis;
+  },
+
+  getAssessmentHistory: async (): Promise<AssessmentResponse[]> => {
+    const response = await api.get('/api/mental-health/assessments');
+    return response.data.assessments;
+  },
+
+  submitAssessment: async (data: Partial<AssessmentResponse>): Promise<AssessmentResponse> => {
+    const response = await api.post('/api/mental-health/assessments', data);
+    return response.data.assessment;
   },
 };

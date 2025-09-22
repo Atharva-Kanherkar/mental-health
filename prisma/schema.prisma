@@ -23,15 +23,22 @@ model User {
   accounts      Account[]
 
   // Journaling & Mental Health
-  journalEntries    JournalEntry[]
-  dailyCheckIns     DailyCheckIn[]
-  userRewards       UserReward[]
-  streaks           Streak[]
-  achievements      UserAchievement[]
+  journalEntries       JournalEntry[]
+  dailyCheckIns        DailyCheckIn[]
+  userRewards          UserReward[]
+  streaks              Streak[]
+  achievements         UserAchievement[]
+  
+  // Comprehensive Mental Health Assessment
+  mentalHealthProfile  MentalHealthProfile?
+  assessmentResponses  AssessmentResponse[]
+  medicationHistory    MedicationHistory[]
+  therapyHistory       TherapyHistory[]
+  crisisEvents         CrisisEvent[]
   
   // Gamification stats
-  totalPoints       Int @default(0)
-  currentLevel      Int @default(1)
+  totalPoints          Int @default(0)
+  currentLevel         Int @default(1)
   
   @@map("user")
 }
@@ -318,5 +325,222 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+// Comprehensive Mental Health Assessment Models
+// Based on scientific research and standardized psychological instruments
+
+// Main mental health profile for each user
+model MentalHealthProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Demographics and Background (encrypted)
+  age                    Int?
+  gender                 String? // "male" | "female" | "non-binary" | "prefer-not-to-say" | "other"
+  occupation             String?
+  educationLevel         String? // "high-school" | "some-college" | "bachelor" | "master" | "doctorate" | "other"
+  relationshipStatus     String? // "single" | "partnered" | "married" | "divorced" | "widowed" | "other"
+  livingArrangement      String? // "alone" | "family" | "roommates" | "partner" | "other"
+  
+  // Current Mental Health Status
+  primaryConcerns        String[] // ["depression", "anxiety", "ptsd", "bipolar", "adhd", "eating-disorder", "substance-abuse", "other"]
+  diagnosedConditions    String[] // Formally diagnosed conditions
+  symptomSeverity        String? // "mild" | "moderate" | "severe" | "very-severe"
+  symptomDuration        String? // "days" | "weeks" | "months" | "years"
+  
+  // Risk Assessment (highly encrypted)
+  suicidalIdeation       Boolean @default(false)
+  selfHarmHistory        Boolean @default(false)
+  substanceUseRisk       String? // "none" | "low" | "moderate" | "high"
+  eatingDisorderRisk     String? // "none" | "low" | "moderate" | "high"
+  
+  // Treatment History
+  hasTherapyHistory      Boolean @default(false)
+  hasMedicationHistory   Boolean @default(false)
+  hasHospitalization     Boolean @default(false)
+  
+  // Support System
+  familySupport          String? // "none" | "limited" | "moderate" | "strong"
+  friendSupport          String? // "none" | "limited" | "moderate" | "strong"
+  professionalSupport    String? // "none" | "limited" | "moderate" | "strong"
+  
+  // Lifestyle Factors
+  sleepQuality           String? // "very-poor" | "poor" | "fair" | "good" | "excellent"
+  exerciseFrequency      String? // "never" | "rarely" | "sometimes" | "often" | "daily"
+  nutritionQuality       String? // "very-poor" | "poor" | "fair" | "good" | "excellent"
+  socialConnection       String? // "very-isolated" | "isolated" | "some-connection" | "well-connected" | "very-connected"
+  
+  // Privacy and Consent
+  privacyLevel           String @default("zero_knowledge") // All mental health data should be encrypted
+  consentToAnalysis      Boolean @default(false)
+  consentToInsights      Boolean @default(false)
+  dataRetentionPeriod    Int @default(365) // Days to retain data
+  
+  // Metadata
+  lastAssessmentDate     DateTime?
+  profileCompleteness    Float @default(0.0) // 0.0 to 1.0
+  riskLevel              String @default("unknown") // "low" | "moderate" | "high" | "crisis"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Standardized assessment responses (PHQ-9, GAD-7, PCL-5, etc.)
+model AssessmentResponse {
+  id           String @id @default(uuid())
+  userId       String
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Assessment metadata
+  assessmentType    String // "PHQ-9" | "GAD-7" | "PCL-5" | "MDQ" | "AUDIT" | "MINI" | "custom"
+  assessmentVersion String @default("1.0")
+  
+  // Responses (encrypted JSON)
+  responses         Json   // {"q1": 2, "q2": 1, "q3": 3, ...}
+  totalScore        Int?   // Calculated total score
+  severity          String? // "minimal" | "mild" | "moderate" | "moderately-severe" | "severe"
+  
+  // Clinical interpretation
+  interpretation    String? // Clinical meaning of the score
+  recommendations   String[] // ["therapy", "medication-consultation", "lifestyle-changes", "crisis-intervention"]
+  flagged           Boolean @default(false) // Flagged for high risk
+  
+  // Context
+  triggeredBy       String? // What triggered this assessment
+  notes            String? // Additional notes
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId, assessmentType])
+}
+
+// Medication tracking
+model MedicationHistory {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Medication details (encrypted)
+  medicationName    String
+  dosage           String?
+  frequency        String? // "daily" | "twice-daily" | "weekly" | "as-needed" | "other"
+  prescribedBy     String? // Doctor's name (encrypted)
+  
+  // Status
+  isCurrentlyTaking Boolean @default(true)
+  startDate        DateTime?
+  endDate          DateTime?
+  
+  // Effectiveness and side effects
+  effectiveness    String? // "very-ineffective" | "ineffective" | "somewhat-effective" | "effective" | "very-effective"
+  sideEffects      String[] // List of side effects experienced
+  adherence        String? // "never" | "rarely" | "sometimes" | "often" | "always"
+  
+  // Notes
+  reasonForStopping String?
+  notes            String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId, isCurrentlyTaking])
+}
+
+// Therapy and treatment history
+model TherapyHistory {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Therapy details (encrypted)
+  therapyType      String // "CBT" | "DBT" | "psychodynamic" | "humanistic" | "family" | "group" | "other"
+  providerType     String // "psychiatrist" | "psychologist" | "counselor" | "social-worker" | "other"
+  providerName     String? // Encrypted
+  
+  // Duration and frequency
+  startDate        DateTime?
+  endDate          DateTime?
+  frequency        String? // "weekly" | "bi-weekly" | "monthly" | "as-needed"
+  sessionCount     Int?
+  
+  // Outcomes
+  effectiveness    String? // "very-ineffective" | "ineffective" | "somewhat-effective" | "effective" | "very-effective"
+  reasonForEnding  String? // "completed" | "no-longer-needed" | "not-helpful" | "cost" | "scheduling" | "other"
+  
+  // Current status
+  isOngoing        Boolean @default(false)
+  
+  notes            String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId, isOngoing])
+}
+
+// Crisis events and emergency situations
+model CrisisEvent {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Crisis details (highly encrypted)
+  crisisType       String // "suicidal-ideation" | "suicide-attempt" | "self-harm" | "panic-attack" | "psychotic-episode" | "substance-overdose" | "other"
+  severity         String // "mild" | "moderate" | "severe" | "life-threatening"
+  
+  // Context
+  triggeringEvents String[] // Factors that led to the crisis
+  warningSignsUsed String[] // Warning signs that were present
+  copingStrategies String[] // What was tried to manage the crisis
+  
+  // Response and outcome
+  interventionUsed String[] // ["self-care", "friend-support", "family-support", "crisis-hotline", "emergency-room", "hospitalization", "therapy-session"]
+  outcome          String? // "resolved" | "ongoing" | "worsened" | "hospitalized"
+  
+  // Follow-up
+  followUpNeeded   Boolean @default(false)
+  followUpReceived Boolean @default(false)
+  
+  // Safety planning
+  safetyPlanUsed   Boolean @default(false)
+  safetyPlanEffective Boolean?
+  
+  notes            String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId, crisisType])
+  @@index([userId, createdAt])
+}
+
+// Standardized assessment questionnaires
+model AssessmentQuestionnaire {
+  id          String @id @default(uuid())
+  
+  // Questionnaire metadata
+  name        String   // "Patient Health Questionnaire-9" | "Generalized Anxiety Disorder-7" | etc.
+  shortName   String   // "PHQ-9" | "GAD-7" | "PCL-5" | etc.
+  version     String   @default("1.0")
+  
+  // Scientific validity
+  validated   Boolean  @default(true)
+  reliability Float?   // Cronbach's alpha or similar
+  reference   String?  // Scientific paper reference
+  
+  // Questionnaire structure (JSON)
+  questions   Json     // Array of question objects with text, type, options, scoring
+  scoring     Json     // Scoring algorithm and interpretation ranges
+  
+  // Usage metadata
+  isActive    Boolean  @default(true)
+  category    String   // "depression" | "anxiety" | "trauma" | "bipolar" | "substance-use" | "general"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([shortName, version])
 }
 

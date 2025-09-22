@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -11,7 +11,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-import { journalApi } from '@/lib/api-client';
+import { journalApi, type JournalEntry } from '@/lib/api-client';
+import { useAuth } from '@/lib/auth-context';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { 
   ArrowLeft, 
@@ -28,7 +29,11 @@ import {
   Minimize2,
   X,
   Sun,
-  Moon
+  Moon,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Calendar
 } from 'lucide-react';
 
 // AI Analysis interface matching API response
@@ -68,6 +73,65 @@ function NewJournalEntryContent() {
   const [isImmersiveMode, setIsImmersiveMode] = useState(false);
   const [immersiveField, setImmersiveField] = useState<'title' | 'content'>('content');
   const [immersiveTheme, setImmersiveTheme] = useState<'dark' | 'light'>('dark');
+  
+  // Sidebar state
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(320);
+  const [isResizing, setIsResizing] = useState(false);
+  const [pastEntries, setPastEntries] = useState<JournalEntry[]>([]);
+  const [entriesLoading, setEntriesLoading] = useState(false);
+  
+  const { user } = useAuth();
+
+  // Load past journal entries for sidebar
+  const loadPastEntries = useCallback(async () => {
+    if (!user || !isImmersiveMode) return;
+    
+    try {
+      setEntriesLoading(true);
+      const result = await journalApi.getAll({ page: 1, limit: 10 });
+      setPastEntries(result.entries);
+    } catch (error) {
+      console.error('Failed to load past entries:', error);
+    } finally {
+      setEntriesLoading(false);
+    }
+  }, [user, isImmersiveMode]);
+
+  // Load entries when entering immersive mode
+  useEffect(() => {
+    if (isImmersiveMode) {
+      loadPastEntries();
+    }
+  }, [isImmersiveMode, loadPastEntries]);
+
+  // Handle sidebar resizing
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const newWidth = window.innerWidth - e.clientX;
+      setSidebarWidth(Math.max(280, Math.min(600, newWidth)));
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   // Handle keyboard shortcuts in immersive mode
   useEffect(() => {
@@ -573,139 +637,255 @@ function NewJournalEntryContent() {
 
       {/* Immersive Writing Modal */}
       {isImmersiveMode && (
-        <div className={`fixed inset-0 flex flex-col z-50 transition-all duration-500 ${
+        <div className={`fixed inset-0 flex z-50 transition-all duration-500 ${
           immersiveTheme === 'dark' 
             ? 'bg-gradient-to-br from-[#2A2A2A] via-[#1F1F1F] to-[#151515]'
             : 'bg-gradient-to-br from-[#FAFAFE] via-[#F6F4FC] to-[#F0EDFA]'
         }`}>
-          {/* Header */}
-          <div className={`flex items-center justify-between p-6 border-b transition-colors ${
-            immersiveTheme === 'dark' ? 'border-white/10' : 'border-[#6B5FA8]/10'
-          }`}>
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] flex items-center justify-center">
-                <Heart className="h-4 w-4 text-white" />
+          
+          {/* Main Writing Area */}
+          <div className="flex-1 flex flex-col">
+            {/* Header */}
+            <div className={`flex items-center justify-between p-4 md:p-6 border-b transition-colors ${
+              immersiveTheme === 'dark' ? 'border-white/10' : 'border-[#6B5FA8]/10'
+            }`}>
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#6B5FA8] to-[#7C6DB8] flex items-center justify-center">
+                  <Heart className="h-4 w-4 text-white" />
+                </div>
+                <h2 className={`font-serif text-lg transition-colors hidden md:block ${
+                  immersiveTheme === 'dark' ? 'text-white' : 'text-[#4A4A4A]'
+                }`}>
+                  {immersiveField === 'title' ? 'Title your thoughts' : 'Let your thoughts flow'}
+                </h2>
               </div>
-              <h2 className={`font-serif text-lg transition-colors ${
-                immersiveTheme === 'dark' ? 'text-white' : 'text-[#4A4A4A]'
-              }`}>
-                {immersiveField === 'title' ? 'Title your thoughts' : 'Let your thoughts flow'}
-              </h2>
+              
+              {/* Controls */}
+              <div className="flex items-center space-x-2 md:space-x-4">
+                {/* Sidebar Toggle */}
+                <button
+                  onClick={() => setSidebarVisible(!sidebarVisible)}
+                  className={`p-2 rounded-lg transition-all ${
+                    immersiveTheme === 'dark'
+                      ? 'text-white/60 hover:text-white hover:bg-white/5'
+                      : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
+                  }`}
+                  title="Toggle past entries"
+                >
+                  <BookOpen className="h-5 w-5" />
+                </button>
+                
+                {/* Theme Toggle */}
+                <button
+                  onClick={() => setImmersiveTheme(immersiveTheme === 'dark' ? 'light' : 'dark')}
+                  className={`p-2 rounded-lg transition-all ${
+                    immersiveTheme === 'dark'
+                      ? 'text-white/60 hover:text-white hover:bg-white/5'
+                      : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
+                  }`}
+                  title={`Switch to ${immersiveTheme === 'dark' ? 'light' : 'dark'} mode`}
+                >
+                  {immersiveTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </button>
+                
+                {/* Field Toggle */}
+                <div className={`hidden md:flex items-center rounded-lg p-1 ${
+                  immersiveTheme === 'dark' ? 'bg-white/10' : 'bg-[#6B5FA8]/10'
+                }`}>
+                  <button
+                    onClick={() => setImmersiveField('title')}
+                    className={`px-3 py-1.5 rounded-md text-sm transition-all ${
+                      immersiveField === 'title'
+                        ? 'bg-[#6B5FA8] text-white shadow-lg'
+                        : immersiveTheme === 'dark'
+                          ? 'text-white/60 hover:text-white hover:bg-white/5'
+                          : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
+                    }`}
+                  >
+                    Title
+                  </button>
+                  <button
+                    onClick={() => setImmersiveField('content')}
+                    className={`px-3 py-1.5 rounded-md text-sm transition-all ${
+                      immersiveField === 'content'
+                        ? 'bg-[#6B5FA8] text-white shadow-lg'
+                        : immersiveTheme === 'dark'
+                          ? 'text-white/60 hover:text-white hover:bg-white/5'
+                          : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
+                    }`}
+                  >
+                    Content
+                  </button>
+                </div>
+                
+                <button
+                  onClick={() => setIsImmersiveMode(false)}
+                  className={`p-2 transition-colors rounded-lg ${
+                    immersiveTheme === 'dark'
+                      ? 'text-white/60 hover:text-white hover:bg-white/5'
+                      : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
+                  }`}
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
             
-            {/* Controls */}
-            <div className="flex items-center space-x-4">
-              {/* Theme Toggle */}
-              <button
-                onClick={() => setImmersiveTheme(immersiveTheme === 'dark' ? 'light' : 'dark')}
-                className={`p-2 rounded-lg transition-all ${
-                  immersiveTheme === 'dark'
-                    ? 'text-white/60 hover:text-white hover:bg-white/5'
-                    : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
-                }`}
-                title={`Switch to ${immersiveTheme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {immersiveTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              </button>
-              
-              {/* Field Toggle */}
-              <div className={`flex items-center rounded-lg p-1 ${
-                immersiveTheme === 'dark' ? 'bg-white/10' : 'bg-[#6B5FA8]/10'
-              }`}>
-                <button
-                  onClick={() => setImmersiveField('title')}
-                  className={`px-3 py-1.5 rounded-md text-sm transition-all ${
-                    immersiveField === 'title'
-                      ? 'bg-[#6B5FA8] text-white shadow-lg'
-                      : immersiveTheme === 'dark'
-                        ? 'text-white/60 hover:text-white hover:bg-white/5'
-                        : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
-                  }`}
-                >
-                  Title
-                </button>
-                <button
-                  onClick={() => setImmersiveField('content')}
-                  className={`px-3 py-1.5 rounded-md text-sm transition-all ${
-                    immersiveField === 'content'
-                      ? 'bg-[#6B5FA8] text-white shadow-lg'
-                      : immersiveTheme === 'dark'
-                        ? 'text-white/60 hover:text-white hover:bg-white/5'
-                        : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
-                  }`}
-                >
-                  Content
-                </button>
+            {/* Writing Area */}
+            <div className="flex-1 p-4 md:p-6 flex items-center justify-center">
+              <div className="w-full max-w-4xl">
+                {immersiveField === 'title' ? (
+                  <input
+                    {...register('title')}
+                    autoFocus
+                    placeholder="Today I feel..."
+                    className={`w-full bg-transparent border-none text-2xl md:text-4xl focus:outline-none font-serif text-center transition-colors ${
+                      immersiveTheme === 'dark'
+                        ? 'text-white placeholder:text-white/40'
+                        : 'text-[#4A4A4A] placeholder:text-[#8B86B8]/50'
+                    }`}
+                    style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                  />
+                ) : (
+                  <textarea
+                    {...register('content')}
+                    autoFocus
+                    placeholder="Dear journal, today..."
+                    className={`w-full h-64 md:h-96 bg-transparent border-none text-lg md:text-xl focus:outline-none resize-none leading-relaxed font-serif transition-colors ${
+                      immersiveTheme === 'dark'
+                        ? 'text-white placeholder:text-white/40'
+                        : 'text-[#4A4A4A] placeholder:text-[#8B86B8]/50'
+                    }`}
+                    style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+                  />
+                )}
               </div>
-              
+            </div>
+            
+            {/* Footer */}
+            <div className={`p-4 md:p-6 border-t flex items-center justify-between transition-colors ${
+              immersiveTheme === 'dark' ? 'border-white/10' : 'border-[#6B5FA8]/10'
+            }`}>
+              <div className="flex items-center space-x-4 md:space-x-6">
+                <div className={`text-xs md:text-sm transition-colors ${
+                  immersiveTheme === 'dark' ? 'text-white/60' : 'text-[#8B86B8]'
+                }`}>
+                  <span className="hidden md:inline">Escape to minimize • Tab to switch • Ctrl+D for theme • </span>Take your time
+                </div>
+                <div className={`text-xs transition-colors ${
+                  immersiveTheme === 'dark' ? 'text-white/40' : 'text-[#8B86B8]/60'
+                }`}>
+                  <span className="capitalize">{immersiveField}</span> • <span className="capitalize">{immersiveTheme}</span>
+                </div>
+              </div>
               <button
                 onClick={() => setIsImmersiveMode(false)}
-                className={`p-2 transition-colors rounded-lg ${
-                  immersiveTheme === 'dark'
-                    ? 'text-white/60 hover:text-white hover:bg-white/5'
-                    : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
-                }`}
+                className="flex items-center space-x-2 px-3 md:px-4 py-2 bg-[#6B5FA8] hover:bg-[#5D4F9A] text-white rounded-lg transition-colors text-sm"
               >
-                <X className="h-5 w-5" />
+                <Minimize2 className="h-4 w-4" />
+                <span className="hidden md:inline">Minimize</span>
               </button>
             </div>
           </div>
-          
-          {/* Writing Area */}
-          <div className="flex-1 p-6 flex items-center justify-center">
-            <div className="w-full max-w-4xl">
-              {immersiveField === 'title' ? (
-                <input
-                  {...register('title')}
-                  autoFocus
-                  placeholder="Today I feel..."
-                  className={`w-full bg-transparent border-none text-4xl focus:outline-none font-serif text-center transition-colors ${
-                    immersiveTheme === 'dark'
-                      ? 'text-white placeholder:text-white/40'
-                      : 'text-[#4A4A4A] placeholder:text-[#8B86B8]/50'
-                  }`}
-                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-                />
-              ) : (
-                <textarea
-                  {...register('content')}
-                  autoFocus
-                  placeholder="Dear journal, today..."
-                  className={`w-full h-96 bg-transparent border-none text-xl focus:outline-none resize-none leading-relaxed font-serif transition-colors ${
-                    immersiveTheme === 'dark'
-                      ? 'text-white placeholder:text-white/40'
-                      : 'text-[#4A4A4A] placeholder:text-[#8B86B8]/50'
-                  }`}
-                  style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
-                />
-              )}
-            </div>
-          </div>
-          
-          {/* Footer */}
-          <div className={`p-6 border-t flex items-center justify-between transition-colors ${
-            immersiveTheme === 'dark' ? 'border-white/10' : 'border-[#6B5FA8]/10'
-          }`}>
-            <div className="flex items-center space-x-6">
-              <div className={`text-sm transition-colors ${
-                immersiveTheme === 'dark' ? 'text-white/60' : 'text-[#8B86B8]'
-              }`}>
-                Escape to minimize • Tab to switch • Ctrl+D for theme • Take your time
-              </div>
-              <div className={`text-xs transition-colors ${
-                immersiveTheme === 'dark' ? 'text-white/40' : 'text-[#8B86B8]/60'
-              }`}>
-                <span className="capitalize">{immersiveField}</span> • <span className="capitalize">{immersiveTheme}</span> mode
-              </div>
-            </div>
-            <button
-              onClick={() => setIsImmersiveMode(false)}
-              className="flex items-center space-x-2 px-4 py-2 bg-[#6B5FA8] hover:bg-[#5D4F9A] text-white rounded-lg transition-colors"
+
+          {/* Resizable Sidebar */}
+          {sidebarVisible && (
+            <div 
+              className={`relative flex-shrink-0 transition-all duration-300 ${
+                immersiveTheme === 'dark' ? 'bg-black/20' : 'bg-white/20'
+              } backdrop-blur-sm border-l ${
+                immersiveTheme === 'dark' ? 'border-white/10' : 'border-[#6B5FA8]/10'
+              }`}
+              style={{ width: `${sidebarWidth}px` }}
             >
-              <Minimize2 className="h-4 w-4" />
-              <span>Minimize</span>
-            </button>
-          </div>
+              {/* Resize Handle */}
+              <div
+                className={`absolute left-0 top-0 bottom-0 w-1 cursor-col-resize transition-colors hover:bg-[#6B5FA8]/50 ${
+                  isResizing ? 'bg-[#6B5FA8]' : ''
+                }`}
+                onMouseDown={handleMouseDown}
+              />
+              
+              {/* Sidebar Content */}
+              <div className="flex flex-col h-full p-4 md:p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className={`font-serif text-lg transition-colors ${
+                    immersiveTheme === 'dark' ? 'text-white' : 'text-[#4A4A4A]'
+                  }`}>
+                    Past Entries
+                  </h3>
+                  <button
+                    onClick={() => setSidebarVisible(false)}
+                    className={`p-1 rounded transition-colors md:hidden ${
+                      immersiveTheme === 'dark'
+                        ? 'text-white/60 hover:text-white hover:bg-white/5'
+                        : 'text-[#6B5FA8]/60 hover:text-[#6B5FA8] hover:bg-[#6B5FA8]/5'
+                    }`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                
+                {/* Past Entries List */}
+                <div className="flex-1 overflow-y-auto space-y-3">
+                  {entriesLoading ? (
+                    <div className="flex justify-center py-8">
+                      <div className={`animate-spin rounded-full h-6 w-6 border-2 ${
+                        immersiveTheme === 'dark' 
+                          ? 'border-white/20 border-t-white' 
+                          : 'border-[#6B5FA8]/20 border-t-[#6B5FA8]'
+                      }`}></div>
+                    </div>
+                  ) : pastEntries.length === 0 ? (
+                    <div className={`text-center py-8 text-sm ${
+                      immersiveTheme === 'dark' ? 'text-white/40' : 'text-[#8B86B8]/60'
+                    }`}>
+                      No past entries yet. This will be your first!
+                    </div>
+                  ) : (
+                    pastEntries.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className={`p-3 rounded-lg transition-all cursor-pointer ${
+                          immersiveTheme === 'dark'
+                            ? 'bg-white/5 hover:bg-white/10 border border-white/10'
+                            : 'bg-white/30 hover:bg-white/50 border border-[#6B5FA8]/10'
+                        }`}
+                        onClick={() => window.open(`/journal/${entry.id}`, '_blank')}
+                      >
+                        <h4 className={`font-serif text-sm mb-1 line-clamp-1 ${
+                          immersiveTheme === 'dark' ? 'text-white' : 'text-[#4A4A4A]'
+                        }`}>
+                          {entry.title}
+                        </h4>
+                        <p className={`text-xs line-clamp-2 mb-2 ${
+                          immersiveTheme === 'dark' ? 'text-white/60' : 'text-[#8B86B8]'
+                        }`}>
+                          {entry.content}
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs ${
+                            immersiveTheme === 'dark' ? 'text-white/40' : 'text-[#8B86B8]/60'
+                          }`}>
+                            {new Date(entry.createdAt).toLocaleDateString()}
+                          </span>
+                          {entry.overallMood && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              immersiveTheme === 'dark'
+                                ? 'bg-white/10 text-white/60'
+                                : 'bg-[#6B5FA8]/10 text-[#6B5FA8]'
+                            }`}>
+                              {entry.overallMood}/10
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

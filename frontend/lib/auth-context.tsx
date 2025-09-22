@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
+    console.log('Checking authentication...');
     try {
       // Use the correct Better Auth session endpoint
       const response = await fetch('http://localhost:4000/api/auth/get-session', {
@@ -43,18 +44,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
       });
       
+      console.log('Auth check response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Auth check data:', data);
         if (data.user) {
-          setUser({
+          const userData = {
             id: data.user.id || data.user.userId,
             email: data.user.email,
             username: data.user.name || data.user.email,
-          });
+          };
+          console.log('Setting user from auth check:', userData);
+          setUser(userData);
         } else {
+          console.log('No user in auth response');
           setUser(null);
         }
       } else {
+        console.log('Auth check failed with status:', response.status);
         setUser(null);
       }
     } catch (error) {
@@ -66,20 +74,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
-    const result = await authClient.signIn.email({
-      email,
-      password,
-      rememberMe: true,
-    });
+    console.log('Starting login process...', { email });
     
-    if (result.data?.user) {
-      setUser({
-        id: result.data.user.id,
-        email: result.data.user.email,
-        username: result.data.user.name || result.data.user.email,
+    try {
+      // Try direct fetch first to test if backend is reachable
+      console.log('Testing backend connectivity...');
+      const testResponse = await fetch('http://localhost:4000/health', {
+        method: 'GET',
+        credentials: 'include',
       });
-    } else {
-      throw new Error(result.error?.message || 'Login failed');
+      console.log('Backend test response:', testResponse.status);
+      
+      // Now try the Better Auth client
+      console.log('Attempting Better Auth login...');
+      const result = await authClient.signIn.email({
+        email,
+        password,
+        rememberMe: true,
+      });
+      
+      console.log('Login result:', result);
+      
+      if (result.data?.user) {
+        const userData = {
+          id: result.data.user.id,
+          email: result.data.user.email,
+          username: result.data.user.name || result.data.user.email,
+        };
+        console.log('Setting user data:', userData);
+        setUser(userData);
+      } else {
+        console.error('Login failed:', result.error);
+        throw new Error(result.error?.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   };
 

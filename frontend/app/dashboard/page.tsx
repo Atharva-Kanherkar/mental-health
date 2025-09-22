@@ -15,7 +15,12 @@ import {
   Archive,
   LogOut,
   Sparkles,
-  ArrowRight
+  ArrowRight,
+  Brain,
+  Shield,
+  User,
+  Activity,
+  FileText
 } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import CompanionWidget from '@/components/CompanionWidget';
@@ -99,6 +104,62 @@ function DashboardPageContent() {
             <>
               {/* Companion Widget */}
               <CompanionWidget />
+
+              {/* Mental Health Assessment Section */}
+              <div className="mb-8">
+                <div className="p-8 bg-gradient-to-br from-[#F0EDFA]/90 to-[#EBE7F8]/90 backdrop-blur-sm rounded-3xl border border-[#8B86B8]/30 relative overflow-hidden">
+                  {/* Background decoration */}
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-[#6B5FA8]/10 to-[#8B86B8]/10 rounded-full blur-3xl"></div>
+                  
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-3 rounded-full bg-gradient-to-br from-[#6B5FA8] to-[#8B86B8] text-white">
+                        <Brain className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-2xl font-serif text-[#6B5FA8]">
+                        Mental Health Assessment
+                      </h3>
+                    </div>
+                    <p className="text-[#8B86B8] font-light mb-6 leading-relaxed">
+                      Take a scientifically-based, confidential assessment to understand your mental health better. 
+                      Your data is encrypted and secure, and you maintain full control - view, update, or delete anytime.
+                    </p>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="flex items-center gap-3 p-4 bg-white/50 rounded-2xl">
+                        <Shield className="w-5 h-5 text-[#6B5FA8]" />
+                        <div>
+                          <p className="font-medium text-[#6B5FA8] text-sm">Secure & Private</p>
+                          <p className="text-xs text-[#8B86B8]">Your data stays encrypted</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-4 bg-white/50 rounded-2xl">
+                        <Activity className="w-5 h-5 text-[#6B5FA8]" />
+                        <div>
+                          <p className="font-medium text-[#6B5FA8] text-sm">Science-Based</p>
+                          <p className="text-xs text-[#8B86B8]">Validated psychological tools</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-4 bg-white/50 rounded-2xl">
+                        <FileText className="w-5 h-5 text-[#6B5FA8]" />
+                        <div>
+                          <p className="font-medium text-[#6B5FA8] text-sm">AI Insights</p>
+                          <p className="text-xs text-[#8B86B8]">Personalized recommendations</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Link href="/assessment" passHref>
+                      <Button className="bg-gradient-to-r from-[#6B5FA8] to-[#8B86B8] hover:from-[#5A4F97] hover:to-[#7A75A7] text-white rounded-full px-8 py-3 text-lg font-light transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl">
+                        <Brain className="mr-2 h-5 w-5" />
+                        Begin Assessment
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {/* Stat Cards */}
                 <div className="group p-8 bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-sm rounded-3xl border border-[#8B86B8]/15 hover:border-[#6B5FA8]/25 hover:bg-gradient-to-br hover:from-white/50 hover:to-white/30 transition-all duration-500">
@@ -216,6 +277,11 @@ function DashboardPageContent() {
                     <Link href="/memories" passHref>
                       <Button className="w-full justify-start rounded-full bg-white/50 text-[#6B5FA8] hover:bg-white/70 transition-all duration-300 border border-[#8B86B8]/20 font-light">
                         <Archive className="mr-2 h-4 w-4" /> Visit Memory Sanctuary
+                      </Button>
+                    </Link>
+                    <Link href="/dashboard/profile" passHref>
+                      <Button className="w-full justify-start rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 border-0 font-light">
+                        <User className="mr-2 h-4 w-4" /> Mental Health Profile
                       </Button>
                     </Link>
                     <Link href="/favorites" passHref>

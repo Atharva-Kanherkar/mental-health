@@ -10,6 +10,7 @@ import vaultRoutes from "./routes/vault";
 import fileRoutes from "./routes/files";
 import walkthroughRoutes from "./routes/walkthrough";
 import journalRoutes from "./routes/journal";
+import mentalHealthRoutes from "./routes/mentalHealth";
 
 const app = express();
  
@@ -17,6 +18,12 @@ app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:3000",
     credentials: true,
 }));
+
+// Add request logging
+app.use((req, res, next) => {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+    next();
+});
 
 // Better Auth handler - handles all /api/auth/* routes (Express v5 syntax)
 app.all("/api/auth/*splat", toNodeHandler(auth));
@@ -43,12 +50,27 @@ app.use('/api/walkthrough', walkthroughRoutes);
 // Journal API routes (protected)
 app.use('/api/journal', journalRoutes);
 
+// Mental Health Assessment routes (protected)
+app.use('/api/mental-health', mentalHealthRoutes);
+
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Mental Health API is running' });
 });
 
 const PORT = process.env.PORT || 4000;
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit the process, just log the error
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // Don't exit the process, just log the error
+});
+
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
- 
 });

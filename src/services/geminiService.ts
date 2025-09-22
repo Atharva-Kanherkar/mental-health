@@ -369,6 +369,85 @@ You have access to the actual video from this memory. Use both visual and audio 
     }
   }
     /**
+   * Generate comprehensive AI analysis and insights for a mental health profile
+   * Uses the existing JSON function calling pattern for structured responses
+   */
+  static async generateProfileAnalysis(profileData: any): Promise<{
+    overallAssessment: string;
+    strengths: string[];
+    areasOfConcern: string[];
+    recommendations: string[];
+    wellnessScore: number;
+    riskAssessment: {
+      level: 'low' | 'moderate' | 'high';
+      factors: string[];
+    };
+    supportiveMessage: string;
+    nextSteps: string[];
+  }> {
+    const prompt = `You are a licensed clinical psychologist providing a comprehensive mental health analysis based on a user's assessment data. Analyze the following profile and provide structured insights.
+
+PROFILE DATA:
+${JSON.stringify(profileData, null, 2)}
+
+ANALYSIS REQUIREMENTS:
+1. Provide a holistic assessment of the person's mental health status
+2. Identify key strengths and protective factors
+3. Highlight areas that may need attention or support
+4. Give evidence-based recommendations following therapeutic best practices
+5. Calculate a wellness score (1-100) based on all factors
+6. Assess risk level and contributing factors
+7. Provide a supportive, non-judgmental message
+8. Suggest concrete next steps
+
+IMPORTANT GUIDELINES:
+- Be compassionate and non-judgmental
+- Focus on strengths-based approach while acknowledging challenges
+- Avoid clinical diagnoses - this is supportive analysis only
+- Provide actionable, realistic recommendations
+- Consider cultural sensitivity and individual circumstances
+- Emphasize hope and resilience
+
+FORMAT YOUR RESPONSE AS VALID JSON:
+{
+  "overallAssessment": "A comprehensive 2-3 sentence overview of the person's current mental health status",
+  "strengths": ["List of 3-5 key strengths and protective factors identified"],
+  "areasOfConcern": ["List of 2-4 areas that may benefit from attention"],
+  "recommendations": ["List of 4-6 specific, actionable recommendations"],
+  "wellnessScore": 75,
+  "riskAssessment": {
+    "level": "moderate",
+    "factors": ["List of factors contributing to risk assessment"]
+  },
+  "supportiveMessage": "A warm, encouraging message acknowledging their journey and efforts",
+  "nextSteps": ["List of 3-4 immediate, concrete steps they can take"]
+}
+
+Ensure all responses are supportive, professional, and focused on empowerment and healing.`;
+
+    try {
+      const jsonResponse = await this.generateJson(prompt);
+      return JSON.parse(jsonResponse);
+    } catch (error) {
+      console.error('Error generating profile analysis:', error);
+      // Return fallback analysis
+      return {
+        overallAssessment: "Thank you for sharing your mental health information. Your openness to self-reflection and seeking support shows strength and self-awareness.",
+        strengths: ["Willingness to seek help", "Self-awareness", "Taking proactive steps"],
+        areasOfConcern: ["Individual assessment needed"],
+        recommendations: ["Continue regular self-reflection", "Consider professional support", "Maintain healthy routines"],
+        wellnessScore: 65,
+        riskAssessment: {
+          level: 'moderate' as const,
+          factors: ["Assessment data incomplete"]
+        },
+        supportiveMessage: "Your journey toward better mental health is commendable. Every step you take matters.",
+        nextSteps: ["Schedule regular check-ins with yourself", "Maintain support systems", "Consider professional guidance"]
+      };
+    }
+  }
+
+  /**
    * A generic function to send a prompt to the AI and get a structured JSON object back.
    * @param prompt The detailed prompt instructing the AI to return JSON.
    * @returns The raw string of the JSON response from the AI.
