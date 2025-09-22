@@ -19,7 +19,7 @@ import userRoutes from "./routes/user";
 const app = express();
  
 app.use(cors({
-    origin: process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+    origin: process.env.FRONTEND_URL  || "http://localhost:3000",
     credentials: true,
 }));
 
@@ -75,7 +75,8 @@ app.get('/health', (req, res) => {
 
 const PORT = process.env.PORT || 8080;
 
- 
+ console.log('Express version:', require('express/package.json').version);
+
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
