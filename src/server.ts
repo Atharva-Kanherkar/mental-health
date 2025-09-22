@@ -73,7 +73,7 @@ app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Mental Health API is running' });
 });
 
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 8080;
 
  
 
