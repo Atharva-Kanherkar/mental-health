@@ -36,6 +36,95 @@ export interface Memory {
   };
 }
 
+export interface JournalEntry {
+  id: string;
+  title: string;
+  content: string;
+  mediaType?: 'image' | 'audio' | 'video';
+  mediaUrl?: string;
+  
+  // Mental Health Tracking
+  overallMood?: number; // 1-10 scale
+  energyLevel?: number; // 1-10 scale
+  anxietyLevel?: number; // 1-10 scale
+  stressLevel?: number; // 1-10 scale
+  
+  // Privacy & Memory
+  privacyLevel: 'zero_knowledge' | 'server_managed';
+  convertToMemory: boolean;
+  associatedMemoryId?: string;
+  pointsEarned: number;
+  
+  createdAt: string;
+  updatedAt: string;
+  
+  aiAnalysis: {
+    sentiment?: string;
+    moodTags: string[];
+    wellnessScore?: number;
+    insights?: string;
+    themes: string[];
+    safetyRisk?: boolean;
+    supportiveMessage?: string;
+  };
+}
+
+export interface DailyCheckIn {
+  id: string;
+  date: string;
+  overallMood: number;
+  energyLevel: number;
+  sleepQuality?: number;
+  stressLevel: number;
+  anxietyLevel: number;
+  
+  // Safety questions
+  hadSelfHarmThoughts: boolean;
+  hadSuicidalThoughts: boolean;
+  actedOnHarm: boolean;
+  
+  // Positive behaviors
+  exercised: boolean;
+  ateWell: boolean;
+  socializedHealthily: boolean;
+  practicedSelfCare: boolean;
+  tookMedication: boolean;
+  
+  // Optional reflection
+  gratefulFor?: string;
+  challengesToday?: string;
+  accomplishments?: string;
+  
+  pointsEarned: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  type: 'streak' | 'milestone' | 'behavior' | 'wellness';
+  pointValue: number;
+  requiredCount?: number;
+  requiredDays?: number;
+  behaviorType?: string;
+  isActive: boolean;
+  maxClaimsPerUser?: number;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  category: 'writing' | 'wellness' | 'safety' | 'consistency';
+  iconName?: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  pointReward: number;
+  isActive: boolean;
+  unlockedAt?: string;
+}
+
 export interface FavoritePerson {
   id: string;
   name: string;
@@ -326,5 +415,124 @@ export const walkthroughApi = {
   getAvailableMemories: async (): Promise<AvailableMemory[]> => {
     const response = await api.get('/api/walkthrough/available-memories');
     return response.data.data.memories;
+  },
+};
+
+// Journal API calls
+export const journalApi = {
+  create: async (data: {
+    title: string;
+    content: string;
+    mediaType?: 'image' | 'audio' | 'video';
+    mediaUrl?: string;
+    overallMood?: number;
+    energyLevel?: number;
+    anxietyLevel?: number;
+    stressLevel?: number;
+    privacyLevel?: 'zero_knowledge' | 'server_managed';
+    convertToMemory?: boolean;
+    associatedMemoryId?: string;
+  }): Promise<JournalEntry> => {
+    const response = await api.post('/api/journal', data);
+    return response.data.data.entry;
+  },
+
+  getAll: async (params?: {
+    page?: number;
+    limit?: number;
+    mood?: number;
+    sentiment?: string;
+  }): Promise<{
+    entries: JournalEntry[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      limit: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  }> => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.mood) searchParams.set('mood', params.mood.toString());
+    if (params?.sentiment) searchParams.set('sentiment', params.sentiment);
+
+    const response = await api.get(`/api/journal?${searchParams.toString()}`);
+    return response.data.data;
+  },
+
+  getById: async (id: string): Promise<JournalEntry> => {
+    const response = await api.get(`/api/journal/${id}`);
+    return response.data.data.entry;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/api/journal/${id}`);
+  },
+
+  update: async (id: string, data: Partial<{
+    title: string;
+    content: string;
+    mediaType?: 'image' | 'audio' | 'video';
+    mediaUrl?: string;
+    overallMood?: number;
+    energyLevel?: number;
+    anxietyLevel?: number;
+    stressLevel?: number;
+    privacyLevel?: 'zero_knowledge' | 'server_managed';
+  }>): Promise<JournalEntry> => {
+    const response = await api.put(`/api/journal/${id}`, data);
+    return response.data.data.entry;
+  },
+};
+
+// Daily Check-in API calls (placeholder for future implementation)
+export const checkInApi = {
+  create: async (data: Omit<DailyCheckIn, 'id' | 'createdAt' | 'updatedAt' | 'pointsEarned'>): Promise<DailyCheckIn> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Check-in API not implemented yet');
+  },
+
+  getAll: async (): Promise<DailyCheckIn[]> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Check-in API not implemented yet');
+  },
+
+  getToday: async (): Promise<DailyCheckIn | null> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Check-in API not implemented yet');
+  },
+};
+
+// Rewards API calls (placeholder for future implementation)
+export const rewardsApi = {
+  getAll: async (): Promise<Reward[]> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Rewards API not implemented yet');
+  },
+
+  getUserRewards: async (): Promise<Reward[]> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Rewards API not implemented yet');
+  },
+
+  claimReward: async (rewardId: string): Promise<void> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Rewards API not implemented yet');
+  },
+};
+
+// Achievements API calls (placeholder for future implementation)
+export const achievementsApi = {
+  getAll: async (): Promise<Achievement[]> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Achievements API not implemented yet');
+  },
+
+  getUserAchievements: async (): Promise<Achievement[]> => {
+    // TODO: Implement when backend is ready
+    throw new Error('Achievements API not implemented yet');
   },
 };

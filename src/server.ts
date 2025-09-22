@@ -9,6 +9,7 @@ import favoritesRoutes from "./routes/favorites";
 import vaultRoutes from "./routes/vault";
 import fileRoutes from "./routes/files";
 import walkthroughRoutes from "./routes/walkthrough";
+import journalRoutes from "./routes/journal";
 
 const app = express();
  
@@ -38,6 +39,9 @@ app.use('/favorites', favoritesRoutes);
 app.use('/vault', vaultRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/walkthrough', walkthroughRoutes);
+
+// Journal API routes (protected)
+app.use('/api/journal', journalRoutes);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', message: 'Mental Health API is running' });

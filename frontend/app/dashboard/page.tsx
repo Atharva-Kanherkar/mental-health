@@ -18,6 +18,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import CompanionWidget from '@/components/CompanionWidget';
 
 interface DashboardStats {
   totalMemories: number;
@@ -96,6 +97,8 @@ function DashboardPageContent() {
             </div>
           ) : (
             <>
+              {/* Companion Widget */}
+              <CompanionWidget />
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {/* Stat Cards */}
                 <div className="group p-8 bg-gradient-to-br from-white/40 to-white/20 backdrop-blur-sm rounded-3xl border border-[#8B86B8]/15 hover:border-[#6B5FA8]/25 hover:bg-gradient-to-br hover:from-white/50 hover:to-white/30 transition-all duration-500">
@@ -180,14 +183,34 @@ function DashboardPageContent() {
                     Gentle Actions
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Link href="/memories/new" passHref>
+                    <Link href="/journal/new" passHref>
                       <Button className="w-full justify-start rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 border-0 font-light">
+                        <Plus className="mr-2 h-4 w-4" /> Write Journal Entry
+                      </Button>
+                    </Link>
+                    <Link href="/checkin" passHref>
+                      <Button className="w-full justify-start rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 border-0 font-light">
+                        <Plus className="mr-2 h-4 w-4" /> Daily Check-in
+                      </Button>
+                    </Link>
+                    <Link href="/memories/new" passHref>
+                      <Button className="w-full justify-start rounded-full bg-white/50 text-[#6B5FA8] hover:bg-white/70 transition-all duration-300 border border-[#8B86B8]/20 font-light">
                         <Plus className="mr-2 h-4 w-4" /> Preserve a Memory
                       </Button>
                     </Link>
                     <Link href="/favorites/new" passHref>
-                      <Button className="w-full justify-start rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 border-0 font-light">
+                      <Button className="w-full justify-start rounded-full bg-white/50 text-[#6B5FA8] hover:bg-white/70 transition-all duration-300 border border-[#8B86B8]/20 font-light">
                         <Plus className="mr-2 h-4 w-4" /> Add a Cherished Person
+                      </Button>
+                    </Link>
+                    <Link href="/journal" passHref>
+                      <Button className="w-full justify-start rounded-full bg-white/50 text-[#6B5FA8] hover:bg-white/70 transition-all duration-300 border border-[#8B86B8]/20 font-light">
+                        <Archive className="mr-2 h-4 w-4" /> View Journal
+                      </Button>
+                    </Link>
+                    <Link href="/rewards" passHref>
+                      <Button className="w-full justify-start rounded-full bg-white/50 text-[#6B5FA8] hover:bg-white/70 transition-all duration-300 border border-[#8B86B8]/20 font-light">
+                        <TrendingUp className="mr-2 h-4 w-4" /> View Rewards
                       </Button>
                     </Link>
                     <Link href="/memories" passHref>
