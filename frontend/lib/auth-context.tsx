@@ -36,7 +36,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('Checking authentication...');
     try {
       // Use the correct Better Auth session endpoint
-      const response = await fetch('http://localhost:4000/api/auth/get-session', {
+  const base = process.env.NEXT_PUBLIC_API_URL || 'https://mental-health-nbvq2.ondigitalocean.app';
+  const response = await fetch(`${base}/api/auth/get-session`, {
         method: 'GET',
         credentials: 'include', // Important: Send cookies
         headers: {
@@ -79,7 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Try direct fetch first to test if backend is reachable
       console.log('Testing backend connectivity...');
-      const testResponse = await fetch('http://localhost:4000/health', {
+  const base = process.env.NEXT_PUBLIC_API_URL || 'https://mental-health-nbvq2.ondigitalocean.app';
+  const testResponse = await fetch(`${base}/health`, {
         method: 'GET',
         credentials: 'include',
       });

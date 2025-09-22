@@ -29,7 +29,8 @@ export const metadata: Metadata = {
     siteName: 'Echoes',
     images: [
       {
-        url: '/preview.png',
+        // Use absolute site URL from env when available to produce correct OG URLs in production builds.
+        url: (process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/preview.png` : '/preview.png'),
         width: 1400,
         height: 720,
         alt: 'Echoes — gentle landing preview',
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Echoes',
     description: 'A gentle space where your memories become medicine.',
-    images: ['/preview.png'],
+    images: [process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/preview.png` : '/preview.png'],
   },
 };
 

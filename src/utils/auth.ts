@@ -27,9 +27,11 @@ export const auth = betterAuth({
             }
         }),
     },
-    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:4000", // Your backend app's base URL
+    baseURL: process.env.BETTER_AUTH_URL || process.env.FRONTEND_URL || "http://localhost:4000", // Prefer configured BETTER_AUTH_URL or FRONTEND_URL
     trustedOrigins: [
-        "http://localhost:3000", // Next.js frontend
-        "http://localhost:4000"  // Backend (for testing)
+        // Allow frontend origin from env; fall back to localhost for local dev
+        process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000",
+        // Allow the backend URL itself if provided
+        process.env.BETTER_AUTH_URL || "http://localhost:4000",
     ],
 });
