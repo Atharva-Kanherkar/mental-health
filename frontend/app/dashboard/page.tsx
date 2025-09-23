@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth-context';
-import { memoryApi, favoritesApi, type Memory, type FavoritePerson } from '@/lib/api-client';
+import { memoryApi, favoritesApi, onboardingApi, type Memory, type FavoritePerson } from '@/lib/api-client';
 import { 
   Heart, 
   BookOpen, 
@@ -75,7 +75,25 @@ function DashboardPageContent() {
   const router = useRouter();
 
   useEffect(() => {
-    loadDashboardData();
+    // Ensure the user has completed onboarding (has a MemoryVault) before loading dashboard
+    const init = async () => {
+      try {
+        const status = await onboardingApi.getStatus();
+        if (!status.isOnboarded) {
+          router.push('/onboarding');
+          return;
+        }
+      } catch (err) {
+        // If onboarding status check fails, route to onboarding as a safe fallback
+        console.warn('Failed to verify onboarding status, redirecting to onboarding', err);
+        router.push('/onboarding');
+        return;
+      }
+
+      await loadDashboardData();
+    };
+
+    init();
   }, []);
 
   const loadDashboardData = async () => {
