@@ -19,6 +19,7 @@ const prisma = new PrismaClient();
 
 // Validation schema for memory upload with privacy level
 const CreateMemorySchema = z.object({
+    title: z.string().min(1, 'Title is required'), 
   type: z.enum(['text', 'image', 'audio', 'video']),
   content: z.string().optional(), // Optional description
   associatedPersonId: z.string().uuid().optional(),
