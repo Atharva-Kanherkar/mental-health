@@ -233,7 +233,7 @@ model Memory {
   id      String      @id @default(uuid())
   vaultId String
   vault   MemoryVault @relation(fields: [vaultId], references: [id])
-
+  title   String      @default("Untitled")
   type      String // "text" | "image" | "audio" | "video"
   content   String? // text content
   

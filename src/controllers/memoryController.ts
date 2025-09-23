@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 
 // Zod validation schemas
 const CreateMemorySchema = z.object({
+    title: z.string().min(1, 'Title is required'),
   type: z.enum(['text', 'image', 'audio', 'video']),
   content: z.string().optional(),
   fileUrl: z.string().url().optional(),
@@ -49,8 +50,7 @@ export class MemoryController {
         });
       }
 
-      const { type, content, fileUrl, associatedPersonId } = validationResult.data;
-      console.log(validationResult.data);
+      const {title, type, content, fileUrl, associatedPersonId } = validationResult.data;
 
       // Check if user has a memory vault
       const memoryVault = await prisma.memoryVault.findUnique({
@@ -98,6 +98,7 @@ export class MemoryController {
         data: {
           memory: {
             id: memory.id,
+            title,
             type: memory.type,
             content: memory.content,
             fileUrl: memory.fileUrl,
@@ -105,42 +106,11 @@ export class MemoryController {
           }
         }
       });
-    } catch (error: unknown) {
-      // Log the raw error for debugging
-      console.error('CreateMemory error:', error);
-
-      // Safely derive a message and optional details from the unknown error
-      let message = error;
-      let details: string | undefined;
-
-      if (error instanceof Error) {
-        message = error.message || message;
-        details = error.stack;
-      } else if (typeof error === 'object' && error !== null) {
-        try {
-          details = JSON.stringify(error);
-        } catch {
-          details = String(error);
-        }
-      } else if (typeof error === 'string') {
-        message = error;
-      } else {
-        message = String(error);
-      }
-
-      // Return the safe message; include details only in development to avoid leaking sensitive info
-      const responseBody: any = {
+    } catch (error: any) {
+      res.status(500).json({
         success: false,
-        message
-      };
-      // Send error details to the frontend for debugging purposes (temporary)
-      if (details) {
-        responseBody.error = details;
-      } else {
-        responseBody.error = message;
-      }
-
-      res.status(500).json(responseBody);
+        message: error.message || 'Internal server error'
+      });
     }
   }
 
