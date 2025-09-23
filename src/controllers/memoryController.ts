@@ -50,6 +50,7 @@ export class MemoryController {
       }
 
       const { type, content, fileUrl, associatedPersonId } = validationResult.data;
+      console.log(validationResult.data);
 
       // Check if user has a memory vault
       const memoryVault = await prisma.memoryVault.findUnique({
@@ -104,11 +105,42 @@ export class MemoryController {
           }
         }
       });
-    } catch (error: any) {
-      res.status(500).json({
+    } catch (error: unknown) {
+      // Log the raw error for debugging
+      console.error('CreateMemory error:', error);
+
+      // Safely derive a message and optional details from the unknown error
+      let message = error;
+      let details: string | undefined;
+
+      if (error instanceof Error) {
+        message = error.message || message;
+        details = error.stack;
+      } else if (typeof error === 'object' && error !== null) {
+        try {
+          details = JSON.stringify(error);
+        } catch {
+          details = String(error);
+        }
+      } else if (typeof error === 'string') {
+        message = error;
+      } else {
+        message = String(error);
+      }
+
+      // Return the safe message; include details only in development to avoid leaking sensitive info
+      const responseBody: any = {
         success: false,
-        message: error.message || 'Internal server error'
-      });
+        message
+      };
+      // Send error details to the frontend for debugging purposes (temporary)
+      if (details) {
+        responseBody.error = details;
+      } else {
+        responseBody.error = message;
+      }
+
+      res.status(500).json(responseBody);
     }
   }
 

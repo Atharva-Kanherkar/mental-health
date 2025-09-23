@@ -522,7 +522,7 @@ export const fileApi = {
       formData.append('authTag', uploadData.authTag);
     }
 
-  // Let the browser / axios set the Content-Type (including boundary)
+   
   const response = await api.post('/api/files/upload', formData);
     
     return response.data.data.memory;
