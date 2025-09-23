@@ -35,11 +35,10 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(data.email, data.password);
-      toast.success('Welcome back!');
+      toast.success('Welcome back to your sanctuary! 🏠');
       router.push('/dashboard');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Login failed';
-      toast.error(errorMessage);
+    } catch {
+      toast.error('Unable to sign you in. Please check your credentials and try again.');
     } finally {
       setIsLoading(false);
     }

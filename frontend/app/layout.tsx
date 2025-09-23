@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/lib/auth-context';
 import { ThemeProvider } from '@/lib/theme-context';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import JournalNavigation from '@/components/JournalNavigation';
 import "./globals.css";
 
@@ -59,18 +60,20 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <AuthProvider>
-            {children}
-            <JournalNavigation />
-            <Toaster 
-              position="top-center"
-              toastOptions={{
-                duration: 4000,
-                style: {
-                  background: '#363636',
-                  color: '#fff',
-                },
-              }}
-            />
+            <ErrorBoundary>
+              {children}
+              <JournalNavigation />
+              <Toaster 
+                position="top-center"
+                toastOptions={{
+                  duration: 4000,
+                  style: {
+                    background: '#363636',
+                    color: '#fff',
+                  },
+                }}
+              />
+            </ErrorBoundary>
           </AuthProvider>
         </ThemeProvider>
       </body>

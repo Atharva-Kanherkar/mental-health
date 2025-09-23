@@ -78,11 +78,10 @@ export default function NewFavoritePersonPage() {
         description: data.description?.trim() || undefined,
       });
 
-      toast.success(`${data.name} added to your favorites!`);
+      toast.success(`${data.name} added to your favorites! 💖`);
       router.push('/favorites');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add person';
-      toast.error(errorMessage);
+    } catch {
+      toast.error('Unable to add this person right now. Please try again.');
     } finally {
       setIsLoading(false);
     }

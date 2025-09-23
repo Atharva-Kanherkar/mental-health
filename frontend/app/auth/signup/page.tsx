@@ -45,11 +45,10 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       await signup(data.email, data.username, data.password);
-      toast.success('Account created successfully!');
+      toast.success('Welcome to your healing journey! ✨');
       router.push('/onboarding');
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Signup failed';
-      toast.error(errorMessage);
+    } catch {
+      toast.error('Unable to create your account right now. Please try again.');
     } finally {
       setIsLoading(false);
     }

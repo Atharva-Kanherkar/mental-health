@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, type Resolver } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import { withErrorHandling } from '@/lib/api-error-handler';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
@@ -14,13 +15,15 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth-context';
 import { onboardingApi, type FavoritePerson, type Memory } from '@/lib/api-client';
 import { Heart, Plus, ChevronRight, Check, Users, Sparkles } from 'lucide-react';
+import { isDiyana, hasDiyanaInPeople } from '@/lib/special-users';
+import DiyanaSpecialSurprise from '@/components/DiyanaSpecialSurprise';
 
 const personSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   relationship: z.string().min(1, 'Relationship is required'),
   description: z.string().optional(),
-  // priority is required by the backend (1..10). default to 5 for gentle ordering.
-  priority: z.number().int().min(1).max(10).default(5),
+  // priority is required by the backend (1..10)
+  priority: z.number().int().min(1, 'Priority must be at least 1').max(10, 'Priority must be at most 10'),
 });
 
 const memorySchema = z.object({
@@ -31,7 +34,7 @@ const memorySchema = z.object({
 type PersonFormData = z.infer<typeof personSchema>;
 type MemoryFormData = z.infer<typeof memorySchema>;
 
-type OnboardingStep = 'welcome' | 'content' | 'complete';
+type OnboardingStep = 'welcome' | 'content' | 'complete' | 'diyana-surprise';
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
@@ -44,15 +47,21 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   const personForm = useForm<PersonFormData>({
-  // zodResolver's inferred types can conflict with react-hook-form's generic here
-  // because we provide a default for `priority`. Cast to a properly-typed Resolver
-  // to avoid `any` while keeping type-safety for the form handlers.
-  resolver: zodResolver(personSchema) as Resolver<PersonFormData>,
-  defaultValues: { priority: 5 },
+    resolver: zodResolver(personSchema),
+    defaultValues: { 
+      name: '',
+      relationship: '',
+      description: '',
+      priority: 5 
+    },
   });
 
   const memoryForm = useForm<MemoryFormData>({
     resolver: zodResolver(memorySchema),
+    defaultValues: {
+      type: 'text',
+      content: '',
+    },
   });
 
   useEffect(() => {
@@ -80,20 +89,28 @@ export default function OnboardingPage() {
   const initializeOnboarding = async () => {
     setIsLoading(true);
     try {
-      await onboardingApi.initialize();
+      await withErrorHandling(
+        () => onboardingApi.initialize(),
+        { context: 'Onboarding Initialization', rethrow: true }
+      );
+      
       // Try to proactively create the memory vault so subsequent add-person/add-memory
       // calls won't fail if the server expects a vault to exist already.
       try {
-        await onboardingApi.createVaultWithContent();
+        await withErrorHandling(
+          () => onboardingApi.createVaultWithContent(),
+          { context: 'Memory Vault Creation', showToast: false, rethrow: true }
+        );
       } catch (err) {
         // Non-fatal: if this fails, add-person/add-memory will surface the issue.
         console.warn('createVaultWithContent failed (non-fatal):', err);
       }
+      
       setCurrentStep('content');
-      toast.success('Your healing journey has begun');
+      toast.success('Your healing journey has begun 🌱');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to initialize';
-      toast.error(errorMessage);
+      // Error was already logged and shown via withErrorHandling
+      console.error('Failed to initialize onboarding:', error);
     } finally {
       setIsLoading(false);
     }
@@ -102,14 +119,17 @@ export default function OnboardingPage() {
   const addPerson = async (data: PersonFormData) => {
     setIsLoading(true);
     try {
-      const person = await onboardingApi.addPerson(data);
+      const person = await withErrorHandling(
+        () => onboardingApi.addPerson(data),
+        { context: 'Adding Favorite Person', rethrow: true }
+      );
       setAddedPeople(prev => [...prev, person]);
       personForm.reset();
       setShowPersonForm(false);
       toast.success(`${person.name} has been added to your sanctuary`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add person';
-      toast.error(errorMessage);
+      // Error was already handled by withErrorHandling
+      console.error('Failed to add person:', error);
     } finally {
       setIsLoading(false);
     }
@@ -118,14 +138,17 @@ export default function OnboardingPage() {
   const addMemory = async (data: MemoryFormData) => {
     setIsLoading(true);
     try {
-      const memory = await onboardingApi.addMemory(data);
+      const memory = await withErrorHandling(
+        () => onboardingApi.addMemory(data),
+        { context: 'Adding Memory', rethrow: true }
+      );
       setAddedMemories(prev => [...prev, memory]);
       memoryForm.reset();
       setShowMemoryForm(false);
       toast.success('Your memory has been safely stored');
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to add memory';
-      toast.error(errorMessage);
+      // Error was already handled by withErrorHandling
+      console.error('Failed to add memory:', error);
     } finally {
       setIsLoading(false);
     }
@@ -134,12 +157,26 @@ export default function OnboardingPage() {
   const completeOnboarding = async () => {
     setIsLoading(true);
     try {
-      await onboardingApi.complete();
-      toast.success('Welcome to your memory sanctuary!');
-      router.push('/dashboard');
+      await withErrorHandling(
+        () => onboardingApi.complete(),
+        { context: 'Completing Onboarding', rethrow: true }
+      );
+
+      // Check if user is Diyana or has added Diyana as a person
+      const isSpecialUser = (user && isDiyana(user)) || hasDiyanaInPeople(addedPeople);
+      
+      if (isSpecialUser) {
+        // Show special surprise for Diyana
+        setCurrentStep('diyana-surprise');
+        toast.success('Something special awaits you... 💕');
+      } else {
+        // Regular completion
+        toast.success('Welcome to your memory sanctuary! 🏛️');
+        router.push('/dashboard');
+      }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to complete onboarding';
-      toast.error(errorMessage);
+      // Error was already handled by withErrorHandling
+      console.error('Failed to complete onboarding:', error);
     } finally {
       setIsLoading(false);
     }
@@ -276,33 +313,59 @@ export default function OnboardingPage() {
                   )}
 
                   {showPersonForm && (
-                    <form onSubmit={personForm.handleSubmit((data) => addPerson(data as PersonFormData))} className="space-y-4">
-                      <Input
-                        {...personForm.register('name')}
-                        placeholder="Their name"
-                        className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                      />
-                      <Input
-                        {...personForm.register('relationship')}
-                        placeholder="How they support you (e.g., best friend, sister)"
-                        className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                      />
+                    <form onSubmit={personForm.handleSubmit(addPerson)} className="space-y-4">
+                      <div className="space-y-2">
+                        <Input
+                          {...personForm.register('name')}
+                          placeholder="Their name"
+                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
+                        />
+                        {personForm.formState.errors.name && (
+                          <p className="text-red-500 text-sm">{personForm.formState.errors.name.message}</p>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Input
+                          {...personForm.register('relationship')}
+                          placeholder="How they support you (e.g., best friend, sister)"
+                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
+                        />
+                        {personForm.formState.errors.relationship && (
+                          <p className="text-red-500 text-sm">{personForm.formState.errors.relationship.message}</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
                         <Textarea
                           {...personForm.register('description')}
                           placeholder="What makes them special to you? (optional)"
                           className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
                           rows={3}
                         />
+                        {personForm.formState.errors.description && (
+                          <p className="text-red-500 text-sm">{personForm.formState.errors.description.message}</p>
+                        )}
+                      </div>
 
-                        {/* Priority - required by backend (1..10) */}
+                      <div className="space-y-2">
                         <Input
                           {...personForm.register('priority', { valueAsNumber: true })}
                           type="number"
                           min={1}
                           max={10}
-                          placeholder="Priority (1-10)"
+                          defaultValue={5}
+                          placeholder="Priority (1-10, default: 5)"
                           className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
                         />
+                        {personForm.formState.errors.priority && (
+                          <p className="text-red-500 text-sm">{personForm.formState.errors.priority.message}</p>
+                        )}
+                        <p className="text-xs text-[#8B86B8] opacity-75">
+                          1 = highest priority, 10 = lowest priority
+                        </p>
+                      </div>
+
                       <div className="flex space-x-3">
                         <Button
                           type="submit"
@@ -313,7 +376,10 @@ export default function OnboardingPage() {
                         </Button>
                         <Button
                           type="button"
-                          onClick={() => setShowPersonForm(false)}
+                          onClick={() => {
+                            setShowPersonForm(false);
+                            personForm.reset();
+                          }}
                           variant="ghost"
                           className="px-4 py-2 rounded-2xl text-[#8B86B8] hover:bg-[#F5F3FA]"
                         >
@@ -372,12 +438,17 @@ export default function OnboardingPage() {
 
                   {showMemoryForm && (
                     <form onSubmit={memoryForm.handleSubmit(addMemory)} className="space-y-4">
-                      <Textarea
-                        {...memoryForm.register('content')}
-                        placeholder="Share a memory that brings you comfort... a moment of joy, a time you felt loved, or anything that makes you smile."
-                        className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                        rows={4}
-                      />
+                      <div className="space-y-2">
+                        <Textarea
+                          {...memoryForm.register('content')}
+                          placeholder="Share a memory that brings you comfort... a moment of joy, a time you felt loved, or anything that makes you smile."
+                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
+                          rows={4}
+                        />
+                        {memoryForm.formState.errors.content && (
+                          <p className="text-red-500 text-sm">{memoryForm.formState.errors.content.message}</p>
+                        )}
+                      </div>
                       <div className="flex space-x-3">
                         <Button
                           type="submit"
@@ -388,7 +459,10 @@ export default function OnboardingPage() {
                         </Button>
                         <Button
                           type="button"
-                          onClick={() => setShowMemoryForm(false)}
+                          onClick={() => {
+                            setShowMemoryForm(false);
+                            memoryForm.reset();
+                          }}
                           variant="ghost"
                           className="px-4 py-2 rounded-2xl text-[#8B86B8] hover:bg-[#F5F3FA]"
                         >
@@ -437,6 +511,15 @@ export default function OnboardingPage() {
               </p>
             </div>
           </div>
+        )}
+
+        {/* Special surprise for Diyana */}
+        {currentStep === 'diyana-surprise' && (
+          <DiyanaSpecialSurprise
+            onComplete={() => {
+              router.push('/dashboard');
+            }}
+          />
         )}
       </div>
     </div>
