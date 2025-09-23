@@ -72,7 +72,12 @@ export class FileUploadController {
       if (!req.encryptedFile) {
         return res.status(400).json({
           success: false,
-          message: 'No file provided'
+          message: 'No file provided',
+          debug: {
+            hasEncryptedFile: !!req.encryptedFile,
+            bodyKeys: Object.keys(req.body || {}),
+            contentType: req.headers['content-type']
+          }
         });
       }
 

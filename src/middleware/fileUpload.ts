@@ -67,7 +67,12 @@ export const handleEncryptedUpload = (req: EncryptedFileRequest, res: Response, 
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'No file provided'
+        message: 'No file provided',
+        debug: {
+          hasBody: !!req.body,
+          bodyKeys: Object.keys(req.body || {}),
+          contentType: req.headers['content-type']
+        }
       });
     }
 
@@ -80,7 +85,12 @@ export const handleEncryptedUpload = (req: EncryptedFileRequest, res: Response, 
       if (!iv) {
         return res.status(400).json({
           success: false,
-          message: 'Missing encryption metadata (IV) - required for zero-knowledge privacy level'
+          message: 'Missing encryption metadata (IV) - required for zero-knowledge privacy level',
+          debug: {
+            privacyLevel,
+            hasIV: !!iv,
+            bodyKeys: Object.keys(req.body || {})
+          }
         });
       }
 
@@ -88,7 +98,11 @@ export const handleEncryptedUpload = (req: EncryptedFileRequest, res: Response, 
       if (!/^[a-fA-F0-9]{32}$/.test(iv)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid encryption metadata format'
+          message: 'Invalid encryption metadata format',
+          debug: {
+            ivLength: iv.length,
+            ivValue: iv
+          }
         });
       }
     }
