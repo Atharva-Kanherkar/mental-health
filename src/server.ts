@@ -70,12 +70,12 @@ app.use('/api/questionnaires', questionnaireRoutes);
 app.use('/api/user', userRoutes);
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Mental Health API is running' });
+    res.json({ status: 'OK', message: 'Mental Health API is running' }); console.log('Express version:', require('express/package.json').version);
 });
 
 const PORT = process.env.PORT || 8080;
 
- console.log('Express version:', require('express/package.json').version);
+
 
 
 app.listen(PORT, () => {
