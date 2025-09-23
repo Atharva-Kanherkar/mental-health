@@ -123,6 +123,7 @@ export default function NewMemoryPage() {
         content: data.description,
         associatedPersonId: data.associatedPersonId,
         privacyLevel: data.privacyLevel,
+        title: data.title, 
         // Only pass password for zero-knowledge memories
         userPassword: data.privacyLevel === 'zero_knowledge' ? memoryPassword : undefined
       };

@@ -25,6 +25,7 @@ export interface UploadEncryptedFileParams {
   file: File;
   type: 'text' | 'image' | 'audio' | 'video';
   content?: string;
+  title: string;
   associatedPersonId?: string;
   privacyLevel: 'zero_knowledge' | 'server_managed';
   userPassword?: string; // Only required for zero_knowledge privacy level
@@ -97,6 +98,7 @@ export function useEncryptedFiles() {
       let uploadData: {
         file: File;
         type: 'text' | 'image' | 'audio' | 'video';
+        title: string;
         content?: string;
         associatedPersonId?: string;
         privacyLevel: 'zero_knowledge' | 'server_managed';
@@ -119,6 +121,7 @@ export function useEncryptedFiles() {
         uploadData = {
           file: fileToUpload,
           type: params.type,
+          title : params.title,
           content: params.content,
           associatedPersonId: params.associatedPersonId,
           privacyLevel: params.privacyLevel,
@@ -133,6 +136,7 @@ export function useEncryptedFiles() {
         uploadData = {
           file: fileToUpload,
           type: params.type,
+          title : params.title,
           content: params.content,
           associatedPersonId: params.associatedPersonId,
           privacyLevel: params.privacyLevel,

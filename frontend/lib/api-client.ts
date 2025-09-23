@@ -478,6 +478,7 @@ export const vaultApi = {
 export interface EncryptedFileUpload {
   file: File;
   type: 'text' | 'image' | 'audio' | 'video';
+  title : string;
   content?: string;
   associatedPersonId?: string;
   privacyLevel: 'zero_knowledge' | 'server_managed';
@@ -504,6 +505,7 @@ export const fileApi = {
   uploadEncrypted: async (uploadData: EncryptedFileUpload): Promise<Memory> => {
     const formData = new FormData();
     formData.append('file', uploadData.file);
+     formData.append('title', uploadData.title); 
     formData.append('type', uploadData.type);
     formData.append('privacyLevel', uploadData.privacyLevel);
     
