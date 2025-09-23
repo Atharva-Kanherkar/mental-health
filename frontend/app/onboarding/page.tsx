@@ -23,6 +23,7 @@ type OnboardingStep = 'welcome' | 'content' | 'complete' | 'diyana-surprise';
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [isLoading, setIsLoading] = useState(false);
+  const [alreadyOnboarded, setAlreadyOnboarded] = useState(false);
   const addedPeople: FavoritePerson[] = [];
   const addedMemories: Memory[] = [];
   // Removed in-page forms to prevent failing API calls during onboarding
@@ -37,13 +38,29 @@ export default function OnboardingPage() {
       return;
     }
 
-    // Check onboarding status
+    // Check onboarding status and page data
     const checkStatus = async () => {
       try {
+        // First check a lightweight status
         const status = await onboardingApi.getStatus();
         if (status.isOnboarded) {
-          router.push('/dashboard');
+          // User is already onboarded; show a friendly note instead of redirecting/logging out
+          setAlreadyOnboarded(true);
+          setCurrentStep('complete');
           return;
+        }
+
+        // Also fetch onboarding page data — server may respond with alreadyOnboarded=true for GET
+        try {
+          const pageData = await onboardingApi.getPage();
+          if (pageData?.data?.alreadyOnboarded) {
+            setAlreadyOnboarded(true);
+            setCurrentStep('complete');
+            return;
+          }
+        } catch (err) {
+          // Non-fatal: continue to allow onboarding
+          console.warn('Failed to fetch onboarding page data:', err);
         }
       } catch (error) {
         console.error('Failed to check onboarding status:', error);
@@ -317,14 +334,23 @@ export default function OnboardingPage() {
                     }
                   </p>
 
-                  <Button
-                    onClick={completeOnboarding}
-                    disabled={isLoading}
-                    className="px-8 py-3 text-lg font-light rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 shadow-sm hover:shadow-md border-0"
-                  >
-                    <ChevronRight className="w-5 h-5 mr-2" />
-                    {isLoading ? 'Creating your sanctuary...' : 'Enter My Sanctuary'}
-                  </Button>
+                  {alreadyOnboarded ? (
+                    <Button
+                      onClick={() => router.push('/dashboard')}
+                      className="px-8 py-3 text-lg font-light rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 shadow-sm hover:shadow-md border-0"
+                    >
+                      Go to Dashboard
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={completeOnboarding}
+                      disabled={isLoading}
+                      className="px-8 py-3 text-lg font-light rounded-full bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 shadow-sm hover:shadow-md border-0"
+                    >
+                      <ChevronRight className="w-5 h-5 mr-2" />
+                      {isLoading ? 'Creating your sanctuary...' : 'Enter My Sanctuary'}
+                    </Button>
+                  )}
                 </div>
               </Card>
             </div>
