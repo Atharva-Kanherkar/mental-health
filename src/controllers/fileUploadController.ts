@@ -66,7 +66,7 @@ export class FileUploadController {
         });
       }
 
-      const { type, content, associatedPersonId, privacyLevel, iv, authTag } = validationResult.data;
+      const {title,  type, content, associatedPersonId, privacyLevel, iv, authTag } = validationResult.data;
 
       // SECURITY: Validate file requirement based on privacy level
       if (!req.encryptedFile) {
@@ -157,6 +157,7 @@ export class FileUploadController {
         data: {
           vaultId: memoryVault.id,
           type,
+          title,  
           content: content || null,
           privacyLevel,
           fileKey,
