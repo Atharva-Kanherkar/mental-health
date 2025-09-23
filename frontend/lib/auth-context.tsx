@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authClient } from '@/lib/auth-client';
@@ -13,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, username: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
   checkAuth: () => Promise<void>;
 }
@@ -31,47 +31,31 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const normalizeUser = (u: any): User => ({
+    id: u.id || u.userId,
+    email: u.email,
+    username: u.name || u.email,
+  });
 
   const checkAuth = async () => {
-    console.log('Checking authentication...');
     try {
-      // Use the correct Better Auth session endpoint
-  const base = process.env.NEXT_PUBLIC_API_URL || 'https://mental-health-nbvq2.ondigitalocean.app';
-  const response = await fetch(`${base}/api/auth/get-session`, {
-        method: 'GET',
-        credentials: 'include', // Important: Send cookies
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      // Use Better Auth client to read the session; avoids manual fetch shape/version drift
+      const { data, error } = await authClient.getSession({
+        // ensure no caching of session on the client side
+        fetchOptions: { cache: 'no-store' },
       });
-      
-      console.log('Auth check response status:', response.status);
-      
-      if (response.ok) {
-        // Parse JSON safely — protect against non-JSON or null responses
-        const data = await response.json().catch((err) => {
-          console.error('Failed to parse auth check response JSON:', err);
-          return null;
-        });
-        console.log('Auth check data:', data);
-        if (data?.user) {
-          const userData = {
-            id: data.user.id || data.user.userId,
-            email: data.user.email,
-            username: data.user.name || data.user.email,
-          };
-          console.log('Setting user from auth check:', userData);
-          setUser(userData);
-        } else {
-          console.log('No user in auth response');
-          setUser(null);
-        }
+      if (error) {
+        setUser(null);
+        return;
+      }
+      if (data?.user) {
+        setUser(normalizeUser(data.user));
       } else {
-        console.log('Auth check failed with status:', response.status);
         setUser(null);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
+    } catch {
       setUser(null);
     } finally {
       setLoading(false);
@@ -79,43 +63,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (email: string, password: string) => {
-    console.log('Starting login process...', { email });
-    
-    try {
-      // Try direct fetch first to test if backend is reachable
-      console.log('Testing backend connectivity...');
-  const base = process.env.NEXT_PUBLIC_API_URL || 'https://mental-health-nbvq2.ondigitalocean.app';
-  const testResponse = await fetch(`${base}/health`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-      console.log('Backend test response:', testResponse.status);
-      
-      // Now try the Better Auth client
-      console.log('Attempting Better Auth login...');
-      const result = await authClient.signIn.email({
-        email,
-        password,
-        rememberMe: true,
-      });
-      
-      console.log('Login result:', result);
-      
-      if (result.data?.user) {
-        const userData = {
-          id: result.data.user.id,
-          email: result.data.user.email,
-          username: result.data.user.name || result.data.user.email,
-        };
-        console.log('Setting user data:', userData);
-        setUser(userData);
-      } else {
-        console.error('Login failed:', result.error);
-        throw new Error(result.error?.message || 'Login failed');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+    // Perform sign-in with the Better Auth client (credentials included by default via client config)
+    const result = await authClient.signIn.email({
+      email,
+      password,
+      rememberMe: true,
+    });
+    if (result.error) {
+      throw new Error(result.error.message || 'Login failed');
+    }
+
+    // Critical: verify the cookie round-trip actually succeeded before setting UI state
+    const session = await authClient.getSession({
+      fetchOptions: { cache: 'no-store' },
+    });
+    if (session.data?.user) {
+      setUser(normalizeUser(session.data.user));
+    } else {
+      setUser(null);
+      throw new Error('Login succeeded but no session cookie was stored');
     }
   };
 
@@ -124,39 +90,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       name: username,
+      // autoSignIn is true by default; rely on getSession to confirm
     });
-    
-    if (result.data?.user) {
-      // With autoSignIn: true, user should be automatically signed in
-      setUser({
-        id: result.data.user.id,
-        email: result.data.user.email,
-        username: result.data.user.name || result.data.user.email,
-      });
+    if (result.error) {
+      throw new Error(result.error.message || 'Signup failed');
+    }
+
+    // Confirm session after auto sign-in
+    const session = await authClient.getSession({
+      fetchOptions: { cache: 'no-store' },
+    });
+    if (session.data?.user) {
+      setUser(normalizeUser(session.data.user));
     } else {
-      throw new Error(result.error?.message || 'Signup failed');
+      setUser(null);
+      throw new Error('Signup succeeded but no session cookie was stored');
     }
   };
 
   const logout = async () => {
-    try {
-      await authClient.signOut();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+    await authClient.signOut();
     setUser(null);
-    window.location.href = '/';
   };
 
   useEffect(() => {
     checkAuth();
+    // Optional: refresh session when tab gains focus
+    const onFocus = () => checkAuth();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, []);
 
-  const value = {
+  const value: AuthContextType = {
     user,
     login,
     signup,
-    logout, 
+    logout,
     loading,
     checkAuth,
   };

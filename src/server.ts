@@ -1,87 +1,90 @@
-import express from "express";
-import cors from "cors";
-import { toNodeHandler } from "better-auth/node";
-import { auth } from "./utils/auth";
-import onboardingRoutes from "./routes/onboarding";
-import dashboardRoutes from "./routes/dashboard";
-import memoriesRoutes from "./routes/memories";
-import favoritesRoutes from "./routes/favorites";
-import vaultRoutes from "./routes/vault";
-import fileRoutes from "./routes/files";
-import walkthroughRoutes from "./routes/walkthrough";
-import journalRoutes from "./routes/journal";
-import mentalHealthRoutes from "./routes/mentalHealth";
-import rewardRoutes from "./routes/rewards";
-import dailyCheckinRoutes from "./routes/dailyCheckin";
-import questionnaireRoutes from "./routes/questionnaires";
-import userRoutes from "./routes/user";
+ import express from 'express';
+import cors from 'cors';
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './utils/auth';
+
+import onboardingRoutes from './routes/onboarding';
+import dashboardRoutes from './routes/dashboard';
+import memoriesRoutes from './routes/memories';
+import favoritesRoutes from './routes/favorites';
+import vaultRoutes from './routes/vault';
+import fileRoutes from './routes/files';
+import walkthroughRoutes from './routes/walkthrough';
+import journalRoutes from './routes/journal';
+import mentalHealthRoutes from './routes/mentalHealth';
+import rewardRoutes from './routes/rewards';
+import dailyCheckinRoutes from './routes/dailyCheckin';
+import questionnaireRoutes from './routes/questionnaires';
+import userRoutes from './routes/user';
 
 const app = express();
- 
-app.use(cors({
-    origin: [
-    "http://localhost:3000",
-    "https://www.my-echoes.app",
-    process.env.FRONTEND_URL || ""
-  ],
-    credentials: true,
-}));
 
- 
+// Behind proxy/CDN (required for Secure cookies + correct proto)
+app.set('trust proxy', 1);
+
+// Strict, explicit origin allowlist for credentialed CORS
+const allowed = new Set(
+  [
+    'http://localhost:3000',
+    'https://my-echoes.app',
+    'https://www.my-echoes.app',
+    process.env.FRONTEND_URL,
+  ].filter(Boolean) as string[],
+);
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      // Allow same-origin/non-browser (no Origin header) or allowed origins
+      if (!origin || allowed.has(origin)) return cb(null, true);
+      return cb(new Error(`Origin not allowed: ${origin}`));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }),
+);
+
+// Optional: make caches vary by Origin when using allowlist
 app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-    next();
+  res.header('Vary', 'Origin');
+  next();
 });
 
-// Better Auth handler - handles all /api/auth/* routes (Express v5 syntax)
-app.all("/api/auth/*splat", toNodeHandler(auth));
+app.use((req, _res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
 
-// Mount express json middleware after Better Auth handler
+// Better Auth handler (Express v5 catch-all syntax)
+app.all('/api/auth/{*splat}', toNodeHandler(auth)); // or '/api/auth/*splat' if you don't need to match the base path
+
+// Mount JSON after Better Auth
 app.use(express.json());
 
-// Serve static files
+// Static files
 app.use(express.static('public'));
 
-// Onboarding routes (protected)
+// Protected routes
 app.use('/onboarding', onboardingRoutes);
-
-// Dashboard routes (protected)
 app.use('/dashboard', dashboardRoutes);
-
-// Memory vault API routes (protected)
 app.use('/memories', memoriesRoutes);
 app.use('/favorites', favoritesRoutes);
 app.use('/vault', vaultRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/walkthrough', walkthroughRoutes);
-
-// Journal API routes (protected)
 app.use('/api/journal', journalRoutes);
-
-// Mental Health Assessment routes (protected)
 app.use('/api/mental-health', mentalHealthRoutes);
-
-// Rewards & Gamification routes (protected)
 app.use('/api/rewards', rewardRoutes);
-
-// Daily Check-in routes (protected)
 app.use('/api/checkin', dailyCheckinRoutes);
-
-// Assessment Questionnaire routes (protected)
 app.use('/api/questionnaires', questionnaireRoutes);
-
-// User Profile & Management routes (protected)
 app.use('/api/user', userRoutes);
 
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', message: 'Mental Health API is running' }); console.log('Express version:', require('express/package.json').version);
+app.get('/health', (_req, res) => {
+  res.json({ status: 'OK', message: 'Mental Health API is running' });
 });
 
 const PORT = process.env.PORT || 8080;
-
-
-
-
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
