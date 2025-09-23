@@ -1,6 +1,6 @@
  'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authClient } from '@/lib/auth-client';
 
 export interface User {
@@ -33,13 +33,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
    
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const normalizeUser = (u: any): User => ({
+  const normalizeUser = useCallback((u: any): User => ({
     id: u.id || u.userId,
     email: u.email,
     username: u.name || u.email,
-  });
+  }), []);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       // Use Better Auth client to read the session; avoids manual fetch shape/version drift
       const { data, error } = await authClient.getSession({
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
+  }, [normalizeUser]);
 
   const login = async (email: string, password: string) => {
     // Perform sign-in with the Better Auth client (credentials included by default via client config)
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const onFocus = () => checkAuth();
     window.addEventListener('focus', onFocus);
     return () => window.removeEventListener('focus', onFocus);
-  }, []);
+  }, [checkAuth]);
 
   const value: AuthContextType = {
     user,

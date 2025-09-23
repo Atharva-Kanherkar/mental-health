@@ -26,7 +26,7 @@ export const auth = betterAuth({
   },
 
   // Must match the exact backend origin (protocol + host + port)
-  baseURL: process.env.BETTER_AUTH_URL || 'https://mental-health-nbvq2.ondigitalocean.app',
+  baseURL: process.env.BETTER_AUTH_URL || 'https://api.my-echoes.app',
 
   // Must include the exact frontend origin(s) that will call the API
   trustedOrigins: [

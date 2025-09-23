@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
@@ -19,6 +19,8 @@ const personSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   relationship: z.string().min(1, 'Relationship is required'),
   description: z.string().optional(),
+  // priority is required by the backend (1..10). default to 5 for gentle ordering.
+  priority: z.number().int().min(1).max(10).default(5),
 });
 
 const memorySchema = z.object({
@@ -42,7 +44,11 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   const personForm = useForm<PersonFormData>({
-    resolver: zodResolver(personSchema),
+  // zodResolver's inferred types can conflict with react-hook-form's generic here
+  // because we provide a default for `priority`. Cast to a properly-typed Resolver
+  // to avoid `any` while keeping type-safety for the form handlers.
+  resolver: zodResolver(personSchema) as Resolver<PersonFormData>,
+  defaultValues: { priority: 5 },
   });
 
   const memoryForm = useForm<MemoryFormData>({
@@ -75,6 +81,14 @@ export default function OnboardingPage() {
     setIsLoading(true);
     try {
       await onboardingApi.initialize();
+      // Try to proactively create the memory vault so subsequent add-person/add-memory
+      // calls won't fail if the server expects a vault to exist already.
+      try {
+        await onboardingApi.createVaultWithContent();
+      } catch (err) {
+        // Non-fatal: if this fails, add-person/add-memory will surface the issue.
+        console.warn('createVaultWithContent failed (non-fatal):', err);
+      }
       setCurrentStep('content');
       toast.success('Your healing journey has begun');
     } catch (error) {
@@ -262,7 +276,7 @@ export default function OnboardingPage() {
                   )}
 
                   {showPersonForm && (
-                    <form onSubmit={personForm.handleSubmit(addPerson)} className="space-y-4">
+                    <form onSubmit={personForm.handleSubmit((data) => addPerson(data as PersonFormData))} className="space-y-4">
                       <Input
                         {...personForm.register('name')}
                         placeholder="Their name"
@@ -273,12 +287,22 @@ export default function OnboardingPage() {
                         placeholder="How they support you (e.g., best friend, sister)"
                         className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
                       />
-                      <Textarea
-                        {...personForm.register('description')}
-                        placeholder="What makes them special to you? (optional)"
-                        className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                        rows={3}
-                      />
+                        <Textarea
+                          {...personForm.register('description')}
+                          placeholder="What makes them special to you? (optional)"
+                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
+                          rows={3}
+                        />
+
+                        {/* Priority - required by backend (1..10) */}
+                        <Input
+                          {...personForm.register('priority', { valueAsNumber: true })}
+                          type="number"
+                          min={1}
+                          max={10}
+                          placeholder="Priority (1-10)"
+                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
+                        />
                       <div className="flex space-x-3">
                         <Button
                           type="submit"

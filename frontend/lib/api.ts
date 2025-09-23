@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://mental-health-nbvq2.ondigitalocean.app';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.my-echoes.app';
 
 // Create axios instance
 const api = axios.create({

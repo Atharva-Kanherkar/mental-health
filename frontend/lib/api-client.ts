@@ -389,8 +389,9 @@ export const onboardingApi = {
     return response.data.data.memoryVault;
   },
 
-  // Add content during onboarding (no vault required yet)
-  addPerson: async (person: { name: string; relationship: string; description?: string }): Promise<FavoritePerson> => {
+  // Add content during onboarding
+  // priority is required by the backend/prisma schema (1..10)
+  addPerson: async (person: { name: string; relationship: string; priority: number; description?: string }): Promise<FavoritePerson> => {
     const response = await api.post('/onboarding/add-person', person);
     return response.data.data.favoritePerson;
   },
