@@ -119,6 +119,17 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Ensure native form controls and slotted inputs always use the app foreground
+     color so typed text remains visible even when parent containers set a
+     different text color (e.g. decorative headers with text-white). */
+  input,
+  textarea,
+  select,
+  button,
+  [data-slot="input"],
+  [data-slot="textarea"] {
+    @apply text-foreground;
+  }
 }
 
 /* Custom slider styles for journal */

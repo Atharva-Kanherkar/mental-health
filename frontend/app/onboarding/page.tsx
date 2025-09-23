@@ -2,14 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+// removed react-hook-form usage from onboarding page to avoid in-page API calls
+// zod import removed; form schemas moved out
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { withErrorHandling } from '@/lib/api-error-handler';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+// Removed Input/Textarea imports since in-page forms were removed
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth-context';
@@ -18,51 +16,20 @@ import { Heart, Plus, ChevronRight, Check, Users, Sparkles } from 'lucide-react'
 import { isDiyana, hasDiyanaInPeople } from '@/lib/special-users';
 import DiyanaSpecialSurprise from '@/components/DiyanaSpecialSurprise';
 
-const personSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  relationship: z.string().min(1, 'Relationship is required'),
-  description: z.string().optional(),
-  // priority is required by the backend (1..10)
-  priority: z.number().int().min(1, 'Priority must be at least 1').max(10, 'Priority must be at most 10'),
-});
-
-const memorySchema = z.object({
-  type: z.literal('text'),
-  content: z.string().min(10, 'Memory must be at least 10 characters'),
-});
-
-type PersonFormData = z.infer<typeof personSchema>;
-type MemoryFormData = z.infer<typeof memorySchema>;
+// Form schemas removed; onboarding defers adding people/memories to dedicated pages
 
 type OnboardingStep = 'welcome' | 'content' | 'complete' | 'diyana-surprise';
 
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('welcome');
   const [isLoading, setIsLoading] = useState(false);
-  const [addedPeople, setAddedPeople] = useState<FavoritePerson[]>([]);
-  const [addedMemories, setAddedMemories] = useState<Memory[]>([]);
-  const [showPersonForm, setShowPersonForm] = useState(false);
-  const [showMemoryForm, setShowMemoryForm] = useState(false);
+  const addedPeople: FavoritePerson[] = [];
+  const addedMemories: Memory[] = [];
+  // Removed in-page forms to prevent failing API calls during onboarding
   const { user } = useAuth();
   const router = useRouter();
 
-  const personForm = useForm<PersonFormData>({
-    resolver: zodResolver(personSchema),
-    defaultValues: { 
-      name: '',
-      relationship: '',
-      description: '',
-      priority: 5 
-    },
-  });
-
-  const memoryForm = useForm<MemoryFormData>({
-    resolver: zodResolver(memorySchema),
-    defaultValues: {
-      type: 'text',
-      content: '',
-    },
-  });
+  // form logic removed — onboarding will defer add-person/add-memory to dedicated pages
 
   useEffect(() => {
     if (!user) {
@@ -116,43 +83,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const addPerson = async (data: PersonFormData) => {
-    setIsLoading(true);
-    try {
-      const person = await withErrorHandling(
-        () => onboardingApi.addPerson(data),
-        { context: 'Adding Favorite Person', rethrow: true }
-      );
-      setAddedPeople(prev => [...prev, person]);
-      personForm.reset();
-      setShowPersonForm(false);
-      toast.success(`${person.name} has been added to your sanctuary`);
-    } catch (error) {
-      // Error was already handled by withErrorHandling
-      console.error('Failed to add person:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addMemory = async (data: MemoryFormData) => {
-    setIsLoading(true);
-    try {
-      const memory = await withErrorHandling(
-        () => onboardingApi.addMemory(data),
-        { context: 'Adding Memory', rethrow: true }
-      );
-      setAddedMemories(prev => [...prev, memory]);
-      memoryForm.reset();
-      setShowMemoryForm(false);
-      toast.success('Your memory has been safely stored');
-    } catch (error) {
-      // Error was already handled by withErrorHandling
-      console.error('Failed to add memory:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // addPerson/addMemory handlers removed; users are directed to dedicated pages instead
 
   const completeOnboarding = async () => {
     setIsLoading(true);
@@ -301,93 +232,19 @@ export default function OnboardingPage() {
                     </div>
                   )}
 
-                  {!showPersonForm && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-[#8B86B8]">You can add people later from your Favorites page.</p>
                     <Button
-                      onClick={() => setShowPersonForm(true)}
+                      asChild
                       variant="ghost"
                       className="w-full py-3 text-[#8B86B8] hover:bg-[#F5F3FA] transition-all duration-300 rounded-2xl border-2 border-dashed border-[#8B86B8]/30 hover:border-[#6B5FA8]/50"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Someone Special
+                      <a href="/favorites/new" className="flex items-center justify-center w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Someone Later
+                      </a>
                     </Button>
-                  )}
-
-                  {showPersonForm && (
-                    <form onSubmit={personForm.handleSubmit(addPerson)} className="space-y-4">
-                      <div className="space-y-2">
-                        <Input
-                          {...personForm.register('name')}
-                          placeholder="Their name"
-                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                        />
-                        {personForm.formState.errors.name && (
-                          <p className="text-red-500 text-sm">{personForm.formState.errors.name.message}</p>
-                        )}
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Input
-                          {...personForm.register('relationship')}
-                          placeholder="How they support you (e.g., best friend, sister)"
-                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                        />
-                        {personForm.formState.errors.relationship && (
-                          <p className="text-red-500 text-sm">{personForm.formState.errors.relationship.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Textarea
-                          {...personForm.register('description')}
-                          placeholder="What makes them special to you? (optional)"
-                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                          rows={3}
-                        />
-                        {personForm.formState.errors.description && (
-                          <p className="text-red-500 text-sm">{personForm.formState.errors.description.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Input
-                          {...personForm.register('priority', { valueAsNumber: true })}
-                          type="number"
-                          min={1}
-                          max={10}
-                          defaultValue={5}
-                          placeholder="Priority (1-10, default: 5)"
-                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                        />
-                        {personForm.formState.errors.priority && (
-                          <p className="text-red-500 text-sm">{personForm.formState.errors.priority.message}</p>
-                        )}
-                        <p className="text-xs text-[#8B86B8] opacity-75">
-                          1 = highest priority, 10 = lowest priority
-                        </p>
-                      </div>
-
-                      <div className="flex space-x-3">
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="flex-1 py-2 rounded-2xl bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 border-0"
-                        >
-                          {isLoading ? 'Adding...' : 'Add to Sanctuary'}
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setShowPersonForm(false);
-                            personForm.reset();
-                          }}
-                          variant="ghost"
-                          className="px-4 py-2 rounded-2xl text-[#8B86B8] hover:bg-[#F5F3FA]"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  )}
+                  </div>
                 </div>
               </Card>
 
@@ -425,52 +282,19 @@ export default function OnboardingPage() {
                     </div>
                   )}
 
-                  {!showMemoryForm && (
+                  <div className="space-y-3">
+                    <p className="text-sm text-[#8B86B8]">You can add memories later from your Memories page.</p>
                     <Button
-                      onClick={() => setShowMemoryForm(true)}
+                      asChild
                       variant="ghost"
                       className="w-full py-3 text-[#8B86B8] hover:bg-[#F5F3FA] transition-all duration-300 rounded-2xl border-2 border-dashed border-[#8B86B8]/30 hover:border-[#6B5FA8]/50"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add a Memory
+                      <a href="/memories/new" className="flex items-center justify-center w-full">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Memory Later
+                      </a>
                     </Button>
-                  )}
-
-                  {showMemoryForm && (
-                    <form onSubmit={memoryForm.handleSubmit(addMemory)} className="space-y-4">
-                      <div className="space-y-2">
-                        <Textarea
-                          {...memoryForm.register('content')}
-                          placeholder="Share a memory that brings you comfort... a moment of joy, a time you felt loved, or anything that makes you smile."
-                          className="rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm"
-                          rows={4}
-                        />
-                        {memoryForm.formState.errors.content && (
-                          <p className="text-red-500 text-sm">{memoryForm.formState.errors.content.message}</p>
-                        )}
-                      </div>
-                      <div className="flex space-x-3">
-                        <Button
-                          type="submit"
-                          disabled={isLoading}
-                          className="flex-1 py-2 rounded-2xl bg-[#EBE7F8] text-[#6B5FA8] hover:bg-[#E0DBF3] transition-all duration-300 border-0"
-                        >
-                          {isLoading ? 'Saving...' : 'Save Memory'}
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={() => {
-                            setShowMemoryForm(false);
-                            memoryForm.reset();
-                          }}
-                          variant="ghost"
-                          className="px-4 py-2 rounded-2xl text-[#8B86B8] hover:bg-[#F5F3FA]"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </form>
-                  )}
+                  </div>
                 </div>
               </Card>
             </div>
