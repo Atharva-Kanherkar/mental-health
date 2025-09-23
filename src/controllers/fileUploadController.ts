@@ -137,7 +137,16 @@ export class FileUploadController {
         }
       });
 
-      const uploadResult = await s3Client.send(uploadCommand);
+      let uploadResult;
+      try {
+        uploadResult = await s3Client.send(uploadCommand);
+      } catch (storageError) {
+        console.error('Storage upload error:', storageError);
+        return res.status(502).json({
+          success: false,
+          message: 'Failed to store file in object storage',
+        });
+      }
 
       // Generate the file URL manually since AWS SDK v3 doesn't return Location
       const fileUrl = `https://${bucketName}.${process.env.DO_SPACES_ENDPOINT}/${fileKey}`;
