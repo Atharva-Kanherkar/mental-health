@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/lib/auth-context';
 import { favoritesApi } from '@/lib/api-client';
-import { 
+import {
   ArrowLeft,
   Heart,
   User
@@ -58,10 +58,15 @@ export default function NewFavoritePersonPage() {
     watch,
   } = useForm<PersonFormData>({
     resolver: zodResolver(personSchema),
+    defaultValues: {
+        priority: undefined,
+    }
   });
 
   const watchedName = watch('name');
   const watchedDescription = watch('description');
+  const watchedRelationship = watch('relationship');
+  const watchedPriority = watch('priority');
 
   const onSubmit = async (data: PersonFormData) => {
     if (!user) {
@@ -88,7 +93,7 @@ export default function NewFavoritePersonPage() {
   };
 
   const handleRelationshipClick = (relationship: string) => {
-    setValue('relationship', relationship);
+    setValue('relationship', relationship, { shouldValidate: true });
   };
 
   if (!user) {
@@ -157,7 +162,7 @@ export default function NewFavoritePersonPage() {
                 {errors.name && (
                   <p className="text-red-300 text-sm font-light">{errors.name.message}</p>
                 )}
-                <div className="text-xs text-[#8B86B8] font-light opacity-75">
+                <div className="text-xs text-[#8B86B8] font-light opacity-75 ml-auto">
                   {watchedName?.length || 0}/100 characters
                 </div>
               </div>
@@ -187,7 +192,11 @@ export default function NewFavoritePersonPage() {
                       key={relationship}
                       type="button"
                       onClick={() => handleRelationshipClick(relationship)}
-                      className="px-4 py-2 text-sm font-light border border-[#8B86B8]/30 rounded-2xl bg-white/30 backdrop-blur-sm hover:border-[#6B5FA8] hover:text-[#6B5FA8] hover:bg-white/50 transition-all duration-200"
+                      className={`px-4 py-2 text-sm font-light border rounded-2xl backdrop-blur-sm transition-all duration-200 ${
+                        watchedRelationship === relationship
+                          ? 'bg-[#6B5FA8] text-white border-[#6B5FA8]'
+                          : 'bg-white/30 border-[#8B86B8]/30 text-[#8B86B8] hover:border-[#6B5FA8] hover:text-[#6B5FA8] hover:bg-white/50'
+                      }`}
                     >
                       {relationship}
                     </button>
@@ -204,19 +213,21 @@ export default function NewFavoritePersonPage() {
               <select
                 id="priority"
                 {...register('priority', { valueAsNumber: true })}
-                className={`w-full rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm font-light px-4 py-3 ${errors.priority ? 'border-red-300' : ''}`}
+                className={`w-full rounded-2xl border-[#8B86B8]/30 focus:border-[#6B5FA8] bg-white/50 backdrop-blur-sm font-light px-4 py-3 appearance-none ${
+                  watchedPriority ? 'text-[#6B5FA8]' : 'text-[#8B86B8]'
+                } ${errors.priority ? 'border-red-300' : ''}`}
               >
-                <option value="">Choose their importance level...</option>
-                <option value={1}>Most Important (1) - My closest person</option>
-                <option value={2}>Extremely Important (2) - One of my dearest</option>
-                <option value={3}>Very Important (3) - Someone I deeply value</option>
-                <option value={4}>Quite Important (4) - Someone I care about greatly</option>
-                <option value={5}>Important (5) - A meaningful presence</option>
-                <option value={6}>Moderately Important (6) - Someone I appreciate</option>
-                <option value={7}>Somewhat Important (7) - A valued connection</option>
-                <option value={8}>Friendly Important (8) - Someone I enjoy</option>
-                <option value={9}>Casually Important (9) - A pleasant connection</option>
-                <option value={10}>Generally Important (10) - Someone I know well</option>
+                <option value="" disabled>Choose their importance level...</option>
+                <option value={1} className="bg-[#F8F6FF] text-[#6B5FA8]">Most Important (1) - My closest person</option>
+                <option value={2} className="bg-[#F8F6FF] text-[#6B5FA8]">Extremely Important (2) - One of my dearest</option>
+                <option value={3} className="bg-[#F8F6FF] text-[#6B5FA8]">Very Important (3) - Someone I deeply value</option>
+                <option value={4} className="bg-[#F8F6FF] text-[#6B5FA8]">Quite Important (4) - Someone I care about greatly</option>
+                <option value={5} className="bg-[#F8F6FF] text-[#6B5FA8]">Important (5) - A meaningful presence</option>
+                <option value={6} className="bg-[#F8F6FF] text-[#6B5FA8]">Moderately Important (6) - Someone I appreciate</option>
+                <option value={7} className="bg-[#F8F6FF] text-[#6B5FA8]">Somewhat Important (7) - A valued connection</option>
+                <option value={8} className="bg-[#F8F6FF] text-[#6B5FA8]">Friendly Important (8) - Someone I enjoy</option>
+                <option value={9} className="bg-[#F8F6FF] text-[#6B5FA8]">Casually Important (9) - A pleasant connection</option>
+                <option value={10} className="bg-[#F8F6FF] text-[#6B5FA8]">Generally Important (10) - Someone I know well</option>
               </select>
               {errors.priority && (
                 <p className="text-red-300 text-sm font-light mt-1">{errors.priority.message}</p>
@@ -242,7 +253,7 @@ export default function NewFavoritePersonPage() {
                 {errors.description && (
                   <p className="text-red-300 text-sm font-light">{errors.description.message}</p>
                 )}
-                <div className="text-xs text-[#8B86B8] font-light opacity-75">
+                <div className="text-xs text-[#8B86B8] font-light opacity-75 ml-auto">
                   {watchedDescription?.length || 0}/500 characters
                 </div>
               </div>
@@ -264,7 +275,7 @@ export default function NewFavoritePersonPage() {
                 className="flex-1 rounded-2xl bg-gradient-to-r from-[#6B5FA8] to-[#8B86B8] hover:from-[#5A4F97] hover:to-[#7A75A7] text-white font-light shadow-lg"
               >
                 <Heart className="w-4 h-4 mr-2" />
-                {isLoading ? 'Welcoming them to your sanctuary...' : 'Welcome to My Circle'}
+                {isLoading ? 'Welcoming them...' : 'Welcome to My Circle'}
               </Button>
             </div>
           </form>
@@ -273,12 +284,12 @@ export default function NewFavoritePersonPage() {
         {/* Gentle Guidance */}
         <Card className="mt-8 p-6 bg-white/10 backdrop-blur-lg border-white/20 rounded-3xl">
           <h3 className="font-serif font-light text-[#6B5FA8] text-lg mb-4">Gentle reminders for your heart:</h3>
-          <ul className="text-[#8B86B8] font-light space-y-2">
-            <li>• Use whatever name feels most natural to you (Mom, Sarah, their nickname...)</li>
-            <li>• Your relationship description can be as simple or detailed as you wish</li>
-            <li>• Priority helps us understand their place in your heart - there&apos;s no wrong answer</li>
-            <li>• Share what feels right in the description - a memory, a quality, or just how they make you feel</li>
-            <li>• This is your sanctuary - honor your connections in whatever way feels authentic</li>
+          <ul className="text-[#8B86B8] font-light space-y-2 list-disc list-inside">
+            <li>Use whatever name feels most natural to you (Mom, Sarah, their nickname...)</li>
+            <li>Your relationship description can be as simple or detailed as you wish</li>
+            <li>Priority helps us understand their place in your heart - there&apos;s no wrong answer</li>
+            <li>Share what feels right in the description - a memory, a quality, or just how they make you feel</li>
+            <li>This is your sanctuary - honor your connections in whatever way feels authentic</li>
           </ul>
         </Card>
       </div>
