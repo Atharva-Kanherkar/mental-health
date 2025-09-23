@@ -200,7 +200,7 @@ export default function NewMemoryPage() {
                     type="radio"
                     value={type}
                     {...register('memoryType')}
-                    className="sr-only"
+                    className="sr-only text-gray-900 placeholder:text-gray-500 caret-indigo-500"
                   />
                   <div className={`
                     p-6 rounded-3xl text-center transition-all duration-500 group-hover:scale-105
@@ -243,7 +243,7 @@ export default function NewMemoryPage() {
                   type="radio"
                   value="server_managed"
                   {...register('privacyLevel')}
-                  className="sr-only"
+                  className="sr-only text-gray-900 placeholder:text-gray-500 caret-indigo-500"
                 />
                 <Card className={`transition-all duration-300 group-hover:shadow-lg ${
                   selectedPrivacyLevel === 'server_managed' 
@@ -326,7 +326,7 @@ export default function NewMemoryPage() {
                   type="radio"
                   value="zero_knowledge"
                   {...register('privacyLevel')}
-                  className="sr-only"
+                  className="sr-only text-gray-900 placeholder:text-gray-500 caret-indigo-500"
                 />
                 <Card className={`transition-all duration-300 group-hover:shadow-lg ${
                   selectedPrivacyLevel === 'zero_knowledge' 
@@ -432,7 +432,7 @@ export default function NewMemoryPage() {
                     type="radio"
                     value=""
                     {...register('associatedPersonId')}
-                    className="sr-only"
+                    className="sr-only text-gray-900 placeholder:text-gray-500 caret-indigo-500"
                   />
                   <div className={`
                     p-4 rounded-2xl transition-all duration-300 border-2 flex items-center gap-4

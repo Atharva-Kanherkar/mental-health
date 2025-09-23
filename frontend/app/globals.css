@@ -1,3 +1,6 @@
+input, textarea, select, button, [data-slot="input"], [data-slot="textarea"] {
+  -webkit-text-fill-color: currentColor;
+}
 @import "tailwindcss";
 @import "tw-animate-css";
 

@@ -714,7 +714,7 @@ function CheckInPageContent() {
                     onChange={(e) => setResponses(prev => ({ ...prev, [currentStepData.id]: e.target.value }))}
                     placeholder="Share your thoughts here..."
                     rows={4}
-                    className="w-full p-4 bg-[#F8F6FF] border border-[#E0DBF3] rounded-2xl focus:border-[#6B5FA8] focus:ring-2 focus:ring-[#6B5FA8]/20 resize-none transition-all duration-300"
+                    className="w-full p-4 bg-[#F8F6FF] border border-[#E0DBF3] rounded-2xl focus:border-[#6B5FA8] focus:ring-2 focus:ring-[#6B5FA8]/20 resize-none transition-all duration-300 text-gray-900 placeholder:text-gray-500 caret-indigo-500"
                   />
                 </div>
               )}
