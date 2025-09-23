@@ -1,4 +1,4 @@
-'use client';
+ 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -52,6 +52,7 @@ export default function NewMemoryPage() {
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<MemoryFormData>({
     resolver: zodResolver(memorySchema),
     defaultValues: {
@@ -236,174 +237,57 @@ export default function NewMemoryPage() {
               <div className="mt-4 w-24 h-1 bg-gradient-to-r from-[#6B5FA8] to-purple-300 rounded-full mx-auto"></div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Server-Managed Option */}
-              <label className="cursor-pointer group">
-                <input
-                  type="radio"
-                  value="server_managed"
-                  {...register('privacyLevel')}
-                  className="sr-only text-gray-900 placeholder:text-gray-500 caret-indigo-500"
-                />
-                <Card className={`transition-all duration-300 group-hover:shadow-lg ${
-                  selectedPrivacyLevel === 'server_managed' 
-                    ? 'ring-2 ring-[#6B5FA8]/50 shadow-lg bg-gradient-to-br from-[#6B5FA8]/5 to-purple-50/50' 
-                    : 'hover:ring-2 hover:ring-[#6B5FA8]/30'
-                }`}>
-                  <CardHeader>
-                    <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                        selectedPrivacyLevel === 'server_managed' 
-                          ? 'bg-gradient-to-br from-[#6B5FA8]/20 to-purple-200/30' 
-                          : 'bg-gradient-to-br from-indigo-100 to-purple-100 group-hover:from-[#6B5FA8]/15 group-hover:to-purple-200/25'
-                      }`}>
-                        <Heart className={`w-7 h-7 ${selectedPrivacyLevel === 'server_managed' ? 'text-[#6B5FA8]' : 'text-indigo-600 group-hover:text-[#6B5FA8]'}`} />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className={`text-xl ${selectedPrivacyLevel === 'server_managed' ? 'text-[#6B5FA8]' : 'text-gray-800'}`}>
-                          Smart Memory
-                        </CardTitle>
-                        <CardDescription className="text-sm font-medium">
-                          AI-Enhanced Experience
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-6">
-                    <p className="text-gray-700 leading-relaxed">
-                      Enable AI-powered features like personalized therapeutic insights, memory analysis, and intelligent recommendations tailored to your healing journey.
-                    </p>
-                    
-                    <div className="space-y-4">
-                      <div className="text-sm font-medium text-gray-600">What you get:</div>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-800 text-sm">Personalized AI Walkthroughs</div>
-                            <div className="text-xs text-gray-600 mt-1">Guided therapeutic experiences based on your memory</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-800 text-sm">Intelligent Insights</div>
-                            <div className="text-xs text-gray-600 mt-1">AI analyzes patterns to offer meaningful reflections</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-800 text-sm">Memory Connections</div>
-                            <div className="text-xs text-gray-600 mt-1">Links similar memories for deeper understanding</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-700 text-sm">Privacy Note</div>
-                            <div className="text-xs text-gray-600 mt-1">Content processed on secure servers for AI features</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </label>
-
-              {/* Zero-Knowledge Option */}
-              <label className="cursor-pointer group">
-                <input
-                  type="radio"
-                  value="zero_knowledge"
-                  {...register('privacyLevel')}
-                  className="sr-only text-gray-900 placeholder:text-gray-500 caret-indigo-500"
-                />
-                <Card className={`transition-all duration-300 group-hover:shadow-lg ${
-                  selectedPrivacyLevel === 'zero_knowledge' 
-                    ? 'ring-2 ring-slate-400/50 shadow-lg bg-gradient-to-br from-slate-50/50 to-blue-50/30' 
-                    : 'hover:ring-2 hover:ring-slate-400/30'
-                }`}>
-                  <CardHeader>
-                    <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 ${
-                        selectedPrivacyLevel === 'zero_knowledge' 
-                          ? 'bg-gradient-to-br from-slate-200/50 to-blue-100/40' 
-                          : 'bg-gradient-to-br from-slate-100 to-blue-100 group-hover:from-slate-200/40 group-hover:to-blue-100/50'
-                      }`}>
-                        <Shield className={`w-7 h-7 ${selectedPrivacyLevel === 'zero_knowledge' ? 'text-slate-600' : 'text-slate-500 group-hover:text-slate-600'}`} />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className={`text-xl ${selectedPrivacyLevel === 'zero_knowledge' ? 'text-slate-700' : 'text-gray-800'}`}>
-                          Private Memory
-                        </CardTitle>
-                        <CardDescription className="text-sm font-medium">
-                          Maximum Privacy
-                        </CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="space-y-6">
-                    <p className="text-gray-700 leading-relaxed">
-                      Complete privacy with client-side encryption. Your memory is encrypted on your device and only you hold the key to decrypt and view it.
-                    </p>
-                    
-                    <div className="space-y-4">
-                      <div className="text-sm font-medium text-gray-600">Privacy features:</div>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-800 text-sm">End-to-End Encryption</div>
-                            <div className="text-xs text-gray-600 mt-1">Your data is encrypted before leaving your device</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-800 text-sm">Zero Server Access</div>
-                            <div className="text-xs text-gray-600 mt-1">Server cannot read or analyze your content</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-800 text-sm">Your Keys Only</div>
-                            <div className="text-xs text-gray-600 mt-1">Only you can decrypt and access your memories</div>
-                          </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                          <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center mt-0.5 flex-shrink-0">
-                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-gray-700 text-sm">Trade-off</div>
-                            <div className="text-xs text-gray-600 mt-1">AI features unavailable due to encryption</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </label>
+            <div className="flex justify-center">
+              <div className="bg-white/30 backdrop-blur-sm rounded-full border border-[#8B86B8]/15 p-1 flex items-center space-x-1">
+                <button
+                  type="button"
+                  onClick={() => setValue('privacyLevel', 'server_managed')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                    selectedPrivacyLevel === 'server_managed'
+                      ? 'bg-[#EBE7F8] text-[#6B5FA8] shadow-sm'
+                      : 'text-[#8B86B8] hover:bg-white/50'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <Heart className="w-4 h-4 mr-2" />
+                    Smart Memory
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue('privacyLevel', 'zero_knowledge')}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                    selectedPrivacyLevel === 'zero_knowledge'
+                      ? 'bg-slate-200 text-slate-700 shadow-sm'
+                      : 'text-slate-500 hover:bg-white/50'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <Shield className="w-4 h-4 mr-2" />
+                    Private Memory
+                  </div>
+                </button>
+              </div>
             </div>
-            
+
+            <div className="mt-4 p-6 bg-white/30 backdrop-blur-sm rounded-3xl border border-[#8B86B8]/15">
+              {selectedPrivacyLevel === 'server_managed' ? (
+                <div>
+                  <h3 className="text-lg font-semibold text-[#6B5FA8] mb-2">Smart Memory</h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    Enable AI-powered features like personalized therapeutic insights, memory analysis, and intelligent recommendations tailored to your healing journey.
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-700 mb-2">Private Memory</h3>
+                  <p className="text-gray-700 leading-relaxed">
+                    Complete privacy with client-side encryption. Your memory is encrypted on your device and only you hold the key to decrypt and view it.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {errors.privacyLevel && (
               <p className="text-red-500 text-sm mt-4 text-center font-light">
                 {errors.privacyLevel.message}
