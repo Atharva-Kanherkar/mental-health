@@ -110,15 +110,7 @@ export default function OnboardingPage() {
         { context: 'Completing Onboarding', rethrow: true }
       );
 
-      // Check if user is Diyana or has added Diyana as a person
-      console.log('🔍 Debug Diyana check:', {
-        user: user,
-        userName: user?.name,
-        userEmail: user?.email,
-        addedPeople: addedPeople,
-        isDiyanaUser: user && isDiyana(user),
-        hasDiyanaInPeople: hasDiyanaInPeople(addedPeople)
-      });
+     
 
       const isSpecialUser = (user && isDiyana(user)) || hasDiyanaInPeople(addedPeople);
 
