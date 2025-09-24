@@ -59,8 +59,13 @@ app.use((req, _res, next) => {
 // Better Auth handler (Express v5 catch-all syntax)
 app.all('/api/auth/{*splat}', toNodeHandler(auth)); // or '/api/auth/*splat' if you don't need to match the base path
 
-// Mount JSON after Better Auth
-app.use(express.json());
+// Mount JSON after Better Auth - only for application/json requests
+app.use((req, res, next) => {
+  if (req.headers['content-type']?.includes('application/json')) {
+    return express.json()(req, res, next);
+  }
+  next();
+});
 
 // Static files
 app.use(express.static('public'));

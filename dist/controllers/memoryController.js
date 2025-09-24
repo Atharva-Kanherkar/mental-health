@@ -7,9 +7,11 @@ const storage_1 = require("../config/storage");
 const prisma = new prisma_1.PrismaClient();
 // Zod validation schemas
 const CreateMemorySchema = zod_1.z.object({
+    title: zod_1.z.string().min(1, 'Title is required'),
     type: zod_1.z.enum(['text', 'image', 'audio', 'video']),
     content: zod_1.z.string().optional(),
     fileUrl: zod_1.z.string().url().optional(),
+    associatedPersonId: zod_1.z.string().uuid().optional(),
 }).refine((data) => {
     if (data.type === 'text' && !data.content) {
         return false;
@@ -41,7 +43,7 @@ class MemoryController {
                     errors: validationResult.error.issues
                 });
             }
-            const { type, content, fileUrl } = validationResult.data;
+            const { title, type, content, fileUrl, associatedPersonId } = validationResult.data;
             // Check if user has a memory vault
             const memoryVault = await prisma.memoryVault.findUnique({
                 where: { userId }
@@ -52,13 +54,29 @@ class MemoryController {
                     message: 'Memory vault not found. Please complete onboarding first.'
                 });
             }
+            // Validate associatedPersonId if provided
+            if (associatedPersonId) {
+                const associatedPerson = await prisma.favPerson.findFirst({
+                    where: {
+                        id: associatedPersonId,
+                        vaultId: memoryVault.id
+                    }
+                });
+                if (!associatedPerson) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Associated person not found in your vault'
+                    });
+                }
+            }
             // Create the memory
             const memory = await prisma.memory.create({
                 data: {
                     vaultId: memoryVault.id,
                     type,
                     content,
-                    fileUrl
+                    fileUrl,
+                    associatedPersonId: associatedPersonId || null
                 }
             });
             res.status(201).json({
@@ -67,6 +85,7 @@ class MemoryController {
                 data: {
                     memory: {
                         id: memory.id,
+                        title,
                         type: memory.type,
                         content: memory.content,
                         fileUrl: memory.fileUrl,
@@ -357,13 +376,26 @@ class MemoryController {
                     message: 'Memory not found'
                 });
             }
-            // Delete the memory
+            // SECURITY: Delete file from appropriate bucket if it exists
+            if (existingMemory.fileKey) {
+                try {
+                    const privacyLevel = existingMemory.privacyLevel;
+                    await (0, storage_1.deleteFile)(existingMemory.fileKey, privacyLevel);
+                    console.log(`File deleted from ${privacyLevel} bucket: ${existingMemory.fileKey}`);
+                }
+                catch (storageError) {
+                    console.error('Error deleting file from storage:', storageError);
+                    // Continue with database deletion even if storage deletion fails
+                    // Log this for manual cleanup if needed
+                }
+            }
+            // Delete the memory from database
             await prisma.memory.delete({
                 where: { id: memoryId }
             });
             res.json({
                 success: true,
-                message: 'Memory deleted successfully'
+                message: 'Memory and associated file deleted successfully'
             });
         }
         catch (error) {

@@ -21,7 +21,10 @@ const requireOnboarding = async (req, res, next) => {
             where: { userId }
         });
         if (!memoryVault) {
-            return res.status(302).json({
+            // Return a clear JSON response instead of a 302 redirect.
+            // Frontend can use `redirectTo` to navigate, but a 302 status
+            // caused unexpected client-side redirect/logouts in some flows.
+            return res.status(400).json({
                 success: false,
                 message: 'Onboarding required',
                 redirectTo: '/onboarding'
@@ -58,11 +61,26 @@ const requireNoOnboarding = async (req, res, next) => {
             where: { userId }
         });
         if (memoryVault) {
-            return res.status(302).json({
-                success: false,
-                message: 'Onboarding already completed',
-                redirectTo: '/dashboard'
-            });
+            // If the user already has a vault, do not send a 302 redirect.
+            // - For GET requests (e.g. onboarding page data), respond with a harmless JSON
+            //   payload indicating the user is already onboarded so the frontend can display
+            //   a friendly message instead of performing a hard redirect.
+            // - For non-GET requests (POST/PUT) allow the request to proceed so onboarding
+            //   handlers can be idempotent and accept content (controllers already handle
+            //   existing-vault logic). Blocking POSTs caused 302 errors when the vault
+            //   was created proactively during initialization.
+            if (req.method === 'GET') {
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        alreadyOnboarded: true,
+                        redirectTo: '/dashboard'
+                    }
+                });
+            }
+            // Attach the found vault for convenience and continue to handlers
+            req.memoryVault = memoryVault;
+            return next();
         }
         next();
     }
