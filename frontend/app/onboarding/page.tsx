@@ -111,10 +111,22 @@ export default function OnboardingPage() {
       );
 
       // Check if user is Diyana or has added Diyana as a person
+      console.log('🔍 Debug Diyana check:', {
+        user: user,
+        userName: user?.name,
+        userEmail: user?.email,
+        addedPeople: addedPeople,
+        isDiyanaUser: user && isDiyana(user),
+        hasDiyanaInPeople: hasDiyanaInPeople(addedPeople)
+      });
+
       const isSpecialUser = (user && isDiyana(user)) || hasDiyanaInPeople(addedPeople);
-      
+
+      console.log('🔍 Is special user?', isSpecialUser);
+
       if (isSpecialUser) {
         // Show special surprise for Diyana
+        console.log('🎉 Showing Diyana surprise!');
         setCurrentStep('diyana-surprise');
         toast.success('Something special awaits you... 💕');
       } else {
