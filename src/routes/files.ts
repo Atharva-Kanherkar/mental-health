@@ -46,4 +46,40 @@ router.get('/:memoryId/status', FileUploadController.getUploadStatus);
  */
 router.get('/serve/:memoryId', FileUploadController.serveFile);
 
+/**
+ * GET /api/files/debug
+ * Debug endpoint to test environment variables and basic functionality
+ */
+router.get('/debug', (req, res) => {
+  try {
+    const envCheck = {
+      hasDoSpacesEndpoint: !!process.env.DO_SPACES_ENDPOINT,
+      hasZkBucket: !!process.env.DO_SPACES_ZK_BUCKET,
+      hasSmBucket: !!process.env.DO_SPACES_SM_BUCKET,
+      hasZkKey: !!process.env.DO_SPACES_ZK_KEY,
+      hasZkSecret: !!process.env.DO_SPACES_ZK_SECRET,
+      hasSmKey: !!process.env.DO_SPACES_SM_KEY,
+      hasSmSecret: !!process.env.DO_SPACES_SM_SECRET,
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      nodeEnv: process.env.NODE_ENV,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log('🔍 DEBUG: Environment check:', envCheck);
+
+    res.json({
+      success: true,
+      message: 'Debug endpoint working',
+      environment: envCheck,
+      upload_endpoint: '/api/files/upload'
+    });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;
