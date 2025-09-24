@@ -19,10 +19,14 @@ const prisma = new PrismaClient();
 
 // Validation schema for memory upload with privacy level
 const CreateMemorySchema = z.object({
-    title: z.string().min(1, 'Title is required'), 
+  title: z.string().min(1, 'Title is required'),
   type: z.enum(['text', 'image', 'audio', 'video']),
   content: z.string().optional(), // Optional description
-  associatedPersonId: z.string().uuid().optional(),
+  associatedPersonId: z.union([
+    z.string().uuid(),
+    z.string().length(0),
+    z.undefined()
+  ]).optional().transform(val => val === '' ? undefined : val),
   privacyLevel: z.enum(['zero_knowledge', 'server_managed']).default('server_managed'),
   // Encryption fields (only required for zero_knowledge)
   iv: z.string().regex(/^[a-fA-F0-9]{32}$/, 'Invalid IV format').optional(),
@@ -49,10 +53,17 @@ export class FileUploadController {
       
       // DEBUG: Log request body for debugging
       console.log(`🔍 DEBUG: Upload request body:`, {
+        title: req.body.title,
         type: req.body.type,
         privacyLevel: req.body.privacyLevel,
+        hasContent: !!req.body.content,
         hasIV: !!req.body.iv,
-        hasFile: !!req.encryptedFile
+        hasFile: !!req.encryptedFile,
+        fileName: req.encryptedFile?.originalName,
+        fileSize: req.encryptedFile?.size,
+        fileMimeType: req.encryptedFile?.mimeType,
+        associatedPersonId: req.body.associatedPersonId,
+        bodyKeys: Object.keys(req.body || {})
       });
 
       // Validate request body
@@ -155,7 +166,16 @@ export class FileUploadController {
       }
 
       // Generate the file URL manually since AWS SDK v3 doesn't return Location
-      const fileUrl = `https://${bucketName}.${process.env.DO_SPACES_ENDPOINT}/${fileKey}`;
+      // Format: https://bucketname.region.digitaloceanspaces.com/path/to/file
+      const endpoint = process.env.DO_SPACES_ENDPOINT!; // e.g., nyc3.digitaloceanspaces.com
+      const fileUrl = `https://${bucketName}.${endpoint}/${fileKey}`;
+
+      console.log(`🔍 DEBUG: Generated file URL:`, {
+        bucketName,
+        endpoint,
+        fileKey,
+        fileUrl
+      });
 
       // Create memory record in database with privacy level
       const memory = await prisma.memory.create({

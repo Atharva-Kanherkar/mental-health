@@ -71,7 +71,21 @@ export const handleEncryptedUpload = (req: EncryptedFileRequest, res: Response, 
         debug: {
           hasBody: !!req.body,
           bodyKeys: Object.keys(req.body || {}),
-          contentType: req.headers['content-type']
+          contentType: req.headers['content-type'],
+          bodyValues: req.body
+        }
+      });
+    }
+
+    // Validate file size (additional check beyond multer)
+    if (req.file.size === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'File cannot be empty',
+        debug: {
+          fileName: req.file.originalname,
+          fileSize: req.file.size,
+          mimeType: req.file.mimetype
         }
       });
     }

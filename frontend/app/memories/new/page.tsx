@@ -112,18 +112,46 @@ export default function NewMemoryPage() {
       return;
     }
 
+    // Validate content for text memories without files
+    if (data.memoryType === 'text' && !selectedFile) {
+      if (!data.description || data.description.trim() === '') {
+        toast.error('Please enter some content for your text memory');
+        return;
+      }
+    }
+
+    // Validate file requirement for non-text memories
+    if (data.memoryType !== 'text' && !selectedFile) {
+      toast.error(`Please select a ${data.memoryType} file to upload`);
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const fileToUpload = selectedFile || new File([data.description || ''], 'memory.txt', { type: 'text/plain' });
-      
+      // Create file for text memories or use selected file
+      let fileToUpload: File;
+
+      if (selectedFile) {
+        fileToUpload = selectedFile;
+      } else if (data.memoryType === 'text') {
+        // Ensure we have content for text memories
+        const textContent = data.description?.trim() || '';
+        if (textContent === '') {
+          throw new Error('Text content cannot be empty');
+        }
+        fileToUpload = new File([textContent], 'memory.txt', { type: 'text/plain' });
+      } else {
+        throw new Error('File is required for non-text memories');
+      }
+
       const uploadParams = {
         file: fileToUpload,
         type: data.memoryType,
         content: data.description,
         associatedPersonId: data.associatedPersonId,
         privacyLevel: data.privacyLevel,
-        title: data.title, 
+        title: data.title,
         // Only pass password for zero-knowledge memories
         userPassword: data.privacyLevel === 'zero_knowledge' ? memoryPassword : undefined
       };
