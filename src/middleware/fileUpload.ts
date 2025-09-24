@@ -44,6 +44,12 @@ const upload = multer({
  * Expects the file to already be encrypted on the client side
  */
 export const handleEncryptedUpload = (req: EncryptedFileRequest, res: Response, next: NextFunction) => {
+  console.log('🔍 Upload middleware started:', {
+    contentType: req.headers['content-type'],
+    method: req.method,
+    url: req.url
+  });
+
   upload(req, res, (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
