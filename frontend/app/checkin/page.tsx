@@ -624,16 +624,16 @@ function CheckInPageContent() {
                           onClick={() => handleResponse(value)}
                           className={`
                             aspect-square rounded-2xl border-2 transition-all duration-300 hover:scale-105
-                            ${isSelected 
-                              ? 'bg-[#6B5FA8] border-[#6B5FA8] text-white shadow-lg' 
-                              : 'bg-white border-[#E0DBF3] hover:border-[#6B5FA8] hover:bg-[#F8F6FF]'
+                            ${isSelected
+                              ? 'bg-[#6B5FA8] border-[#6B5FA8] text-white shadow-lg'
+                              : 'bg-white border-[#E0DBF3] hover:border-[#6B5FA8] hover:bg-[#F8F6FF] text-[#6B5FA8]'
                             }
                           `}
                         >
                           <div className="flex flex-col items-center justify-center h-full">
-                            <span className="text-lg font-medium">{value}</span>
-                            {currentStepData.id === 'overallMood' && isSelected && (
-                              <span className="text-sm">{getMoodEmoji(value)}</span>
+                            <span className={`text-lg font-medium ${isSelected ? 'text-white' : 'text-[#6B5FA8]'}`}>{value}</span>
+                            {currentStepData.id === 'overallMood' && (
+                              <span className={`text-sm mt-1 ${isSelected ? 'text-white' : 'text-[#8B86B8]'}`}>{getMoodEmoji(value)}</span>
                             )}
                           </div>
                         </button>
