@@ -4,14 +4,14 @@
  * Includes caching, fallback, and optimization
  */
 
-import textToSpeech from '@google-cloud/text-to-speech';
+import textToSpeech, { v1 } from '@google-cloud/text-to-speech';
 import { CircuitBreaker } from '../infrastructure/circuitBreaker';
 import { RetryHandler } from '../infrastructure/retryHandler';
 import { createHash } from 'crypto';
 
 // Initialize Google Cloud TTS client
 // Support both file-based and environment variable credentials
-let client: textToSpeech.TextToSpeechClient;
+let client: v1.TextToSpeechClient;
 
 if (process.env.GOOGLE_CLOUD_CREDENTIALS_JSON) {
   // From .env (DigitalOcean, Heroku, etc.)
