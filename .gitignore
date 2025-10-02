@@ -12,3 +12,4 @@ out/
 # Generated JS files in frontend (we only want TypeScript)
 frontend/**/*.js
 !frontend/node_modules/**/*.js
+credentials/
