@@ -15,8 +15,11 @@ let client: v1.TextToSpeechClient;
 
 if (process.env.GOOGLE_CLOUD_CREDENTIALS_JSON) {
   // From .env (DigitalOcean, Heroku, etc.)
-  const credentials = JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS_JSON);
+  // Need to handle literal \n in the string and convert to actual newlines
+  const credentialsString = process.env.GOOGLE_CLOUD_CREDENTIALS_JSON.replace(/\\n/g, '\n');
+  const credentials = JSON.parse(credentialsString);
   client = new textToSpeech.TextToSpeechClient({ credentials });
+  console.log('✅ Google Cloud TTS initialized from environment variable');
 } else {
   // From file (local development)
   client = new textToSpeech.TextToSpeechClient();
