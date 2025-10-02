@@ -10,7 +10,17 @@ import { RetryHandler } from '../infrastructure/retryHandler';
 import { createHash } from 'crypto';
 
 // Initialize Google Cloud TTS client
-const client = new textToSpeech.TextToSpeechClient();
+// Support both file-based and environment variable credentials
+let client: textToSpeech.TextToSpeechClient;
+
+if (process.env.GOOGLE_CLOUD_CREDENTIALS_JSON) {
+  // From .env (DigitalOcean, Heroku, etc.)
+  const credentials = JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS_JSON);
+  client = new textToSpeech.TextToSpeechClient({ credentials });
+} else {
+  // From file (local development)
+  client = new textToSpeech.TextToSpeechClient();
+}
 
 // Infrastructure
 const circuitBreaker = new CircuitBreaker('voice-service', {
