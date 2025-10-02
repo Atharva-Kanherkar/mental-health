@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft, Heart, Brain, Calendar, AlertTriangle, Sparkles } from 'lucide-react';
@@ -15,6 +16,7 @@ interface MemorySelectionProps {
 }
 
 export function MemorySelection({ onSelectMemory, onSelectPanicMode }: MemorySelectionProps) {
+  const router = useRouter();
   const [memories, setMemories] = useState<AvailableMemory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,16 +186,15 @@ export function MemorySelection({ onSelectMemory, onSelectPanicMode }: MemorySel
           {!isLoading && !error && memories && memories.length > 0 && (
             <div className="grid gap-4">
               {memories.map((memory) => (
-                <Card 
+                <Card
                   key={memory.id}
-                  className="group p-6 bg-white/60 backdrop-blur-sm border-[#8B86B8]/20 hover:bg-white/80 transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-0.5"
-                  onClick={() => onSelectMemory(memory.id)}
+                  className="group p-6 bg-white/60 backdrop-blur-sm border-[#8B86B8]/20 hover:bg-white/80 transition-all duration-300 hover:shadow-lg"
                 >
                   <div className="flex items-center gap-4">
                     <div className="text-3xl">{getTypeIcon(memory.type)}</div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-medium text-[#6B5FA8] group-hover:text-[#5D5A8C] transition-colors">
+                        <h3 className="font-medium text-[#6B5FA8]">
                           {memory.preview}
                         </h3>
                         <div className="px-2 py-1 rounded-full text-xs bg-[#EBE7F8] text-[#6B5FA8] border border-[#8B86B8]/30">
@@ -212,9 +213,26 @@ export function MemorySelection({ onSelectMemory, onSelectPanicMode }: MemorySel
                           </div>
                         )}
                       </div>
-                    </div>
-                    <div className="text-[#8B86B8] group-hover:text-[#6B5FA8] transition-colors">
-                      →
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2 mt-4">
+                        <Button
+                          onClick={() => onSelectMemory(memory.id)}
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 border-[#8B86B8]/30 text-[#6B5FA8] hover:bg-[#EBE7F8]"
+                        >
+                          Original Experience
+                        </Button>
+                        <Button
+                          onClick={() => router.push(`/walkthrough-v2?memoryId=${memory.id}`)}
+                          size="sm"
+                          className="flex-1 bg-gradient-to-r from-[#6B5FA8] to-[#8B86B8] text-white hover:opacity-90"
+                        >
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          Try New AI Chat
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </Card>
