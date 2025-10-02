@@ -14,12 +14,27 @@ import { createHash } from 'crypto';
 let client: v1.TextToSpeechClient;
 
 if (process.env.GOOGLE_CLOUD_CREDENTIALS_JSON) {
-  // From .env (DigitalOcean, Heroku, etc.)
-  // Need to handle literal \n in the string and convert to actual newlines
-  const credentialsString = process.env.GOOGLE_CLOUD_CREDENTIALS_JSON.replace(/\\n/g, '\n');
-  const credentials = JSON.parse(credentialsString);
-  client = new textToSpeech.TextToSpeechClient({ credentials });
-  console.log('✅ Google Cloud TTS initialized from environment variable');
+  try {
+    // From .env (DigitalOcean, Heroku, etc.)
+    let credentialsString = process.env.GOOGLE_CLOUD_CREDENTIALS_JSON;
+
+    // Check if it's base64 encoded (recommended approach)
+    if (!credentialsString.trim().startsWith('{')) {
+      // It's base64 - decode it
+      credentialsString = Buffer.from(credentialsString, 'base64').toString('utf-8');
+    } else {
+      // It's raw JSON - try to fix escaped newlines
+      credentialsString = credentialsString.replace(/\\n/g, '\n');
+    }
+
+    const credentials = JSON.parse(credentialsString);
+    client = new textToSpeech.TextToSpeechClient({ credentials });
+    console.log('✅ Google Cloud TTS initialized from environment variable');
+  } catch (error) {
+    console.error('❌ Failed to initialize Google Cloud TTS from env variable:', error);
+    console.error('Falling back to file-based credentials...');
+    client = new textToSpeech.TextToSpeechClient();
+  }
 } else {
   // From file (local development)
   client = new textToSpeech.TextToSpeechClient();
