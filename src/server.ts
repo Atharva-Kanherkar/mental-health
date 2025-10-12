@@ -37,12 +37,14 @@ app.use(
   cors({
     origin(origin, cb) {
       // Allow same-origin/non-browser (no Origin header) or allowed origins
+      // Mobile apps (React Native/Expo) don't send Origin header
       if (!origin || allowed.has(origin)) return cb(null, true);
       return cb(new Error(`Origin not allowed: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
   }),
 );
 
