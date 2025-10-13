@@ -1,0 +1,3 @@
+2025.10.13 22:58:35 INFO  Started: Metals version 1.6.2 in folders '/home/atharva/mental-health' for client Visual Studio Code 1.103.2.
+2025.10.13 22:58:36 WARN  no build tool detected in workspace '/home/atharva/mental-health'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. 
+2025.10.13 22:58:37 WARN  Build server is not auto-connectable.

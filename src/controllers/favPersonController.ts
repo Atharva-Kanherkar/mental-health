@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 
-const prisma = new PrismaClient();
 
 // Zod validation schemas
 const PersonaMetadataSchema = z.object({

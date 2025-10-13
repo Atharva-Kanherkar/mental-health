@@ -1,11 +1,10 @@
 
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 import { MemoryController } from './memoryController';
 import { FavPersonController } from './favPersonController';
 
-const prisma = new PrismaClient();
 
 // Zod validation schemas
 const CreateVaultSchema = z.object({

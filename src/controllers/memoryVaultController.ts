@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 
-const prisma = new PrismaClient();
 
 export class MemoryVaultController {
   /**

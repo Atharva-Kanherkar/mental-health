@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
 import { requireOnboarding } from '../middleware/onboarding';
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 
 const router = Router();
-const prisma = new PrismaClient();
 
 // Protect all dashboard routes and require onboarding
 router.use(requireAuth);

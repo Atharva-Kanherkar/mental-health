@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 import { EncryptedFileRequest } from '../middleware/fileUpload';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { 
@@ -15,7 +15,6 @@ import {
 } from '../config/storage';
 import { generateFileMetadata } from '../middleware/fileUpload';
 
-const prisma = new PrismaClient();
 
 // Validation schema for memory upload with privacy level
 const CreateMemorySchema = z.object({

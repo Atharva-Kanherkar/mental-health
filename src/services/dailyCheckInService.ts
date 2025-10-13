@@ -1,7 +1,5 @@
-import { PrismaClient } from '../generated/prisma';
+import prisma from '../prisma/client';
 import { rewardService } from './rewardService';
-
-const prisma = new PrismaClient();
 
 export interface CreateDailyCheckInData {
   overallMood: number;                    // 1-10

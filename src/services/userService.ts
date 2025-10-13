@@ -1,6 +1,5 @@
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 
-const prisma = new PrismaClient();
 
 export interface UpdateUserProfileData {
   name?: string;

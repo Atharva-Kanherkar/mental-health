@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 
-const prisma = new PrismaClient();
 
 /**
  * Middleware to check if user has completed onboarding

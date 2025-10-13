@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { PrismaClient } from '../generated/prisma';
+import prisma from "../prisma/client";
 import { getSignedUrl, PrivacyLevel, deleteFile } from '../config/storage';
 
-const prisma = new PrismaClient();
 
 // Zod validation schemas
 const CreateMemorySchema = z.object({
