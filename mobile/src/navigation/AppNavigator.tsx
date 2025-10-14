@@ -55,6 +55,9 @@ import { ProfileAnalysisScreen } from '../screens/ProfileAnalysisScreen';
 // Rewards Screen
 import { RewardsScreen } from '../screens/RewardsScreen';
 
+// Insights Screen
+import { InsightsScreen } from '../screens/InsightsScreen';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -170,6 +173,9 @@ const MainAppStack = () => {
 
       {/* Rewards */}
       <Stack.Screen name="Rewards" component={RewardsScreen} />
+
+      {/* Insights */}
+      <Stack.Screen name="Insights" component={InsightsScreen} />
     </Stack.Navigator>
   );
 };

@@ -353,6 +353,7 @@ export const DailyCheckinScreen = ({ navigation }: any) => {
     if (isSubmitting) return;
 
     setIsSubmitting(true);
+    setCurrentView('loading'); // Show loading screen during submission
 
     try {
       const checkInData = {
@@ -395,10 +396,18 @@ export const DailyCheckinScreen = ({ navigation }: any) => {
         <SafeAreaView style={styles.centerContent}>
           <View style={styles.loadingBox}>
             <View style={styles.iconCircle}>
-              <CalendarIcon size={40} color="#FFFFFF" />
+              {isSubmitting ? (
+                <CheckIcon size={40} color="#FFFFFF" />
+              ) : (
+                <CalendarIcon size={40} color="#FFFFFF" />
+              )}
             </View>
-            <Text style={styles.loadingTitle}>Loading Your Check-In</Text>
-            <Text style={styles.loadingSubtext}>Preparing your daily wellness space...</Text>
+            <Text style={styles.loadingTitle}>
+              {isSubmitting ? 'Saving Your Check-In...' : 'Loading Your Check-In'}
+            </Text>
+            <Text style={styles.loadingSubtext}>
+              {isSubmitting ? 'Processing your wellness data...' : 'Preparing your daily wellness space...'}
+            </Text>
             <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: 20 }} />
           </View>
         </SafeAreaView>
