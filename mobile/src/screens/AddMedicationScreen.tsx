@@ -24,10 +24,9 @@ import type { CreateMedicationData } from '../types/medication';
 
 const DOSAGE_UNITS = ['mg', 'ml', 'tablets', 'capsules', 'drops', 'units'];
 const FREQUENCIES = [
-  { label: 'Once daily', value: 'once', times: 1 },
-  { label: 'Twice daily', value: 'twice', times: 2 },
-  { label: '3 times daily', value: '3x', times: 3 },
-  { label: '4 times daily', value: '4x', times: 4 },
+  { label: 'Once daily', value: 'once_daily', times: 1 },
+  { label: 'Twice daily', value: 'twice_daily', times: 2 },
+  { label: '3 times daily', value: 'three_times_daily', times: 3 },
   { label: 'As needed', value: 'as_needed', times: 0 },
 ];
 
@@ -40,7 +39,7 @@ export const AddMedicationScreen = () => {
   const [name, setName] = useState('');
   const [dosage, setDosage] = useState('');
   const [dosageUnit, setDosageUnit] = useState('mg');
-  const [frequency, setFrequency] = useState('once');
+  const [frequency, setFrequency] = useState('once_daily');
   const [scheduledTimes, setScheduledTimes] = useState<string[]>(['08:00']);
 
   // Optional fields
