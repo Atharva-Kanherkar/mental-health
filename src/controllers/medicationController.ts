@@ -71,7 +71,7 @@ const QueryDaysSchema = z.object({
 });
 
 const QueryMedicationSchema = z.object({
-  medicationId: z.string().uuid().optional(),
+  medicationId: z.string().optional(),
   days: z.string().optional().default('30').transform(val => {
     const num = parseInt(val);
     if (isNaN(num) || num < 1 || num > 365) {
