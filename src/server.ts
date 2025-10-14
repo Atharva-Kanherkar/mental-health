@@ -18,6 +18,7 @@ import dailyCheckinRoutes from './routes/dailyCheckin';
 import questionnaireRoutes from './routes/questionnaires';
 import userRoutes from './routes/user';
 import crisisRoutes from './routes/crisis';
+import checkInInsightsRoutes from './routes/checkInInsights';
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use('/api/journal', journalRoutes);
 app.use('/api/mental-health', mentalHealthRoutes);
 app.use('/api/rewards', rewardRoutes);
 app.use('/api/checkin', dailyCheckinRoutes);
+app.use('/api/checkin/insights', checkInInsightsRoutes);
 app.use('/api/questionnaires', questionnaireRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/crisis', crisisRoutes);

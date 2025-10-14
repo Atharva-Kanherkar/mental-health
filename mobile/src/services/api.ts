@@ -468,6 +468,77 @@ class ApiService {
     },
   };
 
+  // Check-in Insights API methods
+  insights = {
+    getWeekly: async (): Promise<any> => {
+      const response = await this.request<{ success: boolean; insights: any; generatedAt: string }>({
+        method: 'GET',
+        url: '/api/checkin/insights/weekly',
+      });
+      return response.insights;
+    },
+
+    getPatterns: async (days: number = 30): Promise<any[]> => {
+      const response = await this.request<{ success: boolean; patterns: any[] }>({
+        method: 'GET',
+        url: `/api/checkin/insights/patterns?days=${days}`,
+      });
+      return response.patterns;
+    },
+
+    getCorrelations: async (days: number = 30): Promise<any[]> => {
+      const response = await this.request<{ success: boolean; correlations: any[] }>({
+        method: 'GET',
+        url: `/api/checkin/insights/correlations?days=${days}`,
+      });
+      return response.correlations;
+    },
+
+    getPredictions: async (): Promise<any> => {
+      const response = await this.request<{ success: boolean; prediction: any }>({
+        method: 'GET',
+        url: '/api/checkin/insights/predictions',
+      });
+      return response.prediction;
+    },
+
+    getWarnings: async (): Promise<any[]> => {
+      const response = await this.request<{ success: boolean; warnings: any[] }>({
+        method: 'GET',
+        url: '/api/checkin/insights/warnings',
+      });
+      return response.warnings;
+    },
+
+    getReflections: async (days: number = 30): Promise<any> => {
+      const response = await this.request<{ success: boolean; analysis: any }>({
+        method: 'GET',
+        url: `/api/checkin/insights/reflections?days=${days}`,
+      });
+      return response.analysis;
+    },
+
+    getProgress: async (days: number = 30): Promise<any> => {
+      const response = await this.request<{ success: boolean; progress: any }>({
+        method: 'GET',
+        url: `/api/checkin/insights/progress?days=${days}`,
+      });
+      return response.progress;
+    },
+
+    getComprehensive: async (days: number = 30): Promise<any> => {
+      const response = await this.request<{
+        success: boolean;
+        insights: any;
+        metadata: any;
+      }>({
+        method: 'GET',
+        url: `/api/checkin/insights/comprehensive?days=${days}`,
+      });
+      return response.insights;
+    },
+  };
+
   // Assessment/Questionnaire API methods
   assessment = {
     getAll: async (): Promise<AssessmentQuestionnaire[]> => {

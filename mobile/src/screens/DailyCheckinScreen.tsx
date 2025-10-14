@@ -648,7 +648,7 @@ export const DailyCheckinScreen = ({ navigation }: any) => {
 
                 {/* Boolean Questions */}
                 {currentStepData?.type === 'boolean' && (
-                  <View style={styles.booleanContainer}>
+                  <View style={styles.multipleContainer}>
                     {[
                       { value: true, label: 'Yes' },
                       { value: false, label: 'No' },
@@ -658,20 +658,15 @@ export const DailyCheckinScreen = ({ navigation }: any) => {
                       return (
                         <TouchableOpacity
                           key={option.label}
-                          style={[
-                            styles.booleanButton,
-                            isSelected && (option.value ? styles.booleanButtonYes : styles.booleanButtonNo),
-                          ]}
+                          style={[styles.multipleButton, isSelected && styles.multipleButtonSelected]}
                           onPress={() => handleResponse(option.value)}
                         >
                           <Ionicons
                             name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
                             size={20}
-                            color={isSelected ? '#FFFFFF' : theme.colors.text.secondary}
+                            color={isSelected ? '#FFFFFF' : theme.colors.primary}
                           />
-                          <Text
-                            style={[styles.booleanButtonText, isSelected && styles.booleanButtonTextSelected]}
-                          >
+                          <Text style={[styles.multipleButtonText, isSelected && styles.multipleButtonTextSelected]}>
                             {option.label}
                           </Text>
                         </TouchableOpacity>
@@ -834,7 +829,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.lg,
   },
   scrollContent: {
     padding: theme.spacing.lg,
@@ -864,31 +860,33 @@ const styles = StyleSheet.create({
   // Welcome Screen
   welcomeContent: {
     width: '100%',
-    maxWidth: 500,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   welcomeTitle: {
-    fontSize: theme.fontSizes['3xl'],
+    fontSize: theme.fontSizes['2xl'],
     fontWeight: theme.fontWeights.light as any,
     color: theme.colors.primary,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
     fontFamily: theme.fonts.serif,
+    textAlign: 'center',
   },
   welcomeText: {
-    fontSize: theme.fontSizes.lg,
+    fontSize: theme.fontSizes.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 26,
+    lineHeight: 22,
     marginBottom: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
   },
   alreadyCheckedCard: {
     backgroundColor: '#F0FDF4',
@@ -914,18 +912,19 @@ const styles = StyleSheet.create({
   },
   welcomeCard: {
     backgroundColor: theme.colors.surface.whiteAlpha80,
-    borderRadius: theme.borderRadius['2xl'],
-    padding: theme.spacing.xl,
-    marginBottom: theme.spacing.lg,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     width: '100%',
     borderWidth: 1,
     borderColor: theme.colors.border.light,
+    alignItems: 'center',
   },
   cardTitle: {
-    fontSize: theme.fontSizes.xl,
+    fontSize: theme.fontSizes.lg,
     fontWeight: theme.fontWeights.medium as any,
     color: theme.colors.primary,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
     textAlign: 'center',
   },
   featureGrid: {
@@ -949,10 +948,11 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primary,
     borderRadius: theme.borderRadius.full,
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    width: '100%',
   },
   startButtonText: {
     fontSize: theme.fontSizes.lg,
@@ -963,7 +963,8 @@ const styles = StyleSheet.create({
   backLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: theme.spacing.lg,
+    justifyContent: 'center',
+    marginTop: theme.spacing.xl,
   },
   backLinkText: {
     fontSize: theme.fontSizes.md,
@@ -1205,15 +1206,17 @@ const styles = StyleSheet.create({
   },
   booleanButton: {
     flex: 1,
-    paddingVertical: theme.spacing.lg,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.xl,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.full,
     borderWidth: 2,
     borderColor: theme.colors.purple.medium,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: theme.spacing.xs,
+    minHeight: 56,
   },
   booleanButtonYes: {
     backgroundColor: theme.colors.success,
@@ -1225,9 +1228,8 @@ const styles = StyleSheet.create({
   },
   booleanButtonText: {
     fontSize: theme.fontSizes.lg,
-    fontWeight: theme.fontWeights.medium as any,
-    color: '#4B5563',
-    marginLeft: theme.spacing.sm,
+    fontWeight: theme.fontWeights.semibold as any,
+    color: theme.colors.text.dark,
   },
   booleanButtonTextSelected: {
     color: '#FFFFFF',
