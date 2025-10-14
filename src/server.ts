@@ -17,6 +17,7 @@ import rewardRoutes from './routes/rewards';
 import dailyCheckinRoutes from './routes/dailyCheckin';
 import questionnaireRoutes from './routes/questionnaires';
 import userRoutes from './routes/user';
+import crisisRoutes from './routes/crisis';
 
 const app = express();
 
@@ -88,6 +89,7 @@ app.use('/api/rewards', rewardRoutes);
 app.use('/api/checkin', dailyCheckinRoutes);
 app.use('/api/questionnaires', questionnaireRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/crisis', crisisRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'OK', message: 'Mental Health API is running' });

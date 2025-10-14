@@ -21,6 +21,7 @@ export interface Memory {
   vaultId: string;
   userId: string;
   type: 'text' | 'image' | 'audio' | 'video';
+  title?: string;
   content?: string;
   privacyLevel: 'zero_knowledge' | 'server_managed';
   fileUrl?: string;

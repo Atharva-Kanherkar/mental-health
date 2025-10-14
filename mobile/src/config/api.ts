@@ -62,6 +62,13 @@ export const API_ENDPOINTS = {
     DELETE: (id: string) => `/memories/${id}`,
   },
 
+  // Files
+  FILES: {
+    UPLOAD: '/api/files/upload',
+    ACCESS: (id: string) => `/api/files/${id}/access`,
+    DELETE: (id: string) => `/api/files/${id}`,
+  },
+
   // Favorites
   FAVORITES: {
     CREATE: '/favorites',

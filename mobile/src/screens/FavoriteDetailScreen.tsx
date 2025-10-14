@@ -19,13 +19,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/theme';
 import { api } from '../services/api';
 import { FavoritePerson } from '../types/favorites';
-import { ArrowBackIcon, CallIcon, MailIcon, DeleteIcon, StarIcon, ImageIcon, VideoIcon, MicIcon, DocumentIcon, PersonIcon } from '../components/Icons';
+import { VideoView, useVideoPlayer } from 'expo-video';
+import { useAudioPlayer } from 'expo-audio';
+import { ArrowBackIcon, CallIcon, MailIcon, DeleteIcon, StarIcon, ImageIcon, VideoIcon, MicIcon, DocumentIcon, PersonIcon, PlayIcon, PauseIcon } from '../components/Icons';
 
 export const FavoriteDetailScreen = ({ route, navigation }: any) => {
   const { personId } = route.params;
   const [person, setPerson] = useState<FavoritePerson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [taggedMemories, setTaggedMemories] = useState<any[]>([]);
+  const [voiceUrl, setVoiceUrl] = useState<string>('');
+  const [videoUrl, setVideoUrl] = useState<string>('');
+
+  // Initialize media players with state URLs (hooks must be unconditional)
+  const videoPlayer = videoUrl ? useVideoPlayer(videoUrl) : useVideoPlayer('');
+  const audioPlayer = voiceUrl ? useAudioPlayer(voiceUrl) : useAudioPlayer('');
 
   useEffect(() => {
     loadData();
@@ -44,6 +52,10 @@ export const FavoriteDetailScreen = ({ route, navigation }: any) => {
       console.log('First memory sample:', memoriesData[0]);
 
       setPerson(personData);
+
+      // Set media URLs for players
+      if (personData.voiceNoteUrl) setVoiceUrl(personData.voiceNoteUrl);
+      if (personData.videoNoteUrl) setVideoUrl(personData.videoNoteUrl);
 
       // Filter memories where associatedPerson.id matches this personId
       const tagged = memoriesData.filter((m: any) => m.associatedPerson?.id === personId);
@@ -165,12 +177,57 @@ export const FavoriteDetailScreen = ({ route, navigation }: any) => {
               </View>
             )}
 
+            {person.timezone && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Timezone:</Text>
+                <Text style={styles.infoValue}>{person.timezone}</Text>
+              </View>
+            )}
+
             <View style={styles.metaSection}>
               <Text style={styles.metaText}>
                 Added {new Date(person.createdAt).toLocaleDateString()}
               </Text>
             </View>
           </View>
+
+          {/* Voice Note */}
+          {voiceUrl && audioPlayer && (
+            <View style={styles.mediaCard}>
+              <Text style={styles.mediaTitle}>Voice Note from {person.name}</Text>
+              <TouchableOpacity
+                style={styles.playButton}
+                onPress={() => {
+                  if (audioPlayer.playing) {
+                    audioPlayer.pause();
+                  } else {
+                    audioPlayer.play();
+                  }
+                }}
+              >
+                {audioPlayer.playing ? (
+                  <PauseIcon size={32} color="#FFFFFF" />
+                ) : (
+                  <PlayIcon size={32} color="#FFFFFF" />
+                )}
+                <Text style={styles.playButtonText}>
+                  {audioPlayer.playing ? 'Pause' : 'Play'} Voice
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Video Note */}
+          {videoUrl && videoPlayer && (
+            <View style={styles.mediaCard}>
+              <Text style={styles.mediaTitle}>Video Note from {person.name}</Text>
+              <VideoView
+                player={videoPlayer}
+                style={styles.videoPlayer}
+                nativeControls
+              />
+            </View>
+          )}
 
           {/* Tagged Memories Section */}
           {taggedMemories.length > 0 && (
@@ -192,12 +249,12 @@ export const FavoriteDetailScreen = ({ route, navigation }: any) => {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.memoryTitle} numberOfLines={1}>
-                      {memory.title || memory.content?.substring(0, 30) || 'Untitled Memory'}
+                      {memory.title || memory.fileName || memory.content?.substring(0, 30) || 'Image Memory'}
                     </Text>
                     <Text style={styles.memoryDate}>
-                      {new Date(memory.createdAt).toLocaleDateString()}
+                      {new Date(memory.createdAt).toLocaleDateString()} • {memory.type}
                     </Text>
-                    {!memory.title && memory.content && (
+                    {memory.content && (
                       <Text style={styles.memoryPreview} numberOfLines={1}>
                         {memory.content}
                       </Text>
@@ -326,6 +383,59 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.xs,
     color: theme.colors.text.light,
     textAlign: 'center',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingVertical: theme.spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border.light,
+    marginBottom: theme.spacing.sm,
+  },
+  infoLabel: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.secondary,
+    fontWeight: theme.fontWeights.medium as any,
+  },
+  infoValue: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.primary,
+  },
+  mediaCard: {
+    backgroundColor: theme.colors.surface.whiteAlpha80,
+    borderRadius: theme.borderRadius['2xl'],
+    padding: theme.spacing.lg,
+    marginTop: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  mediaTitle: {
+    fontSize: theme.fontSizes.lg,
+    fontWeight: theme.fontWeights.medium as any,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+  },
+  playButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.md,
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.full,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+  },
+  playButtonText: {
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.medium as any,
+    color: '#FFFFFF',
+  },
+  videoPlayer: {
+    width: '100%',
+    height: 200,
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: '#000',
   },
   profilePhoto: {
     width: 120,

@@ -22,7 +22,8 @@ import { theme } from '../config/theme';
 import { api } from '../services/api';
 import { Button } from '../components/Button';
 import { Slider } from '../components/Slider';
-import { ArrowBackIcon, SaveIcon, CameraIcon, PersonIcon } from '../components/Icons';
+import * as DocumentPicker from 'expo-document-picker';
+import { ArrowBackIcon, SaveIcon, CameraIcon, PersonIcon, VideoIcon, MicIcon } from '../components/Icons';
 
 export const NewFavoriteScreen = ({ navigation }: any) => {
   const [name, setName] = useState('');
@@ -34,8 +35,14 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
   const [timezone, setTimezone] = useState('');
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [voiceNoteUri, setVoiceNoteUri] = useState<string | null>(null);
+  const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | null>(null);
+  const [videoNoteUri, setVideoNoteUri] = useState<string | null>(null);
+  const [videoNoteUrl, setVideoNoteUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isUploadingVoice, setIsUploadingVoice] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
   const handlePickPhoto = async () => {
     try {
@@ -66,22 +73,13 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
     try {
       setIsUploadingPhoto(true);
 
-      const formData = new FormData();
-      formData.append('file', {
-        uri,
-        name: 'profile_photo.jpg',
-        type: 'image/jpeg',
-      } as any);
-      formData.append('type', 'image');
-      formData.append('title', `${name || 'Person'} Profile Photo`);
-      formData.append('privacyLevel', 'server_managed');
-
       const memory = await api.files.uploadEncrypted({
         fileUri: uri,
         fileName: 'profile_photo.jpg',
         mimeType: 'image/jpeg',
         type: 'image',
         title: `${name || 'Person'} Profile Photo`,
+        content: 'attachment_profile_photo', // Mark as attachment
         privacyLevel: 'server_managed',
       });
 
@@ -92,6 +90,95 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
       setPhotoUri(null);
     } finally {
       setIsUploadingPhoto(false);
+    }
+  };
+
+  const handlePickVideo = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant media library permission');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+        allowsEditing: true,
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setVideoNoteUri(result.assets[0].uri);
+        await uploadVideo(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Video picker error:', error);
+      Alert.alert('Error', 'Failed to select video');
+    }
+  };
+
+  const uploadVideo = async (uri: string) => {
+    try {
+      setIsUploadingVideo(true);
+
+      const memory = await api.files.uploadEncrypted({
+        fileUri: uri,
+        fileName: 'video_note.mp4',
+        mimeType: 'video/mp4',
+        type: 'video',
+        title: `${name || 'Person'} Video Note`,
+        content: 'attachment_video_note', // Mark as attachment
+        privacyLevel: 'server_managed',
+      });
+
+      setVideoNoteUrl(memory.signedUrl || '');
+    } catch (error) {
+      console.error('Video upload error:', error);
+      Alert.alert('Error', 'Failed to upload video');
+      setVideoNoteUri(null);
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  const handlePickVoice = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'audio/*',
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setVoiceNoteUri(result.assets[0].uri);
+        await uploadVoice(result.assets[0].uri, result.assets[0].name);
+      }
+    } catch (error) {
+      console.error('Audio picker error:', error);
+      Alert.alert('Error', 'Failed to select audio');
+    }
+  };
+
+  const uploadVoice = async (uri: string, fileName: string) => {
+    try {
+      setIsUploadingVoice(true);
+
+      const memory = await api.files.uploadEncrypted({
+        fileUri: uri,
+        fileName: fileName || 'voice_note.mp3',
+        mimeType: 'audio/mpeg',
+        type: 'audio',
+        title: `${name || 'Person'} Voice Note`,
+        content: 'attachment_voice_note', // Mark as attachment
+        privacyLevel: 'server_managed',
+      });
+
+      setVoiceNoteUrl(memory.signedUrl || '');
+    } catch (error) {
+      console.error('Voice upload error:', error);
+      Alert.alert('Error', 'Failed to upload voice note');
+      setVoiceNoteUri(null);
+    } finally {
+      setIsUploadingVoice(false);
     }
   };
 
@@ -110,6 +197,8 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
         phoneNumber: phoneNumber || undefined,
         email: email || undefined,
         photoUrl: photoUrl || undefined,
+        voiceNoteUrl: voiceNoteUrl || undefined,
+        videoNoteUrl: videoNoteUrl || undefined,
         supportMsg: supportMsg || undefined,
         timezone: timezone || undefined,
       });
@@ -138,7 +227,7 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Photo Upload */}
+          {/* Media Uploads */}
           <View style={styles.section}>
             <Text style={styles.label}>Profile Photo</Text>
             <TouchableOpacity
@@ -155,6 +244,48 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
                   <CameraIcon size={40} color={theme.colors.text.light} />
                   <Text style={styles.photoPlaceholderText}>Tap to add photo</Text>
                 </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>Voice Note (Optional)</Text>
+            <Text style={styles.helperText}>A message in your voice for them</Text>
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={handlePickVoice}
+              disabled={isUploadingVoice}
+            >
+              {isUploadingVoice ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <>
+                  <MicIcon size={24} color={voiceNoteUri ? theme.colors.success : theme.colors.primary} />
+                  <Text style={styles.mediaButtonText}>
+                    {voiceNoteUri ? 'Voice Note Added ✓' : 'Choose Audio File'}
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>Video Note (Optional)</Text>
+            <Text style={styles.helperText}>A video message for them</Text>
+            <TouchableOpacity
+              style={styles.mediaButton}
+              onPress={handlePickVideo}
+              disabled={isUploadingVideo}
+            >
+              {isUploadingVideo ? (
+                <ActivityIndicator size="small" color={theme.colors.primary} />
+              ) : (
+                <>
+                  <VideoIcon size={24} color={videoNoteUri ? theme.colors.success : theme.colors.primary} />
+                  <Text style={styles.mediaButtonText}>
+                    {videoNoteUri ? 'Video Note Added ✓' : 'Choose Video'}
+                  </Text>
+                </>
               )}
             </TouchableOpacity>
           </View>
@@ -365,5 +496,20 @@ const styles = StyleSheet.create({
   photoPlaceholderText: {
     fontSize: theme.fontSizes.xs,
     color: theme.colors.text.light,
+  },
+  mediaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    backgroundColor: theme.colors.surface.whiteAlpha80,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  mediaButtonText: {
+    fontSize: theme.fontSizes.md,
+    color: theme.colors.text.primary,
+    flex: 1,
   },
 });

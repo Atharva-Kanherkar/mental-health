@@ -31,39 +31,61 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuth = async () => {
     try {
-      setIsLoading(true);
+      // OPTIMIZATION: Check local cache first (instant)
+      const cachedSession = await SecureStore.getItemAsync('auth_session');
 
-      // Retry logic for network errors on app startup
-      let retries = 3;
-      let session = null;
-
-      while (retries > 0) {
+      if (cachedSession) {
         try {
-          session = await api.auth.getSession();
-          break;
-        } catch (error: any) {
-          const isNetworkError = error.message?.includes('Network') || error.code === 'ERR_NETWORK';
-          if (isNetworkError && retries > 1) {
-            console.log(`Auth check network error, retrying... (${retries - 1} left)`);
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            retries--;
-          } else {
-            throw error;
+          const parsed = JSON.parse(cachedSession);
+          if (parsed.user) {
+            // Show cached user immediately (optimistic)
+            setUser(parsed.user);
+            setIsLoading(false); // Stop loading immediately!
+
+            // Verify in background (don't block UI)
+            verifySessionInBackground();
+            return;
           }
+        } catch (e) {
+          console.error('Failed to parse cached session:', e);
         }
       }
 
+      // No cache - do full check
+      setIsLoading(true);
+      const session = await api.auth.getSession();
+
       if (session?.user) {
         setUser(session.user);
+        await SecureStore.setItemAsync('auth_session', JSON.stringify(session));
       } else {
         setUser(null);
       }
     } catch (error: any) {
       console.error('Auth check failed:', error);
-      // Graceful fallback - just show login screen
       setUser(null);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const verifySessionInBackground = async () => {
+    // Silently verify session validity without blocking UI
+    try {
+      const session = await api.auth.getSession();
+      if (session?.user) {
+        // Update cached user if changed
+        setUser(session.user);
+        await SecureStore.setItemAsync('auth_session', JSON.stringify(session));
+      } else {
+        // Session invalid - logout
+        setUser(null);
+        await SecureStore.deleteItemAsync('auth_session');
+        await SecureStore.deleteItemAsync('session_token');
+      }
+    } catch (error) {
+      console.error('Background session verification failed:', error);
+      // Don't logout on network errors - keep cached user
     }
   };
 

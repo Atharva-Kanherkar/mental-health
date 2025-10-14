@@ -1,0 +1,65 @@
+{
+  "expo": {
+    "name": "Mental Health Companion",
+    "slug": "mental-health-companion",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mentalhealth.companion",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ],
+        "UNUserNotificationCenter": {
+          "UNAuthorizationOptionCriticalAlert": true
+        }
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.mentalhealth.companion",
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "USE_FULL_SCREEN_INTENT",
+        "WAKE_LOCK"
+      ],
+      "useNextNotificationsApi": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#ffffff",
+          "sounds": [
+            "./assets/notification-sound.wav"
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "notificationServiceUrl": "https://your-notification-service.ondigitalocean.app",
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    }
+  }
+}

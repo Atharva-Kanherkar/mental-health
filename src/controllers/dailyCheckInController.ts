@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { dailyCheckInService, CreateDailyCheckInData } from '../services/dailyCheckInService';
+import { crisisAlertService } from '../services/crisisAlertService';
 
 // Validation schemas
 const CreateDailyCheckInSchema = z.object({
@@ -48,10 +49,17 @@ export class DailyCheckInController {
       }
 
       const checkIn = await dailyCheckInService.createOrUpdateCheckIn(userId, validation.data);
-      
+
       // Check if this was a high-risk check-in and provide appropriate response
-      const isHighRisk = checkIn.hadSuicidalThoughts || checkIn.actedOnHarm || 
+      const isHighRisk = checkIn.hadSuicidalThoughts || checkIn.actedOnHarm ||
                         (checkIn.hadSelfHarmThoughts && checkIn.overallMood <= 3);
+
+      // Trigger crisis alert if needed (async, non-blocking)
+      if (isHighRisk) {
+        const userName = req.user?.name || 'User';
+        crisisAlertService.triggerCrisisAlertIfNeeded(userId, userName, checkIn)
+          .catch(error => console.error('Error triggering crisis alert:', error));
+      }
 
       res.json({
         success: true,

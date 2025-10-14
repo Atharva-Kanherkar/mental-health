@@ -135,8 +135,11 @@ export class MemoryController {
         });
       }
 
-      // Build where clause
-      const whereClause: any = { vaultId: memoryVault.id };
+      // Build where clause - exclude attachments
+      const whereClause: any = {
+        vaultId: memoryVault.id,
+        isAttachment: false // Only show actual memories, not profile photos/notes
+      };
       if (type && ['text', 'image', 'audio'].includes(type)) {
         whereClause.type = type;
       }

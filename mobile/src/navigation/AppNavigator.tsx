@@ -5,12 +5,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../services/api';
 import { theme } from '../config/theme';
 import { HomeIcon, BookIcon, ImageIcon, PersonIcon } from '../components/Icons';
+import { DashboardSkeleton } from '../components/DashboardSkeleton';
 
 // Auth Screens
 import { LoginScreen } from '../screens/LoginScreen';
@@ -175,7 +177,7 @@ const MainAppStack = () => {
 // Main Navigator - handles Auth → Onboarding → App flow
 export const AppNavigator = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
-  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [isOnboarded, setIsOnboarded] = useState(true); // Start optimistic - assume onboarded
   const [isCheckingOnboarding, setIsCheckingOnboarding] = useState(true);
 
   // Check onboarding status when authenticated
@@ -187,18 +189,55 @@ export const AppNavigator = () => {
       }
 
       try {
-        console.log('Checking onboarding status...');
+        // OPTIMIZATION: Check cache first (instant ~5ms vs 500ms network)
+        const cached = await SecureStore.getItemAsync('onboarding_status');
+        if (cached) {
+          const { isOnboarded: cachedStatus, timestamp } = JSON.parse(cached);
+          const ageMinutes = (Date.now() - timestamp) / 1000 / 60;
+
+          // Cache valid for 5 minutes
+          if (ageMinutes < 5) {
+            console.log('Using cached onboarding status:', cachedStatus);
+            setIsOnboarded(cachedStatus);
+            setIsCheckingOnboarding(false);
+
+            // Verify in background (don't block)
+            verifyOnboardingInBackground();
+            return;
+          }
+        }
+
+        // No cache or expired - fetch fresh
+        console.log('Fetching onboarding status from server...');
         const status = await api.onboarding.getStatus();
-        console.log('Onboarding status:', status);
         setIsOnboarded(status.isOnboarded);
-        console.log('User is onboarded:', status.isOnboarded);
+
+        // Cache for next time
+        await SecureStore.setItemAsync('onboarding_status', JSON.stringify({
+          isOnboarded: status.isOnboarded,
+          timestamp: Date.now()
+        }));
       } catch (error: any) {
         console.error('Failed to check onboarding status:', error);
-        console.error('Error message:', error.message);
-        // Default to not onboarded if API fails
         setIsOnboarded(false);
       } finally {
         setIsCheckingOnboarding(false);
+      }
+    };
+
+    const verifyOnboardingInBackground = async () => {
+      try {
+        const status = await api.onboarding.getStatus();
+        if (status.isOnboarded !== isOnboarded) {
+          console.log('Onboarding status changed:', status.isOnboarded);
+          setIsOnboarded(status.isOnboarded);
+        }
+        await SecureStore.setItemAsync('onboarding_status', JSON.stringify({
+          isOnboarded: status.isOnboarded,
+          timestamp: Date.now()
+        }));
+      } catch (error) {
+        console.error('Background onboarding check failed:', error);
       }
     };
 
@@ -206,11 +245,7 @@ export const AppNavigator = () => {
   }, [isAuthenticated]);
 
   if (authLoading || isCheckingOnboarding) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAFE' }}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Not authenticated → Auth Stack (Login/SignUp)

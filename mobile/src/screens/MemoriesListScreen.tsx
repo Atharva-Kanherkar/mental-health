@@ -145,11 +145,23 @@ export const MemoriesListScreen = ({ navigation }: any) => {
                 <View style={styles.memoryIconCircle}>{getMemoryIcon(memory.type)}</View>
                 <View style={{ flex: 1 }}>
                   <View style={styles.memoryHeader}>
-                    <Text style={styles.memoryType}>{memory.type.toUpperCase()}</Text>
+                    <View style={styles.memoryHeaderLeft}>
+                      <Text style={styles.memoryType}>{memory.type.toUpperCase()}</Text>
+                      {memory.privacyLevel === 'zero_knowledge' && (
+                        <View style={styles.encryptedBadge}>
+                          <Text style={styles.encryptedText}>🔒</Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={styles.memoryDate}>
                       {new Date(memory.createdAt).toLocaleDateString()}
                     </Text>
                   </View>
+                  {memory.title && (
+                    <Text style={styles.memoryTitle} numberOfLines={1}>
+                      {memory.title}
+                    </Text>
+                  )}
                   {memory.content && (
                     <Text style={styles.memoryContent} numberOfLines={2}>
                       {memory.content}
@@ -162,7 +174,7 @@ export const MemoriesListScreen = ({ navigation }: any) => {
                   )}
                   <View style={styles.privacyBadge}>
                     <Text style={styles.privacyText}>
-                      {memory.privacyLevel === 'zero_knowledge' ? 'Encrypted' : 'Server Managed'}
+                      {memory.privacyLevel === 'zero_knowledge' ? 'Private' : 'Smart'}
                     </Text>
                   </View>
                 </View>
@@ -287,11 +299,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: theme.spacing.xs,
   },
+  memoryHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
   memoryType: {
     fontSize: theme.fontSizes.xs,
     fontWeight: theme.fontWeights.semibold as any,
     color: theme.colors.primary,
     letterSpacing: 0.5,
+  },
+  encryptedBadge: {
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  encryptedText: {
+    fontSize: 12,
+  },
+  memoryTitle: {
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.medium as any,
+    color: theme.colors.text.dark,
+    marginBottom: theme.spacing.xs,
   },
   memoryDate: {
     fontSize: theme.fontSizes.xs,

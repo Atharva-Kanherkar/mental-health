@@ -176,12 +176,15 @@ export class FileUploadController {
         fileUrl
       });
 
+      // Detect if this is an attachment (profile photo, voice/video note) vs actual memory
+      const isAttachment = content?.startsWith('attachment_') || false;
+
       // Create memory record in database with privacy level
       const memory = await prisma.memory.create({
         data: {
           vaultId: memoryVault.id,
           type,
-          title,  
+          title,
           content: content || null,
           privacyLevel,
           fileKey,
@@ -189,6 +192,7 @@ export class FileUploadController {
           fileName: req.encryptedFile.originalName,
           fileMimeType: req.encryptedFile.mimeType,
           fileSize: req.encryptedFile.size,
+          isAttachment, // Mark attachments so they don't appear in memories list
           // SECURITY: Only store encryption metadata for zero-knowledge files
           encryptionIV: privacyLevel === 'zero_knowledge' ? iv : null,
           encryptionAuthTag: privacyLevel === 'zero_knowledge' ? (authTag || null) : null,
