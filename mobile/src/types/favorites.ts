@@ -29,7 +29,9 @@ export interface CreateFavoritePersonData {
   email?: string;
   timezone?: string;
   supportMsg?: string;
-  description?: string;
+  photoUrl?: string;
+  voiceNoteUrl?: string;
+  videoNoteUrl?: string;
 }
 
 export interface UpdateFavoritePersonData {
