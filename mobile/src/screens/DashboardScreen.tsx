@@ -145,6 +145,22 @@ export const DashboardScreen = ({ navigation }: any) => {
 
             <TouchableOpacity
               style={styles.featureCard}
+              onPress={() => navigation.navigate('Insights')}
+            >
+              <View style={styles.featureIconCircle}>
+                <SparklesIcon size={28} color="#FFFFFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureTitle}>AI Insights & Trends</Text>
+                <Text style={styles.featureText}>
+                  Discover patterns and progress in your wellness journey
+                </Text>
+              </View>
+              <Text style={styles.arrow}>→</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.featureCard}
               onPress={() => navigation.navigate('Rewards')}
             >
               <View style={styles.featureIconCircle}>
