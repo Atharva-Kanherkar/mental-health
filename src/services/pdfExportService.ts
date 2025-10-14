@@ -591,6 +591,18 @@ class PDFExportService {
             </div>
           </div>
 
+          <!-- Download PDF Button -->
+          <div style="text-align: center; margin: 40px 0; padding: 30px; background: #F3F4F6; border-radius: 12px;">
+            <a href="?download=pdf"
+               onclick="window.location.href = window.location.pathname + '/pdf' + window.location.search; return false;"
+               style="display: inline-block; background: #6B5FA8; color: white; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 18px; box-shadow: 0 4px 12px rgba(107,95,168,0.3);">
+              📥 Download PDF Report
+            </a>
+            <p style="margin-top: 12px; font-size: 14px; color: #6B7280;">
+              Click to download a printable PDF version
+            </p>
+          </div>
+
           <!-- Footer -->
           <div class="footer">
             <p>This report is confidential and intended for professional mental health assessment only.</p>
