@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { dailyCheckInService, CreateDailyCheckInData } from '../services/dailyCheckInService';
 import { crisisAlertService } from '../services/crisisAlertService';
+import { medicationService } from '../services/medicationService';
 
 // Validation schemas
 const CreateDailyCheckInSchema = z.object({
@@ -48,7 +49,19 @@ export class DailyCheckInController {
         });
       }
 
-      const checkIn = await dailyCheckInService.createOrUpdateCheckIn(userId, validation.data);
+      // Auto-populate medication adherence if not provided
+      const checkInData = { ...validation.data };
+      if (checkInData.tookMedication === undefined) {
+        try {
+          checkInData.tookMedication = await medicationService.wasAllMedicationTakenToday(userId);
+        } catch (error) {
+          console.error('Error checking medication adherence:', error);
+          // Don't fail the check-in if medication check fails
+          checkInData.tookMedication = false;
+        }
+      }
+
+      const checkIn = await dailyCheckInService.createOrUpdateCheckIn(userId, checkInData);
 
       // Check if this was a high-risk check-in and provide appropriate response
       const isHighRisk = checkIn.hadSuicidalThoughts || checkIn.actedOnHarm ||

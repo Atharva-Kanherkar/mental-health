@@ -35,6 +35,10 @@ model User {
   medicationHistory    MedicationHistory[]
   therapyHistory       TherapyHistory[]
   crisisEvents         CrisisEvent[]
+
+  // Medication Management
+  medications          Medication[]
+  medicationLogs       MedicationLog[]
   
   // Gamification stats
   totalPoints          Int @default(0)
@@ -577,5 +581,81 @@ model SharedReport {
   @@index([shareToken])
   @@index([expiresAt])
   @@index([userId])
+}
+
+// ===== MEDICATION MANAGEMENT SYSTEM =====
+
+// Medication Management System
+model Medication {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // What medication
+  name String // "Sertraline", "Prozac"
+  genericName String? // Generic equivalent
+  dosage String // "50mg", "10mg"
+  dosageUnit String @default("mg") // "mg", "ml", "tablets"
+
+  // When to take
+  frequency String // "once_daily", "twice_daily", "three_times_daily", "as_needed", "custom"
+  scheduledTimes String[] // ["08:00", "20:00"] in HH:MM format
+
+  // Duration
+  startDate DateTime @default(now())
+  endDate DateTime? // Null = ongoing/indefinite
+
+  // Prescriber info
+  prescribedBy String? // Doctor name
+  prescribedDate DateTime?
+
+  // Purpose & Instructions
+  purpose String? // "Anxiety", "Depression", "ADHD"
+  instructions String? // "Take with food", "Before bed"
+  sideEffectsToWatch String? // Known side effects
+
+  // Status
+  isActive Boolean @default(true)
+  remindersEnabled Boolean @default(true)
+
+  // Additional info
+  pharmacy String?
+  refillDate DateTime?
+  notes String?
+
+  // Relations
+  logs MedicationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, isActive])
+}
+
+// Log of medication adherence
+model MedicationLog {
+  id String @id @default(uuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  medicationId String
+  medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  // Timing
+  scheduledTime DateTime // When it should be taken
+  takenAt DateTime? // When actually taken (null = missed/skipped)
+
+  // Status
+  status String @default("pending") // "taken", "missed", "skipped", "late"
+
+  // Feedback
+  sideEffects String? // "Nausea", "Headache"
+  effectiveness Int? // 1-5 rating
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, scheduledTime])
+  @@index([medicationId, scheduledTime])
 }
 

@@ -20,6 +20,7 @@ import userRoutes from './routes/user';
 import crisisRoutes from './routes/crisis';
 import checkInInsightsRoutes from './routes/checkInInsights';
 import shareRoutes from './routes/share';
+import medicationRoutes from './routes/medications';
 
 const app = express();
 
@@ -95,6 +96,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/crisis', crisisRoutes);
 app.use('/api/share', shareRoutes); // Authenticated share endpoints
 app.use('/share', shareRoutes); // Public share endpoints
+app.use('/api/medications', medicationRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'OK', message: 'Mental Health API is running' });

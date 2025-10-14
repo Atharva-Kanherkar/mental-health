@@ -5,6 +5,7 @@
 
 import prisma from '../prisma/client';
 import { checkInAnalyticsService } from './checkInAnalyticsService';
+import { medicationService } from './medicationService';
 
 export interface Report {
   userId: string;
@@ -68,6 +69,35 @@ export interface Report {
     actedOnHarm: number;
     riskLevel: 'low' | 'moderate' | 'high' | 'critical';
   };
+  medications: {
+    activeMedications: Array<{
+      id: string;
+      name: string;
+      dosage: string;
+      dosageUnit: string;
+      frequency: string;
+      startDate: Date;
+      purpose?: string;
+    }>;
+    adherenceRate: {
+      totalScheduled: number;
+      totalTaken: number;
+      adherenceRate: number;
+      period: number;
+    };
+    missedDoses: Array<{
+      medicationId: string;
+      medicationName: string;
+      scheduledTime: Date;
+      status: string;
+    }>;
+    sideEffects: Array<{
+      medicationId: string;
+      medicationName: string;
+      count: number;
+      sideEffects: Array<{ date: Date; sideEffects: string; effectiveness?: number }>;
+    }>;
+  };
   recommendations: string[];
   progressMetrics: {
     moodChange: number;
@@ -85,7 +115,7 @@ class ReportGenerationService {
     console.log(`[ReportGenerationService] Generating ${days}-day report for user ${userId}`);
 
     // Fetch all necessary data in parallel
-    const [user, checkIns, journalEntries, patterns, correlations, assessments, profile, progressMetrics] = await Promise.all([
+    const [user, checkIns, journalEntries, patterns, correlations, assessments, profile, progressMetrics, medications, adherenceRate, missedDoses, sideEffects] = await Promise.all([
       prisma.user.findUnique({ where: { id: userId }, select: { name: true, email: true } }),
       this.fetchCheckIns(userId, days),
       this.fetchJournalEntries(userId, days),
@@ -93,7 +123,12 @@ class ReportGenerationService {
       checkInAnalyticsService.findCorrelations(userId, days),
       this.fetchAssessments(userId, days),
       prisma.mentalHealthProfile.findUnique({ where: { userId } }),
-      checkInAnalyticsService.getProgressMetrics(userId, days)
+      checkInAnalyticsService.getProgressMetrics(userId, days),
+      // Medication data
+      medicationService.getUserMedications(userId, true),
+      medicationService.getAdherenceRate(userId, undefined, days),
+      medicationService.getMissedDoses(userId, days),
+      medicationService.getSideEffectsSummary(userId)
     ]);
 
     if (!user) {
@@ -119,16 +154,20 @@ class ReportGenerationService {
     // Assess safety indicators
     const safetyIndicators = this.assessSafetyIndicators(checkIns);
 
-    // Generate recommendations
+    // Calculate progress metrics
+    const progressMetricsData = this.calculateProgressMetrics(progressMetrics, checkIns);
+
+    // Format medication data
+    const medicationData = this.formatMedicationData(medications, adherenceRate, missedDoses, sideEffects);
+
+    // Generate recommendations (includes medication data)
     const recommendations = this.generateRecommendations(
       summary,
       patterns,
       behaviors,
-      safetyIndicators
+      safetyIndicators,
+      medicationData
     );
-
-    // Calculate progress metrics
-    const progressMetricsData = this.calculateProgressMetrics(progressMetrics, checkIns);
 
     return {
       userId,
@@ -146,6 +185,7 @@ class ReportGenerationService {
       assessments: this.formatAssessments(assessments),
       journalInsights,
       safetyIndicators,
+      medications: medicationData,
       recommendations,
       progressMetrics: progressMetricsData
     };
@@ -386,11 +426,39 @@ class ReportGenerationService {
     }));
   }
 
+  private formatMedicationData(
+    medications: any[],
+    adherenceRate: any,
+    missedDoses: any[],
+    sideEffects: any[]
+  ) {
+    return {
+      activeMedications: medications.map(med => ({
+        id: med.id,
+        name: med.name,
+        dosage: med.dosage,
+        dosageUnit: med.dosageUnit,
+        frequency: med.frequency,
+        startDate: med.startDate,
+        purpose: med.purpose
+      })),
+      adherenceRate,
+      missedDoses: missedDoses.map(log => ({
+        medicationId: log.medicationId,
+        medicationName: log.medication.name,
+        scheduledTime: log.scheduledTime,
+        status: log.status
+      })),
+      sideEffects
+    };
+  }
+
   private generateRecommendations(
     summary: any,
     patterns: any[],
     behaviors: any,
-    safetyIndicators: any
+    safetyIndicators: any,
+    medicationData?: any
   ): string[] {
     const recommendations: string[] = [];
 
@@ -426,12 +494,38 @@ class ReportGenerationService {
       recommendations.push('Address medication adherence barriers (current compliance: ' + behaviors.medication.percentage + '%)');
     }
 
+    // Medication-based recommendations
+    if (medicationData) {
+      // Adherence recommendations
+      if (medicationData.adherenceRate.adherenceRate < 80 && medicationData.activeMedications.length > 0) {
+        recommendations.push(`⚠️ Medication adherence at ${medicationData.adherenceRate.adherenceRate}% - discuss barriers and strategies to improve compliance`);
+      }
+
+      // Missed doses
+      if (medicationData.missedDoses.length > 3) {
+        recommendations.push(`Consider medication reminders or routine adjustments (${medicationData.missedDoses.length} missed doses in period)`);
+      }
+
+      // Side effects
+      if (medicationData.sideEffects.length > 0) {
+        const totalSideEffects = medicationData.sideEffects.reduce((sum: number, se: any) => sum + se.count, 0);
+        if (totalSideEffects > 5) {
+          recommendations.push(`Review medication side effects (${totalSideEffects} reported instances) - consider adjustment or alternative medications`);
+        }
+      }
+
+      // No active medications but low mood
+      if (medicationData.activeMedications.length === 0 && summary.averageMood < 5) {
+        recommendations.push('Consider medication evaluation given persistent low mood levels');
+      }
+    }
+
     // Positive reinforcement
     if (summary.averageMood >= 7 && behaviors.exercise.percentage >= 50) {
       recommendations.push('✅ Current habits showing positive results - encourage continuation');
     }
 
-    return recommendations.slice(0, 8); // Limit to top 8 recommendations
+    return recommendations.slice(0, 10); // Limit to top 10 recommendations
   }
 
   private calculateProgressMetrics(progressMetrics: any, checkIns: any[]) {
