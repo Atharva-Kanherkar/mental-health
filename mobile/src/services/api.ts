@@ -945,14 +945,16 @@ class ApiService {
       return response.log;
     },
 
-    getLogs: async (medicationId?: string, days?: number): Promise<MedicationLog[]> => {
+    getLogs: async (medicationId?: string, days: number = 30): Promise<MedicationLog[]> => {
+      const params: any = { days };
+      if (medicationId) {
+        params.medicationId = medicationId;
+      }
+
       const response = await this.request<{ success: boolean; logs: MedicationLog[]; count: number }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_LOGS,
-        params: {
-          ...(medicationId && { medicationId }),
-          ...(days && { days }),
-        },
+        params,
       });
       return response.logs;
     },
@@ -965,25 +967,25 @@ class ApiService {
       return response.schedule;
     },
 
-    getAdherence: async (medicationId?: string, days?: number): Promise<AdherenceStats> => {
+    getAdherence: async (medicationId?: string, days: number = 7): Promise<AdherenceStats> => {
+      const params: any = { days };
+      if (medicationId) {
+        params.medicationId = medicationId;
+      }
+
       const response = await this.request<{ success: boolean; adherence: AdherenceStats }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_ADHERENCE,
-        params: {
-          ...(medicationId && { medicationId }),
-          ...(days && { days }),
-        },
+        params,
       });
       return response.adherence;
     },
 
-    getMissed: async (days?: number): Promise<MissedDose[]> => {
+    getMissed: async (days: number = 7): Promise<MissedDose[]> => {
       const response = await this.request<{ success: boolean; missedDoses: MissedDose[]; count: number }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_MISSED,
-        params: {
-          ...(days && { days }),
-        },
+        params: { days },
       });
       return response.missedDoses;
     },
