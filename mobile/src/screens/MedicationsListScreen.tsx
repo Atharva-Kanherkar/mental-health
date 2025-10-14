@@ -47,10 +47,6 @@ export const MedicationsListScreen = () => {
         setTodaysSchedule(null);
         setAdherence(null);
       }
-
-      setMedications(medsData);
-      setTodaysSchedule(scheduleData);
-      setAdherence(adherenceData);
     } catch (error: any) {
       console.error('Failed to load medications:', error);
       Alert.alert('Error', 'Failed to load medications. Please try again.');
