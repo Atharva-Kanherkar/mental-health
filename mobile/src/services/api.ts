@@ -921,32 +921,32 @@ class ApiService {
     },
 
     update: async (id: string, data: UpdateMedicationData): Promise<Medication> => {
-      const response = await this.request<MedicationResponse>({
+      const response = await this.request<{ success: boolean; medication: Medication }>({
         method: 'PUT',
         url: API_ENDPOINTS.MEDICATIONS.UPDATE(id),
         data,
       });
-      return response.data.medication;
+      return response.medication;
     },
 
     delete: async (id: string): Promise<void> => {
-      await this.request({
+      await this.request<{ success: boolean; message: string }>({
         method: 'DELETE',
         url: API_ENDPOINTS.MEDICATIONS.DELETE(id),
       });
     },
 
     logDose: async (data: LogDoseData): Promise<MedicationLog> => {
-      const response = await this.request<MedicationLogResponse>({
+      const response = await this.request<{ success: boolean; log: MedicationLog }>({
         method: 'POST',
         url: API_ENDPOINTS.MEDICATIONS.LOG_DOSE,
         data,
       });
-      return response.data.log;
+      return response.log;
     },
 
     getLogs: async (medicationId?: string, days?: number): Promise<MedicationLog[]> => {
-      const response = await this.request<MedicationLogsListResponse>({
+      const response = await this.request<{ success: boolean; logs: MedicationLog[]; count: number }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_LOGS,
         params: {
@@ -954,19 +954,19 @@ class ApiService {
           ...(days && { days }),
         },
       });
-      return response.data.logs;
+      return response.logs;
     },
 
-    getTodaysSchedule: async (): Promise<TodaysSchedule> => {
-      const response = await this.request<TodaysScheduleResponse>({
+    getTodaysSchedule: async (): Promise<any> => {
+      const response = await this.request<{ success: boolean; schedule: any; count: number }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_TODAY_SCHEDULE,
       });
-      return response.data;
+      return response.schedule;
     },
 
     getAdherence: async (medicationId?: string, days?: number): Promise<AdherenceStats> => {
-      const response = await this.request<AdherenceStatsResponse>({
+      const response = await this.request<{ success: boolean; adherence: AdherenceStats }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_ADHERENCE,
         params: {
@@ -974,26 +974,26 @@ class ApiService {
           ...(days && { days }),
         },
       });
-      return response.data;
+      return response.adherence;
     },
 
     getMissed: async (days?: number): Promise<MissedDose[]> => {
-      const response = await this.request<MissedDosesResponse>({
+      const response = await this.request<{ success: boolean; missedDoses: MissedDose[]; count: number }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_MISSED,
         params: {
           ...(days && { days }),
         },
       });
-      return response.data.missedDoses;
+      return response.missedDoses;
     },
 
     getSideEffects: async (): Promise<SideEffect[]> => {
-      const response = await this.request<SideEffectsResponse>({
+      const response = await this.request<{ success: boolean; summary: SideEffect[] }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_SIDE_EFFECTS,
       });
-      return response.data.sideEffects;
+      return response.summary;
     },
   };
 }
