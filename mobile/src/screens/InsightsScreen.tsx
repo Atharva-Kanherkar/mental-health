@@ -277,7 +277,7 @@ export default function InsightsScreen() {
                   },
                 ]}
               >
-                {correlation.strength.toUpperCase()} CORRELATION
+                {(correlation.strength || 'WEAK').toUpperCase()} CORRELATION
               </Text>
             </View>
             <Text style={styles.interpretationText}>
