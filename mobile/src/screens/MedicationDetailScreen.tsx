@@ -37,13 +37,14 @@ export const MedicationDetailScreen = () => {
 
   const loadData = async () => {
     try {
-      const [medData, logsData, adherenceData] = await Promise.all([
-        api.medication.getById(medicationId),
-        api.medication.getLogs(medicationId, 30),
-        api.medication.getAdherence(medicationId, 30),
+      const medData = await api.medication.getById(medicationId);
+      setMedication(medData);
+
+      const [logsData, adherenceData] = await Promise.all([
+        api.medication.getLogs(medicationId, 30).catch(() => []),
+        api.medication.getAdherence(medicationId, 30).catch(() => null),
       ]);
 
-      setMedication(medData);
       setLogs(logsData);
       setAdherence(adherenceData);
     } catch (error: any) {
