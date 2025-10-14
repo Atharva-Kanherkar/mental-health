@@ -108,7 +108,7 @@ export const MedicationsListScreen = () => {
     }
 
     const diffMs = targetTime.getTime() - now.getTime();
-    if (diffMs < 0) return 'passed';
+    if (diffMs < 0) return '(tomorrow)';
 
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -259,7 +259,7 @@ export const MedicationsListScreen = () => {
                     <View style={styles.nextDoseRow}>
                       <Ionicons name="arrow-forward-circle" size={16} color={theme.colors.success} />
                       <Text style={styles.nextDoseText}>
-                        Next: {nextDose} {formatTimeUntil(nextDose)}
+                        Next: {typeof nextDose === 'string' && !nextDose.includes('T') ? nextDose : new Date(nextDose).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} {formatTimeUntil(nextDose)}
                       </Text>
                     </View>
                   )}
