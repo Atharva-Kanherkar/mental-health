@@ -38,8 +38,8 @@ export const MedicationsListScreen = () => {
       // Only load schedule and adherence if medications exist
       if (medsData.length > 0) {
         const [scheduleData, adherenceData] = await Promise.all([
-          api.medication.getTodaysSchedule(),
-          api.medication.getAdherence(undefined, 7),
+          api.medication.getTodaysSchedule().catch(() => null),
+          api.medication.getAdherence(undefined, 7).catch(() => null),
         ]);
         setTodaysSchedule(scheduleData);
         setAdherence(adherenceData);
