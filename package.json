@@ -6,7 +6,8 @@
     "dev": "nodemon",
     "build": "prisma generate && tsc && node -e \"require('fs').cpSync('src/generated', 'dist/generated', {recursive: true})\"",
     "start": "node dist/server.js",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "postbuild": "npx puppeteer browsers install chrome || echo 'Puppeteer browser install skipped'"
   },
   "keywords": [],
   "author": "",
