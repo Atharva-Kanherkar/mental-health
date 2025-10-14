@@ -506,8 +506,8 @@ export default function InsightsScreen() {
           >
             <Ionicons
               name={tab.icon}
-              size={20}
-              color={activeTab === tab.id ? '#8b5cf6' : '#6b7280'}
+              size={16}
+              color={activeTab === tab.id ? '#ffffff' : '#6b7280'}
             />
             <Text
               style={[
@@ -565,29 +565,31 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   tabsContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 4,
   },
   tab: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginHorizontal: 4,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginHorizontal: 3,
+    borderRadius: 16,
     backgroundColor: '#f3f4f6',
+    height: 32,
   },
   activeTab: {
-    backgroundColor: '#ede9fe',
+    backgroundColor: '#8b5cf6',
   },
   tabText: {
-    fontSize: 14,
-    marginLeft: 6,
+    fontSize: 13,
+    marginLeft: 4,
     color: '#6b7280',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   activeTabText: {
-    color: '#8b5cf6',
+    color: '#ffffff',
   },
   content: {
     flex: 1,
