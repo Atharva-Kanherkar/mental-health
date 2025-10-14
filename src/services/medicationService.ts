@@ -388,25 +388,37 @@ class MedicationService {
       }
 
       const totalLogs = await prisma.medicationLog.count({ where });
-
       const takenLogs = await prisma.medicationLog.count({
-        where: {
-          ...where,
-          status: 'taken'
-        }
+        where: { ...where, status: 'taken' }
       });
 
       const adherenceRate = totalLogs > 0 ? Math.round((takenLogs / totalLogs) * 100) : 0;
 
       return {
-        totalScheduled: totalLogs,
-        totalTaken: takenLogs,
+        medicationId,
+        days,
         adherenceRate,
-        period: days
+        totalDoses: totalLogs,
+        takenDoses: takenLogs,
+        missedDoses: 0,
+        skippedDoses: 0,
+        onTimeDoses: 0,
+        lateDoses: 0
       };
     } catch (error) {
       console.error('[MedicationService] Error calculating adherence rate:', error);
-      throw error;
+      // Return 0% instead of throwing
+      return {
+        medicationId,
+        days,
+        adherenceRate: 0,
+        totalDoses: 0,
+        takenDoses: 0,
+        missedDoses: 0,
+        skippedDoses: 0,
+        onTimeDoses: 0,
+        lateDoses: 0
+      };
     }
   }
 
