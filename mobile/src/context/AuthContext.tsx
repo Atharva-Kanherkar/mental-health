@@ -32,14 +32,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const checkAuth = async () => {
     try {
       setIsLoading(true);
-      const session = await api.auth.getSession();
+
+      // Retry logic for network errors on app startup
+      let retries = 3;
+      let session = null;
+
+      while (retries > 0) {
+        try {
+          session = await api.auth.getSession();
+          break;
+        } catch (error: any) {
+          const isNetworkError = error.message?.includes('Network') || error.code === 'ERR_NETWORK';
+          if (isNetworkError && retries > 1) {
+            console.log(`Auth check network error, retrying... (${retries - 1} left)`);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            retries--;
+          } else {
+            throw error;
+          }
+        }
+      }
+
       if (session?.user) {
         setUser(session.user);
       } else {
         setUser(null);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth check failed:', error);
+      // Graceful fallback - just show login screen
       setUser(null);
     } finally {
       setIsLoading(false);

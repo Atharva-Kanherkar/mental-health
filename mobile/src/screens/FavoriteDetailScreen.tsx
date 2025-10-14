@@ -12,29 +12,49 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/theme';
 import { api } from '../services/api';
 import { FavoritePerson } from '../types/favorites';
-import { ArrowBackIcon, CallIcon, MailIcon, DeleteIcon, StarIcon } from '../components/Icons';
+import { ArrowBackIcon, CallIcon, MailIcon, DeleteIcon, StarIcon, ImageIcon, VideoIcon, MicIcon, DocumentIcon, PersonIcon } from '../components/Icons';
 
 export const FavoriteDetailScreen = ({ route, navigation }: any) => {
   const { personId } = route.params;
   const [person, setPerson] = useState<FavoritePerson | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [taggedMemories, setTaggedMemories] = useState<any[]>([]);
 
   useEffect(() => {
-    loadPerson();
+    loadData();
   }, [personId]);
 
-  const loadPerson = async () => {
+  const loadData = async () => {
     try {
-      setIsLoading(true);
-      const data = await api.favorites.getById(personId);
-      setPerson(data);
-    } catch (error) {
+      console.log('Loading person data for:', personId);
+      const [personData, memoriesData] = await Promise.all([
+        api.favorites.getById(personId),
+        api.memory.getAll(),
+      ]);
+
+      console.log('Person data:', personData);
+      console.log('Memories count:', memoriesData.length);
+      console.log('First memory sample:', memoriesData[0]);
+
+      setPerson(personData);
+
+      // Filter memories where associatedPerson.id matches this personId
+      const tagged = memoriesData.filter((m: any) => m.associatedPerson?.id === personId);
+      console.log('Tagged memories:', tagged.length);
+      if (tagged.length > 0) {
+        console.log('First tagged memory:', tagged[0]);
+      }
+      setTaggedMemories(tagged);
+    } catch (error: any) {
+      console.error('Failed to load data:', error);
+      console.error('Error message:', error.message);
       Alert.alert('Error', 'Failed to load person details');
       navigation.goBack();
     } finally {
@@ -102,6 +122,15 @@ export const FavoriteDetailScreen = ({ route, navigation }: any) => {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Profile Photo */}
+          {person.photoUrl ? (
+            <Image source={{ uri: person.photoUrl }} style={styles.profilePhoto} />
+          ) : (
+            <View style={styles.profilePhotoPlaceholder}>
+              <PersonIcon size={60} color={theme.colors.text.light} />
+            </View>
+          )}
+
           <View style={styles.card}>
             <View style={styles.priorityCircle}>
               <StarIcon size={32} color="#FFFFFF" />
@@ -142,6 +171,42 @@ export const FavoriteDetailScreen = ({ route, navigation }: any) => {
               </Text>
             </View>
           </View>
+
+          {/* Tagged Memories Section */}
+          {taggedMemories.length > 0 && (
+            <View style={styles.memoriesSection}>
+              <Text style={styles.memoriesTitle}>
+                Memories with {person.name} ({taggedMemories.length})
+              </Text>
+              {taggedMemories.map((memory) => (
+                <TouchableOpacity
+                  key={memory.id}
+                  style={styles.memoryCard}
+                  onPress={() => navigation.navigate('MemoryDetail', { memoryId: memory.id })}
+                >
+                  <View style={styles.memoryIcon}>
+                    {memory.type === 'image' && <ImageIcon size={20} color={theme.colors.primary} />}
+                    {memory.type === 'video' && <VideoIcon size={20} color={theme.colors.primary} />}
+                    {memory.type === 'audio' && <MicIcon size={20} color={theme.colors.primary} />}
+                    {memory.type === 'text' && <DocumentIcon size={20} color={theme.colors.primary} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.memoryTitle} numberOfLines={1}>
+                      {memory.title || memory.content?.substring(0, 30) || 'Untitled Memory'}
+                    </Text>
+                    <Text style={styles.memoryDate}>
+                      {new Date(memory.createdAt).toLocaleDateString()}
+                    </Text>
+                    {!memory.title && memory.content && (
+                      <Text style={styles.memoryPreview} numberOfLines={1}>
+                        {memory.content}
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </ScrollView>
       </SafeAreaView>
     </LinearGradient>
@@ -261,5 +326,74 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.xs,
     color: theme.colors.text.light,
     textAlign: 'center',
+  },
+  profilePhoto: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignSelf: 'center',
+    marginVertical: theme.spacing.lg,
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
+  },
+  profilePhotoPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignSelf: 'center',
+    marginVertical: theme.spacing.lg,
+    backgroundColor: theme.colors.purple.lightest,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.border.light,
+  },
+  memoriesSection: {
+    marginTop: theme.spacing.xl,
+    paddingTop: theme.spacing.xl,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.light,
+  },
+  memoriesTitle: {
+    fontSize: theme.fontSizes.lg,
+    fontWeight: theme.fontWeights.medium as any,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
+    fontFamily: theme.fonts.serif,
+  },
+  memoryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    backgroundColor: theme.colors.surface.whiteAlpha80,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  memoryIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: theme.colors.purple.lightest,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  memoryTitle: {
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.medium as any,
+    color: theme.colors.text.primary,
+  },
+  memoryDate: {
+    fontSize: theme.fontSizes.xs,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  memoryPreview: {
+    fontSize: theme.fontSizes.xs,
+    color: theme.colors.text.light,
+    marginTop: 2,
+    fontStyle: 'italic',
   },
 });

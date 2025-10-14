@@ -12,14 +12,17 @@ import {
   StyleSheet,
   TextInput,
   Alert,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { theme } from '../config/theme';
 import { api } from '../services/api';
 import { Button } from '../components/Button';
 import { Slider } from '../components/Slider';
-import { ArrowBackIcon, SaveIcon } from '../components/Icons';
+import { ArrowBackIcon, SaveIcon, CameraIcon, PersonIcon } from '../components/Icons';
 
 export const NewFavoriteScreen = ({ navigation }: any) => {
   const [name, setName] = useState('');
@@ -27,7 +30,70 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [priority, setPriority] = useState(5);
+  const [supportMsg, setSupportMsg] = useState('');
+  const [timezone, setTimezone] = useState('');
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handlePickPhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera roll permission');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        setPhotoUri(result.assets[0].uri);
+        await uploadPhoto(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Photo picker error:', error);
+      Alert.alert('Error', 'Failed to select photo');
+    }
+  };
+
+  const uploadPhoto = async (uri: string) => {
+    try {
+      setIsUploadingPhoto(true);
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri,
+        name: 'profile_photo.jpg',
+        type: 'image/jpeg',
+      } as any);
+      formData.append('type', 'image');
+      formData.append('title', `${name || 'Person'} Profile Photo`);
+      formData.append('privacyLevel', 'server_managed');
+
+      const memory = await api.files.uploadEncrypted({
+        fileUri: uri,
+        fileName: 'profile_photo.jpg',
+        mimeType: 'image/jpeg',
+        type: 'image',
+        title: `${name || 'Person'} Profile Photo`,
+        privacyLevel: 'server_managed',
+      });
+
+      setPhotoUrl(memory.signedUrl || '');
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      Alert.alert('Error', 'Failed to upload photo');
+      setPhotoUri(null);
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!name.trim() || !relationship.trim()) {
@@ -43,6 +109,9 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
         priority,
         phoneNumber: phoneNumber || undefined,
         email: email || undefined,
+        photoUrl: photoUrl || undefined,
+        supportMsg: supportMsg || undefined,
+        timezone: timezone || undefined,
       });
       Alert.alert('Success', 'Person added successfully', [
         { text: 'OK', onPress: () => navigation.goBack() },
@@ -69,6 +138,27 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Photo Upload */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Profile Photo</Text>
+            <TouchableOpacity
+              style={styles.photoUpload}
+              onPress={handlePickPhoto}
+              disabled={isUploadingPhoto}
+            >
+              {isUploadingPhoto ? (
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+              ) : photoUri ? (
+                <Image source={{ uri: photoUri }} style={styles.photoPreview} />
+              ) : (
+                <View style={styles.photoPlaceholder}>
+                  <CameraIcon size={40} color={theme.colors.text.light} />
+                  <Text style={styles.photoPlaceholderText}>Tap to add photo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.section}>
             <Text style={styles.label}>Name *</Text>
             <TextInput
@@ -113,6 +203,34 @@ export const NewFavoriteScreen = ({ navigation }: any) => {
               onChangeText={setEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>Timezone</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g., America/New_York (Optional)"
+              placeholderTextColor={theme.colors.text.light}
+              value={timezone}
+              onChangeText={setTimezone}
+            />
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.label}>Support Message</Text>
+            <Text style={styles.helperText}>
+              A message of support they can see
+            </Text>
+            <TextInput
+              style={[styles.input, styles.textArea]}
+              placeholder="You mean so much to me... (Optional)"
+              placeholderTextColor={theme.colors.text.light}
+              value={supportMsg}
+              onChangeText={setSupportMsg}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
             />
           </View>
 
@@ -205,6 +323,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border.light,
   },
+  textArea: {
+    minHeight: 100,
+    paddingTop: theme.spacing.md,
+  },
   priorityValue: {
     fontSize: theme.fontSizes.xl,
     fontWeight: theme.fontWeights.bold as any,
@@ -217,5 +339,31 @@ const styles = StyleSheet.create({
     fontWeight: theme.fontWeights.medium as any,
     color: '#FFFFFF',
     marginLeft: theme.spacing.sm,
+  },
+  photoUpload: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: theme.colors.purple.lightest,
+    alignSelf: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: theme.colors.border.medium,
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 60,
+  },
+  photoPlaceholder: {
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  photoPlaceholderText: {
+    fontSize: theme.fontSizes.xs,
+    color: theme.colors.text.light,
   },
 });

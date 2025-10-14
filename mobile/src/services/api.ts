@@ -368,11 +368,12 @@ class ApiService {
     },
 
     getById: async (id: string): Promise<FavoritePerson> => {
-      const response = await this.request<FavoritePersonResponse>({
+      const response = await this.request<{ success: boolean; data: { favPerson: FavoritePerson } }>({
         method: 'GET',
         url: API_ENDPOINTS.FAVORITES.GET_BY_ID(id),
       });
-      return response.data.favoritePerson;
+      console.log('Favorites getById response:', response);
+      return response.data.favPerson;
     },
 
     update: async (id: string, data: UpdateFavoritePersonData): Promise<FavoritePerson> => {
@@ -552,6 +553,113 @@ class ApiService {
         url: '/api/mental-health/profile/analysis',
       });
       return response.analysis;
+    },
+  };
+
+  // File Upload API methods
+  files = {
+    uploadEncrypted: async (data: {
+      fileUri: string;
+      fileName: string;
+      mimeType: string;
+      type: 'text' | 'image' | 'audio' | 'video';
+      title: string;
+      content?: string;
+      associatedPersonId?: string;
+      privacyLevel: 'zero_knowledge' | 'server_managed';
+      iv?: string;
+      authTag?: string;
+    }): Promise<Memory> => {
+      try {
+        // Create FormData for multipart upload
+        const formData = new FormData();
+
+        // Add file
+        formData.append('file', {
+          uri: data.fileUri,
+          name: data.fileName,
+          type: data.mimeType,
+        } as any);
+
+        // Add other fields
+        formData.append('type', data.type);
+        formData.append('title', data.title);
+        formData.append('privacyLevel', data.privacyLevel);
+
+        if (data.content) {
+          formData.append('content', data.content);
+        }
+
+        if (data.associatedPersonId) {
+          formData.append('associatedPersonId', data.associatedPersonId);
+        }
+
+        if (data.iv) {
+          formData.append('iv', data.iv);
+        }
+
+        if (data.authTag) {
+          formData.append('authTag', data.authTag);
+        }
+
+        console.log('Uploading file:', { fileName: data.fileName, type: data.type, privacy: data.privacyLevel });
+
+        const response = await this.client.request<MemoryResponse>({
+          method: 'POST',
+          url: API_ENDPOINTS.FILES.UPLOAD,
+          data: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          transformRequest: () => formData, // Let axios handle FormData
+        });
+
+        console.log('Upload response:', response.status);
+        return response.data.data.memory;
+      } catch (error: any) {
+        console.error('File upload error:', error.message);
+        console.error('Error details:', {
+          code: error.code,
+          response: error.response?.data,
+        });
+        throw new Error(error.response?.data?.message || error.message || 'Failed to upload file');
+      }
+    },
+
+    getFileAccess: async (memoryId: string): Promise<{
+      signedUrl: string;
+      fileName: string;
+      mimeType: string;
+      size: number;
+      privacyLevel: 'zero_knowledge' | 'server_managed';
+      encryptionIV?: string;
+      encryptionAuthTag?: string;
+      expiresIn: number;
+    }> => {
+      const response = await this.request<{
+        success: boolean;
+        data: {
+          signedUrl: string;
+          fileName: string;
+          mimeType: string;
+          size: number;
+          privacyLevel: 'zero_knowledge' | 'server_managed';
+          encryptionIV?: string;
+          encryptionAuthTag?: string;
+          expiresIn: number;
+        };
+      }>({
+        method: 'GET',
+        url: API_ENDPOINTS.FILES.ACCESS(memoryId),
+      });
+      return response.data;
+    },
+
+    deleteEncrypted: async (memoryId: string): Promise<void> => {
+      await this.request({
+        method: 'DELETE',
+        url: API_ENDPOINTS.FILES.DELETE(memoryId),
+      });
     },
   };
 

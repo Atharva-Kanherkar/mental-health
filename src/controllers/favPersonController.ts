@@ -401,14 +401,38 @@ export class FavPersonController {
         });
       }
 
-      // Delete the favorite person
+      // Delete associated files from DigitalOcean Spaces before deleting person
+      const filesToDelete = [
+        existingPerson.photoUrl,
+        existingPerson.voiceNoteUrl,
+        existingPerson.videoNoteUrl
+      ].filter(Boolean);
+
+      if (filesToDelete.length > 0) {
+        const { deleteFile } = require('../config/storage');
+        for (const fileUrl of filesToDelete) {
+          try {
+            // Extract file key from URL
+            const fileKey = fileUrl.split('.digitaloceanspaces.com/')[1]?.split('?')[0];
+            if (fileKey) {
+              await deleteFile(fileKey, 'server_managed');
+              console.log('Deleted file from Spaces:', fileKey);
+            }
+          } catch (error) {
+            console.error('Failed to delete file:', fileUrl, error);
+            // Continue with deletion even if file removal fails
+          }
+        }
+      }
+
+      // Delete the favorite person from database
       await prisma.favPerson.delete({
         where: { id: personId }
       });
 
       res.json({
         success: true,
-        message: 'Favorite person deleted successfully'
+        message: 'Favorite person and associated files deleted successfully'
       });
     } catch (error: any) {
       res.status(500).json({
