@@ -84,17 +84,32 @@ export const MedicationsListScreen = () => {
     return med.scheduledTimes.find((time) => time > currentTime) || med.scheduledTimes[0];
   };
 
-  const formatTimeUntil = (time: string) => {
+  const formatTimeUntil = (time: string | Date) => {
     const now = new Date();
-    const [hours, minutes] = time.split(':').map(Number);
-    const targetTime = new Date(now);
-    targetTime.setHours(hours, minutes, 0, 0);
 
-    if (targetTime < now) {
-      targetTime.setDate(targetTime.getDate() + 1);
+    let targetTime: Date;
+    if (typeof time === 'string') {
+      if (time.includes('T')) {
+        // ISO string
+        targetTime = new Date(time);
+      } else {
+        // HH:MM format
+        const [hours, minutes] = time.split(':').map(Number);
+        if (isNaN(hours) || isNaN(minutes)) return '';
+        targetTime = new Date(now);
+        targetTime.setHours(hours, minutes, 0, 0);
+
+        if (targetTime < now) {
+          targetTime.setDate(targetTime.getDate() + 1);
+        }
+      }
+    } else {
+      targetTime = new Date(time);
     }
 
     const diffMs = targetTime.getTime() - now.getTime();
+    if (diffMs < 0) return 'passed';
+
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
 

@@ -406,12 +406,13 @@ export class MedicationController {
       });
     } catch (error: any) {
       console.error('Error calculating adherence rate:', error);
-      // Return empty stats instead of error
+      // Don't throw 404 - return 0% stats
+      const days = parseInt(req.query.days as string) || 7;
       res.json({
         success: true,
         adherence: {
-          medicationId: undefined,
-          days: 7,
+          medicationId: req.query.medicationId as string | undefined,
+          days,
           adherenceRate: 0,
           totalDoses: 0,
           takenDoses: 0,
