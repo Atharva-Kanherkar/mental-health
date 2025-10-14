@@ -318,13 +318,18 @@ export class MedicationController {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      console.log('[MedicationController] getLogs query:', req.query);
+
       const validation = QueryMedicationSchema.safeParse(req.query);
       if (!validation.success) {
+        console.log('[MedicationController] Validation failed:', validation.error);
         return res.status(400).json({
           error: 'Invalid query parameters',
           details: validation.error.issues
         });
       }
+
+      console.log('[MedicationController] Getting logs for:', validation.data.medicationId, 'days:', validation.data.days);
 
       const logs = await medicationService.getMedicationLogs(
         userId,
@@ -386,13 +391,18 @@ export class MedicationController {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      console.log('[MedicationController] getAdherence query:', req.query);
+
       const validation = QueryMedicationSchema.safeParse(req.query);
       if (!validation.success) {
+        console.log('[MedicationController] Validation failed:', validation.error);
         return res.status(400).json({
           error: 'Invalid query parameters',
           details: validation.error.issues
         });
       }
+
+      console.log('[MedicationController] Getting adherence for:', validation.data.medicationId, 'days:', validation.data.days);
 
       const adherence = await medicationService.getAdherenceRate(
         userId,
