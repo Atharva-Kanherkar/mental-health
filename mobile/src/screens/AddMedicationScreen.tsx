@@ -124,7 +124,9 @@ export const AddMedicationScreen = () => {
         remindersEnabled: hasPermission,
       };
 
+      console.log('Sending to backend:', JSON.stringify(data, null, 2));
       const medication = await api.medication.create(data);
+      console.log('Medication created:', medication);
 
       // Schedule notifications if permitted
       if (hasPermission && scheduledTimes.length > 0) {
