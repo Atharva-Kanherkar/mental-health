@@ -1,5 +1,5 @@
 import axios from 'axios';
-import prisma from '../config/database';
+import prisma from '../prisma/client';
 
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:3001';
 
@@ -77,7 +77,7 @@ export class CrisisAlertService {
         return [];
       }
 
-      return vault.favPeople.map(person => ({
+      return vault.favPeople.map((person: any) => ({
         phoneNumber: person.phoneNumber!,
         name: person.name,
         priority: person.priority
