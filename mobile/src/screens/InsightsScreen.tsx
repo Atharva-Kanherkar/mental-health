@@ -23,6 +23,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../services/api';
+import { ShareModal } from '../components/ShareModal';
 
 interface TabOption {
   id: string;
@@ -44,6 +45,7 @@ export default function InsightsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   useEffect(() => {
     loadInsights();
@@ -493,9 +495,18 @@ export default function InsightsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Insights</Text>
-        <TouchableOpacity onPress={onRefresh}>
-          <Ionicons name="refresh" size={24} color="#8b5cf6" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.shareButton}
+            onPress={() => setShowShareModal(true)}
+          >
+            <Ionicons name="share-social" size={20} color="#ffffff" />
+            <Text style={styles.shareButtonText}>Share</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onRefresh} style={styles.refreshButton}>
+            <Ionicons name="refresh" size={24} color="#8b5cf6" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Tabs */}
@@ -542,6 +553,14 @@ export default function InsightsScreen() {
       >
         {renderContent()}
       </ScrollView>
+
+      {/* Share Modal */}
+      <ShareModal
+        visible={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        reportType="comprehensive"
+        days={30}
+      />
     </View>
   );
 }
@@ -565,6 +584,28 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1f2937',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  shareButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#6B5FA8',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  shareButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  refreshButton: {
+    padding: 4,
   },
   tabsContainer: {
     backgroundColor: '#ffffff',

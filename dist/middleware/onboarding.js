@@ -1,8 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireNoOnboarding = exports.requireOnboarding = void 0;
-const prisma_1 = require("../generated/prisma");
-const prisma = new prisma_1.PrismaClient();
+const client_1 = __importDefault(require("../prisma/client"));
 /**
  * Middleware to check if user has completed onboarding
  * Redirects to onboarding if not completed
@@ -17,7 +19,7 @@ const requireOnboarding = async (req, res, next) => {
         }
         const userId = req.user.id;
         // Check if user has completed onboarding by looking for MemoryVault
-        const memoryVault = await prisma.memoryVault.findUnique({
+        const memoryVault = await client_1.default.memoryVault.findUnique({
             where: { userId }
         });
         if (!memoryVault) {
@@ -57,7 +59,7 @@ const requireNoOnboarding = async (req, res, next) => {
         }
         const userId = req.user.id;
         // Check if user has completed onboarding
-        const memoryVault = await prisma.memoryVault.findUnique({
+        const memoryVault = await client_1.default.memoryVault.findUnique({
             where: { userId }
         });
         if (memoryVault) {

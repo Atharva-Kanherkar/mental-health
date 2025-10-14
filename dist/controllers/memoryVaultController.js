@@ -1,8 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemoryVaultController = void 0;
-const prisma_1 = require("../generated/prisma");
-const prisma = new prisma_1.PrismaClient();
+const client_1 = __importDefault(require("../prisma/client"));
 class MemoryVaultController {
     /**
      * Get the complete memory vault for the authenticated user
@@ -11,7 +13,7 @@ class MemoryVaultController {
         try {
             const userId = req.user.id;
             // Get the memory vault with all relations
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId },
                 include: {
                     memories: {
@@ -87,7 +89,7 @@ class MemoryVaultController {
         try {
             const userId = req.user.id;
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -98,12 +100,12 @@ class MemoryVaultController {
             }
             // Get counts and statistics
             const [totalMemories, textMemories, imageMemories, audioMemories, totalFavPeople, recentMemories] = await Promise.all([
-                prisma.memory.count({ where: { vaultId: memoryVault.id } }),
-                prisma.memory.count({ where: { vaultId: memoryVault.id, type: 'text' } }),
-                prisma.memory.count({ where: { vaultId: memoryVault.id, type: 'image' } }),
-                prisma.memory.count({ where: { vaultId: memoryVault.id, type: 'audio' } }),
-                prisma.favPerson.count({ where: { vaultId: memoryVault.id } }),
-                prisma.memory.count({
+                client_1.default.memory.count({ where: { vaultId: memoryVault.id } }),
+                client_1.default.memory.count({ where: { vaultId: memoryVault.id, type: 'text' } }),
+                client_1.default.memory.count({ where: { vaultId: memoryVault.id, type: 'image' } }),
+                client_1.default.memory.count({ where: { vaultId: memoryVault.id, type: 'audio' } }),
+                client_1.default.favPerson.count({ where: { vaultId: memoryVault.id } }),
+                client_1.default.memory.count({
                     where: {
                         vaultId: memoryVault.id,
                         createdAt: {
@@ -146,7 +148,7 @@ class MemoryVaultController {
         try {
             const userId = req.user.id;
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -156,7 +158,7 @@ class MemoryVaultController {
                 });
             }
             // Delete all related data in a transaction
-            await prisma.$transaction(async (tx) => {
+            await client_1.default.$transaction(async (tx) => {
                 // Delete all memories
                 await tx.memory.deleteMany({
                     where: { vaultId: memoryVault.id }
@@ -197,7 +199,7 @@ class MemoryVaultController {
                 });
             }
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -209,7 +211,7 @@ class MemoryVaultController {
             const searchResults = {};
             // Search memories if requested
             if (!type || type === 'all' || type === 'memories') {
-                const memories = await prisma.memory.findMany({
+                const memories = await client_1.default.memory.findMany({
                     where: {
                         vaultId: memoryVault.id,
                         OR: [
@@ -229,7 +231,7 @@ class MemoryVaultController {
             }
             // Search favorite people if requested
             if (!type || type === 'all' || type === 'people') {
-                const favPeople = await prisma.favPerson.findMany({
+                const favPeople = await client_1.default.favPerson.findMany({
                     where: {
                         vaultId: memoryVault.id,
                         OR: [

@@ -1,11 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const auth_1 = require("../middleware/auth");
 const onboarding_1 = require("../middleware/onboarding");
-const prisma_1 = require("../generated/prisma");
+const client_1 = __importDefault(require("../prisma/client"));
 const router = (0, express_1.Router)();
-const prisma = new prisma_1.PrismaClient();
 // Protect all dashboard routes and require onboarding
 router.use(auth_1.requireAuth);
 router.use(onboarding_1.requireOnboarding);
@@ -15,7 +17,7 @@ router.get('/', async (req, res) => {
         const userId = req.user.id;
         const memoryVaultId = req.memoryVault.id;
         // Get recent memories and favorite people
-        const memoryVaultData = await prisma.memoryVault.findUnique({
+        const memoryVaultData = await client_1.default.memoryVault.findUnique({
             where: { id: memoryVaultId },
             include: {
                 memories: {
@@ -40,10 +42,10 @@ router.get('/', async (req, res) => {
                     id: memoryVaultData.id,
                     recentMemories: memoryVaultData.memories,
                     favPeople: memoryVaultData.favPeople,
-                    totalMemories: await prisma.memory.count({
+                    totalMemories: await client_1.default.memory.count({
                         where: { vaultId: memoryVaultId }
                     }),
-                    totalFavPeople: await prisma.favPerson.count({
+                    totalFavPeople: await client_1.default.favPerson.count({
                         where: { vaultId: memoryVaultId }
                     })
                 }
@@ -61,7 +63,7 @@ router.get('/', async (req, res) => {
 router.get('/profile', async (req, res) => {
     try {
         const userId = req.user.id;
-        const user = await prisma.user.findUnique({
+        const user = await client_1.default.user.findUnique({
             where: { id: userId },
             include: {
                 memoryVault: {

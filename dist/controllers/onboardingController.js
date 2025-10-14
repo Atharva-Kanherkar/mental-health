@@ -1,11 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.OnboardingController = void 0;
 const zod_1 = require("zod");
-const prisma_1 = require("../generated/prisma");
+const client_1 = __importDefault(require("../prisma/client"));
 const memoryController_1 = require("./memoryController");
 const favPersonController_1 = require("./favPersonController");
-const prisma = new prisma_1.PrismaClient();
 // Zod validation schemas
 const CreateVaultSchema = zod_1.z.object({
     timezone: zod_1.z.string().optional(),
@@ -25,7 +27,7 @@ class OnboardingController {
             // User is guaranteed to exist due to requireAuth middleware
             const userId = req.user.id;
             // Check if user has completed onboarding by looking for MemoryVault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             const isOnboarded = !!memoryVault;
@@ -66,7 +68,7 @@ class OnboardingController {
             }
             const { timezone } = validationResult.data;
             // Check if user is already onboarded
-            const existingVault = await prisma.memoryVault.findUnique({
+            const existingVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (existingVault) {
@@ -78,7 +80,7 @@ class OnboardingController {
             // Update user timezone if provided (preparing for vault creation)
             let updatedUser = null;
             if (timezone) {
-                updatedUser = await prisma.user.update({
+                updatedUser = await client_1.default.user.update({
                     where: { id: userId },
                     data: { timezone }
                 });
@@ -109,7 +111,7 @@ class OnboardingController {
         try {
             const userId = req.user.id;
             // Check if user is already onboarded
-            const existingVault = await prisma.memoryVault.findUnique({
+            const existingVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (existingVault) {
@@ -119,7 +121,7 @@ class OnboardingController {
                 });
             }
             // For now, create an empty vault but in the future this could include initial content
-            const memoryVault = await prisma.memoryVault.create({
+            const memoryVault = await client_1.default.memoryVault.create({
                 data: {
                     userId: userId
                 }
@@ -151,7 +153,7 @@ class OnboardingController {
         try {
             const userId = req.user.id;
             // Check if user is already onboarded
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (memoryVault) {
@@ -219,7 +221,7 @@ class OnboardingController {
                 updateData.name = name;
             if (timezone)
                 updateData.timezone = timezone;
-            const updatedUser = await prisma.user.update({
+            const updatedUser = await client_1.default.user.update({
                 where: { id: userId },
                 data: updateData
             });
@@ -251,7 +253,7 @@ class OnboardingController {
         try {
             // Check if user has a memory vault first
             const userId = req.user.id;
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -266,7 +268,7 @@ class OnboardingController {
             res.json = function (data) {
                 if (data.success && data.data?.favPerson) {
                     // Add onboarding-specific progress information
-                    prisma.favPerson.count({ where: { vaultId: memoryVault.id } })
+                    client_1.default.favPerson.count({ where: { vaultId: memoryVault.id } })
                         .then(count => {
                         data.data.progress = {
                             totalFavPeople: count,
@@ -299,7 +301,7 @@ class OnboardingController {
         try {
             // Check if user has a memory vault first
             const userId = req.user.id;
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -314,7 +316,7 @@ class OnboardingController {
             res.json = function (data) {
                 if (data.success && data.data?.memory) {
                     // Add onboarding-specific progress information
-                    prisma.memory.count({ where: { vaultId: memoryVault.id } })
+                    client_1.default.memory.count({ where: { vaultId: memoryVault.id } })
                         .then(count => {
                         data.data.progress = {
                             totalMemories: count,
@@ -347,7 +349,7 @@ class OnboardingController {
         try {
             const userId = req.user.id;
             // Check if user has a memory vault
-            let memoryVault = await prisma.memoryVault.findUnique({
+            let memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId },
                 include: {
                     memories: true,
@@ -356,7 +358,7 @@ class OnboardingController {
             });
             // If no vault exists, create it now (progressive onboarding completion)
             if (!memoryVault) {
-                const newVault = await prisma.memoryVault.create({
+                const newVault = await client_1.default.memoryVault.create({
                     data: { userId },
                     include: {
                         memories: true,
@@ -404,7 +406,7 @@ class OnboardingController {
         try {
             const userId = req.user.id;
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId },
                 include: {
                     memories: true,

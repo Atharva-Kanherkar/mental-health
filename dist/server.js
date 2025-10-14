@@ -21,6 +21,9 @@ const rewards_1 = __importDefault(require("./routes/rewards"));
 const dailyCheckin_1 = __importDefault(require("./routes/dailyCheckin"));
 const questionnaires_1 = __importDefault(require("./routes/questionnaires"));
 const user_1 = __importDefault(require("./routes/user"));
+const crisis_1 = __importDefault(require("./routes/crisis"));
+const checkInInsights_1 = __importDefault(require("./routes/checkInInsights"));
+const share_1 = __importDefault(require("./routes/share"));
 const app = (0, express_1.default)();
 // Behind proxy/CDN (required for Secure cookies + correct proto)
 app.set('trust proxy', 1);
@@ -34,13 +37,15 @@ const allowed = new Set([
 app.use((0, cors_1.default)({
     origin(origin, cb) {
         // Allow same-origin/non-browser (no Origin header) or allowed origins
+        // Mobile apps (React Native/Expo) don't send Origin header
         if (!origin || allowed.has(origin))
             return cb(null, true);
         return cb(new Error(`Origin not allowed: ${origin}`));
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    exposedHeaders: ['Set-Cookie'],
 }));
 // Optional: make caches vary by Origin when using allowlist
 app.use((req, res, next) => {
@@ -75,8 +80,12 @@ app.use('/api/journal', journal_1.default);
 app.use('/api/mental-health', mentalHealth_1.default);
 app.use('/api/rewards', rewards_1.default);
 app.use('/api/checkin', dailyCheckin_1.default);
+app.use('/api/checkin/insights', checkInInsights_1.default);
 app.use('/api/questionnaires', questionnaires_1.default);
 app.use('/api/user', user_1.default);
+app.use('/api/crisis', crisis_1.default);
+app.use('/api/share', share_1.default); // Authenticated share endpoints
+app.use('/share', share_1.default); // Public share endpoints
 app.get('/health', (_req, res) => {
     res.json({ status: 'OK', message: 'Mental Health API is running' });
 });

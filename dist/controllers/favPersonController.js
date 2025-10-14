@@ -1,9 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FavPersonController = void 0;
 const zod_1 = require("zod");
-const prisma_1 = require("../generated/prisma");
-const prisma = new prisma_1.PrismaClient();
+const client_1 = __importDefault(require("../prisma/client"));
 // Zod validation schemas
 const PersonaMetadataSchema = zod_1.z.object({
     tone: zod_1.z.string().optional(),
@@ -58,7 +60,7 @@ class FavPersonController {
             }
             const data = validationResult.data;
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -68,7 +70,7 @@ class FavPersonController {
                 });
             }
             // Create the favorite person
-            const favPerson = await prisma.favPerson.create({
+            const favPerson = await client_1.default.favPerson.create({
                 data: {
                     vaultId: memoryVault.id,
                     name: data.name,
@@ -123,7 +125,7 @@ class FavPersonController {
             const sortBy = req.query.sortBy || 'priority';
             const order = req.query.order || 'asc';
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -147,7 +149,7 @@ class FavPersonController {
                 orderBy.priority = 'asc'; // default
             }
             // Get favorite people
-            const favPeople = await prisma.favPerson.findMany({
+            const favPeople = await client_1.default.favPerson.findMany({
                 where: { vaultId: memoryVault.id },
                 orderBy
             });
@@ -194,7 +196,7 @@ class FavPersonController {
                 });
             }
             // Get user's memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -204,7 +206,7 @@ class FavPersonController {
                 });
             }
             // Get the favorite person
-            const favPerson = await prisma.favPerson.findFirst({
+            const favPerson = await client_1.default.favPerson.findFirst({
                 where: {
                     id: personId,
                     vaultId: memoryVault.id
@@ -269,7 +271,7 @@ class FavPersonController {
             }
             const data = validationResult.data;
             // Get user's memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -279,7 +281,7 @@ class FavPersonController {
                 });
             }
             // Check if person exists and belongs to user
-            const existingPerson = await prisma.favPerson.findFirst({
+            const existingPerson = await client_1.default.favPerson.findFirst({
                 where: {
                     id: personId,
                     vaultId: memoryVault.id
@@ -299,7 +301,7 @@ class FavPersonController {
                 }
             });
             // Update the favorite person
-            const updatedPerson = await prisma.favPerson.update({
+            const updatedPerson = await client_1.default.favPerson.update({
                 where: { id: personId },
                 data: updateData
             });
@@ -347,7 +349,7 @@ class FavPersonController {
                 });
             }
             // Get user's memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -357,7 +359,7 @@ class FavPersonController {
                 });
             }
             // Check if person exists and belongs to user
-            const existingPerson = await prisma.favPerson.findFirst({
+            const existingPerson = await client_1.default.favPerson.findFirst({
                 where: {
                     id: personId,
                     vaultId: memoryVault.id
@@ -369,13 +371,38 @@ class FavPersonController {
                     message: 'Favorite person not found'
                 });
             }
-            // Delete the favorite person
-            await prisma.favPerson.delete({
+            // Delete associated files from DigitalOcean Spaces before deleting person
+            const filesToDelete = [
+                existingPerson.photoUrl,
+                existingPerson.voiceNoteUrl,
+                existingPerson.videoNoteUrl
+            ].filter(Boolean);
+            if (filesToDelete.length > 0) {
+                const { deleteFile } = require('../config/storage');
+                for (const fileUrl of filesToDelete) {
+                    try {
+                        if (typeof fileUrl === 'string') {
+                            // Extract file key from URL
+                            const fileKey = fileUrl.split('.digitaloceanspaces.com/')[1]?.split('?')[0];
+                            if (fileKey) {
+                                await deleteFile(fileKey, 'server_managed');
+                                console.log('Deleted file from Spaces:', fileKey);
+                            }
+                        }
+                    }
+                    catch (error) {
+                        console.error('Failed to delete file:', fileUrl, error);
+                        // Continue with deletion even if file removal fails
+                    }
+                }
+            }
+            // Delete the favorite person from database
+            await client_1.default.favPerson.delete({
                 where: { id: personId }
             });
             res.json({
                 success: true,
-                message: 'Favorite person deleted successfully'
+                message: 'Favorite person and associated files deleted successfully'
             });
         }
         catch (error) {

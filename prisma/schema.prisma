@@ -39,7 +39,10 @@ model User {
   // Gamification stats
   totalPoints          Int @default(0)
   currentLevel         Int @default(1)
-  
+
+  // Report sharing
+  sharedReports        SharedReport[]
+
   @@map("user")
 }
 
@@ -545,5 +548,34 @@ model AssessmentQuestionnaire {
   updatedAt DateTime @updatedAt
   
   @@unique([shortName, version])
+}
+
+// Shared reports for therapists
+model SharedReport {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Share token and password
+  shareToken    String @unique
+  passwordHash  String
+
+  // Report metadata
+  reportType    String // "weekly" | "monthly" | "comprehensive"
+  reportData    Json   // Complete report data
+
+  // Timestamps
+  generatedAt   DateTime @default(now())
+  expiresAt     DateTime
+  accessedAt    DateTime?
+
+  // Access control
+  accessCount   Int @default(0)
+  maxAccess     Int @default(10)
+  isActive      Boolean @default(true)
+
+  @@index([shareToken])
+  @@index([expiresAt])
+  @@index([userId])
 }
 

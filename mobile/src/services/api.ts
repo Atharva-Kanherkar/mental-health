@@ -734,6 +734,86 @@ class ApiService {
     },
   };
 
+  // Report Sharing API methods
+  share = {
+    createLink: async (reportType: 'weekly' | 'monthly' | 'comprehensive' = 'comprehensive', expiryDays: number = 30, days: number = 30): Promise<{
+      shareUrl: string;
+      password: string;
+      expiresAt: string;
+      reportType: string;
+      message: string;
+    }> => {
+      const response = await this.request<{
+        success: boolean;
+        data: {
+          shareUrl: string;
+          password: string;
+          expiresAt: string;
+          reportType: string;
+          message: string;
+        };
+      }>({
+        method: 'POST',
+        url: '/api/share/create',
+        data: { reportType, expiryDays, days },
+      });
+      return response.data;
+    },
+
+    getMyLinks: async (): Promise<Array<{
+      id: string;
+      shareToken: string;
+      shareUrl: string;
+      reportType: string;
+      generatedAt: string;
+      expiresAt: string;
+      accessCount: number;
+      maxAccess: number;
+      isActive: boolean;
+      isExpired: boolean;
+      remainingAccess: number;
+    }>> => {
+      const response = await this.request<{
+        success: boolean;
+        data: Array<{
+          id: string;
+          shareToken: string;
+          shareUrl: string;
+          reportType: string;
+          generatedAt: string;
+          expiresAt: string;
+          accessCount: number;
+          maxAccess: number;
+          isActive: boolean;
+          isExpired: boolean;
+          remainingAccess: number;
+        }>;
+      }>({
+        method: 'GET',
+        url: '/api/share/my-links',
+      });
+      return response.data;
+    },
+
+    revokeLink: async (token: string): Promise<void> => {
+      await this.request({
+        method: 'DELETE',
+        url: `/api/share/${token}`,
+      });
+    },
+
+    getLinkStats: async (token: string): Promise<any> => {
+      const response = await this.request<{
+        success: boolean;
+        data: any;
+      }>({
+        method: 'GET',
+        url: `/api/share/${token}/stats`,
+      });
+      return response.data;
+    },
+  };
+
   // Rewards & Gamification API methods
   rewards = {
     getAll: async (): Promise<UserReward[]> => {

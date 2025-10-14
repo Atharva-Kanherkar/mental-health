@@ -1,10 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemoryController = void 0;
 const zod_1 = require("zod");
-const prisma_1 = require("../generated/prisma");
+const client_1 = __importDefault(require("../prisma/client"));
 const storage_1 = require("../config/storage");
-const prisma = new prisma_1.PrismaClient();
 // Zod validation schemas
 const CreateMemorySchema = zod_1.z.object({
     title: zod_1.z.string().min(1, 'Title is required'),
@@ -45,7 +47,7 @@ class MemoryController {
             }
             const { title, type, content, fileUrl, associatedPersonId } = validationResult.data;
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -56,7 +58,7 @@ class MemoryController {
             }
             // Validate associatedPersonId if provided
             if (associatedPersonId) {
-                const associatedPerson = await prisma.favPerson.findFirst({
+                const associatedPerson = await client_1.default.favPerson.findFirst({
                     where: {
                         id: associatedPersonId,
                         vaultId: memoryVault.id
@@ -70,7 +72,7 @@ class MemoryController {
                 }
             }
             // Create the memory
-            const memory = await prisma.memory.create({
+            const memory = await client_1.default.memory.create({
                 data: {
                     vaultId: memoryVault.id,
                     type,
@@ -111,7 +113,7 @@ class MemoryController {
             const limit = parseInt(req.query.limit) || 10;
             const type = req.query.type;
             // Check if user has a memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -120,14 +122,17 @@ class MemoryController {
                     message: 'Memory vault not found. Please complete onboarding first.'
                 });
             }
-            // Build where clause
-            const whereClause = { vaultId: memoryVault.id };
+            // Build where clause - exclude attachments
+            const whereClause = {
+                vaultId: memoryVault.id,
+                isAttachment: false // Only show actual memories, not profile photos/notes
+            };
             if (type && ['text', 'image', 'audio'].includes(type)) {
                 whereClause.type = type;
             }
             // Get memories with pagination and include encrypted file fields
             const [memories, totalCount] = await Promise.all([
-                prisma.memory.findMany({
+                client_1.default.memory.findMany({
                     where: whereClause,
                     orderBy: { createdAt: 'desc' },
                     skip: (page - 1) * limit,
@@ -142,7 +147,7 @@ class MemoryController {
                         }
                     }
                 }),
-                prisma.memory.count({ where: whereClause })
+                client_1.default.memory.count({ where: whereClause })
             ]);
             // Process memories to generate signed URLs with proper bucket routing
             const processedMemories = await Promise.all(memories.map(async (memory) => {
@@ -207,7 +212,7 @@ class MemoryController {
                 });
             }
             // Get user's memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -217,7 +222,7 @@ class MemoryController {
                 });
             }
             // Get the memory
-            const memory = await prisma.memory.findFirst({
+            const memory = await client_1.default.memory.findFirst({
                 where: {
                     id: memoryId,
                     vaultId: memoryVault.id
@@ -289,7 +294,7 @@ class MemoryController {
             }
             const { content, fileUrl } = validationResult.data;
             // Get user's memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -299,7 +304,7 @@ class MemoryController {
                 });
             }
             // Check if memory exists and belongs to user
-            const existingMemory = await prisma.memory.findFirst({
+            const existingMemory = await client_1.default.memory.findFirst({
                 where: {
                     id: memoryId,
                     vaultId: memoryVault.id
@@ -312,7 +317,7 @@ class MemoryController {
                 });
             }
             // Update the memory
-            const updatedMemory = await prisma.memory.update({
+            const updatedMemory = await client_1.default.memory.update({
                 where: { id: memoryId },
                 data: {
                     ...(content !== undefined && { content }),
@@ -354,7 +359,7 @@ class MemoryController {
                 });
             }
             // Get user's memory vault
-            const memoryVault = await prisma.memoryVault.findUnique({
+            const memoryVault = await client_1.default.memoryVault.findUnique({
                 where: { userId }
             });
             if (!memoryVault) {
@@ -364,7 +369,7 @@ class MemoryController {
                 });
             }
             // Check if memory exists and belongs to user
-            const existingMemory = await prisma.memory.findFirst({
+            const existingMemory = await client_1.default.memory.findFirst({
                 where: {
                     id: memoryId,
                     vaultId: memoryVault.id
@@ -390,7 +395,7 @@ class MemoryController {
                 }
             }
             // Delete the memory from database
-            await prisma.memory.delete({
+            await client_1.default.memory.delete({
                 where: { id: memoryId }
             });
             res.json({
