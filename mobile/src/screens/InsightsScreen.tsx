@@ -58,18 +58,23 @@ export default function InsightsScreen() {
       switch (activeTab) {
         case 'weekly':
           result = await api.insights.getWeekly();
+          console.log('Weekly data:', result);
           break;
         case 'patterns':
           result = await api.insights.getPatterns(30);
+          console.log('Patterns data:', result);
           break;
         case 'correlations':
           result = await api.insights.getCorrelations(30);
+          console.log('Correlations data:', result);
           break;
         case 'predictions':
           result = await api.insights.getPredictions();
+          console.log('Predictions data:', result);
           break;
         case 'warnings':
           result = await api.insights.getWarnings();
+          console.log('Warnings data:', result);
           break;
         default:
           result = null;
@@ -79,6 +84,8 @@ export default function InsightsScreen() {
     } catch (error: any) {
       console.error('Error loading insights:', error);
       setError(error.message || 'Failed to load insights');
+      // Set empty data to show empty state instead of white screen
+      setData(activeTab === 'weekly' ? {} : []);
     } finally {
       setLoading(false);
     }
