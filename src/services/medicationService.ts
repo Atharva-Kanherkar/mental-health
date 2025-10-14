@@ -275,15 +275,6 @@ class MedicationService {
       };
 
       if (medicationId) {
-        // Verify medication belongs to user
-        const medication = await prisma.medication.findFirst({
-          where: { id: medicationId, userId }
-        });
-
-        if (!medication) {
-          throw new Error('Medication not found');
-        }
-
         where.medicationId = medicationId;
       }
 
