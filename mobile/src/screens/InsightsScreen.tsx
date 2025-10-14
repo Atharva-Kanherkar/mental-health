@@ -155,7 +155,7 @@ export default function InsightsScreen() {
         {data.recommendations && data.recommendations.length > 0 && (
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons name="lightbulb" size={24} color="#8b5cf6" />
+              <Ionicons name="bulb" size={24} color="#8b5cf6" />
               <Text style={styles.cardTitle}>Recommendations</Text>
             </View>
             {data.recommendations.map((rec: string, index: number) => (
@@ -171,7 +171,7 @@ export default function InsightsScreen() {
   };
 
   const renderPatterns = () => {
-    if (!data || data.length === 0) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <Ionicons name="sparkles-outline" size={64} color="#d1d5db" />
@@ -228,7 +228,7 @@ export default function InsightsScreen() {
   };
 
   const renderCorrelations = () => {
-    if (!data || data.length === 0) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <Ionicons name="analytics-outline" size={64} color="#d1d5db" />
@@ -365,7 +365,7 @@ export default function InsightsScreen() {
   };
 
   const renderWarnings = () => {
-    if (!data || data.length === 0) {
+    if (!data || !Array.isArray(data) || data.length === 0) {
       return (
         <View style={styles.emptyContainer}>
           <Ionicons name="checkmark-circle" size={64} color="#10b981" />
