@@ -73,9 +73,9 @@ export const MedicationsListScreen = () => {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const upcoming = todaysSchedule?.find(
-      (item) => item.medication.id === med.id && item.scheduledTime > currentTime && item.status === 'pending'
-    );
+    const upcoming = Array.isArray(todaysSchedule) ? todaysSchedule.find(
+      (item: any) => item.medicationId === med.id && item.scheduledTime > currentTime && item.status === 'pending'
+    ) : null;
 
     if (upcoming) {
       return upcoming.scheduledTime;
