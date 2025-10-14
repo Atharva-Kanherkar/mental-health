@@ -56,7 +56,7 @@ import { ProfileAnalysisScreen } from '../screens/ProfileAnalysisScreen';
 import { RewardsScreen } from '../screens/RewardsScreen';
 
 // Insights Screen
-import { InsightsScreen } from '../screens/InsightsScreen';
+import InsightsScreen from '../screens/InsightsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
