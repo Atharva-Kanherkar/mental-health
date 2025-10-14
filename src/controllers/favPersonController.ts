@@ -412,11 +412,13 @@ export class FavPersonController {
         const { deleteFile } = require('../config/storage');
         for (const fileUrl of filesToDelete) {
           try {
-            // Extract file key from URL
-            const fileKey = fileUrl.split('.digitaloceanspaces.com/')[1]?.split('?')[0];
-            if (fileKey) {
-              await deleteFile(fileKey, 'server_managed');
-              console.log('Deleted file from Spaces:', fileKey);
+            if (typeof fileUrl === 'string') {
+              // Extract file key from URL
+              const fileKey = fileUrl.split('.digitaloceanspaces.com/')[1]?.split('?')[0];
+              if (fileKey) {
+                await deleteFile(fileKey, 'server_managed');
+                console.log('Deleted file from Spaces:', fileKey);
+              }
             }
           } catch (error) {
             console.error('Failed to delete file:', fileUrl, error);
