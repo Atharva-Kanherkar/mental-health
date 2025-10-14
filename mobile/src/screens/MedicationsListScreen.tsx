@@ -154,17 +154,23 @@ export const MedicationsListScreen = () => {
             </View>
             <View style={styles.todaySummary}>
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{todaysSchedule.summary.taken}</Text>
+                <Text style={styles.summaryValue}>
+                  {Array.isArray(todaysSchedule) ? todaysSchedule.filter((s: any) => s.status === 'taken').length : 0}
+                </Text>
                 <Text style={styles.summaryLabel}>Taken</Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{todaysSchedule.summary.pending}</Text>
+                <Text style={styles.summaryValue}>
+                  {Array.isArray(todaysSchedule) ? todaysSchedule.filter((s: any) => s.status === 'pending').length : 0}
+                </Text>
                 <Text style={styles.summaryLabel}>Pending</Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
-                <Text style={styles.summaryValue}>{todaysSchedule.summary.missed}</Text>
+                <Text style={styles.summaryValue}>
+                  {Array.isArray(todaysSchedule) ? todaysSchedule.filter((s: any) => s.status === 'missed').length : 0}
+                </Text>
                 <Text style={styles.summaryLabel}>Missed</Text>
               </View>
             </View>
