@@ -143,7 +143,7 @@ export const MedicationsListScreen = () => {
         }
       >
         {/* Today's Schedule Card */}
-        {todaysSchedule && todaysSchedule.summary.total > 0 && (
+        {todaysSchedule && todaysSchedule.summary && todaysSchedule.summary.total > 0 && (
           <TouchableOpacity
             style={styles.todayCard}
             onPress={() => navigation.navigate('MedicationSchedule')}

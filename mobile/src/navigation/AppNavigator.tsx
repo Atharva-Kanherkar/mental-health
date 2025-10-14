@@ -58,6 +58,13 @@ import { RewardsScreen } from '../screens/RewardsScreen';
 // Insights Screen
 import InsightsScreen from '../screens/InsightsScreen';
 
+// Medication Screens
+import { MedicationsListScreen } from '../screens/MedicationsListScreen';
+import { AddMedicationScreen } from '../screens/AddMedicationScreen';
+import { MedicationDetailScreen } from '../screens/MedicationDetailScreen';
+import { LogDoseScreen } from '../screens/LogDoseScreen';
+import { MedicationScheduleScreen } from '../screens/MedicationScheduleScreen';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -176,6 +183,13 @@ const MainAppStack = () => {
 
       {/* Insights */}
       <Stack.Screen name="Insights" component={InsightsScreen} />
+
+      {/* Medication Screens */}
+      <Stack.Screen name="MedicationsList" component={MedicationsListScreen} />
+      <Stack.Screen name="AddMedication" component={AddMedicationScreen} />
+      <Stack.Screen name="MedicationDetail" component={MedicationDetailScreen} />
+      <Stack.Screen name="LogDose" component={LogDoseScreen} />
+      <Stack.Screen name="MedicationSchedule" component={MedicationScheduleScreen} />
     </Stack.Navigator>
   );
 };

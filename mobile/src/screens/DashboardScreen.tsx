@@ -30,6 +30,7 @@ import {
   TrophyIcon,
   ClipboardIcon,
   ImageIcon,
+  PillIcon,
 } from '../components/Icons';
 
 export const DashboardScreen = ({ navigation }: any) => {
@@ -170,6 +171,22 @@ export const DashboardScreen = ({ navigation }: any) => {
                 <Text style={styles.featureTitle}>Rewards & Progress</Text>
                 <Text style={styles.featureText}>
                   Track your journey with points and achievements
+                </Text>
+              </View>
+              <Text style={styles.arrow}>→</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.featureCard}
+              onPress={() => navigation.navigate('MedicationsList')}
+            >
+              <View style={styles.featureIconCircle}>
+                <PillIcon size={28} color="#FFFFFF" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.featureTitle}>Medications</Text>
+                <Text style={styles.featureText}>
+                  Manage medications, track doses, and monitor adherence
                 </Text>
               </View>
               <Text style={styles.arrow}>→</Text>

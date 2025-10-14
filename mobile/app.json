@@ -20,6 +20,13 @@
         "NSMicrophoneUsageDescription": "This app needs access to your microphone to record audio for your memories."
       }
     },
+    "notification": {
+      "icon": "./assets/notification-icon.png",
+      "color": "#6B5FA8",
+      "iosDisplayInForeground": true,
+      "androidMode": "default",
+      "androidCollapsedTitle": "Medication Reminder"
+    },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

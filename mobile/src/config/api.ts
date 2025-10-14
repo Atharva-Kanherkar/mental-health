@@ -88,6 +88,21 @@ export const API_ENDPOINTS = {
     TRACK_BEHAVIOR: '/api/rewards/track-behavior',
   },
 
+  // Medications
+  MEDICATIONS: {
+    CREATE: '/api/medications',
+    GET_ALL: '/api/medications',
+    GET_BY_ID: (id: string) => `/api/medications/${id}`,
+    UPDATE: (id: string) => `/api/medications/${id}`,
+    DELETE: (id: string) => `/api/medications/${id}`,
+    LOG_DOSE: '/api/medications/log',
+    GET_LOGS: '/api/medications/logs',
+    GET_TODAY_SCHEDULE: '/api/medications/schedule/today',
+    GET_ADHERENCE: '/api/medications/adherence',
+    GET_MISSED: '/api/medications/missed',
+    GET_SIDE_EFFECTS: '/api/medications/side-effects',
+  },
+
   // Health check
   HEALTH: '/health',
 };
