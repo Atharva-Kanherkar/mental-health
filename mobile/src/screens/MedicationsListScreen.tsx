@@ -73,7 +73,7 @@ export const MedicationsListScreen = () => {
     const now = new Date();
     const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-    const upcoming = todaysSchedule.medications.find(
+    const upcoming = todaysSchedule?.find(
       (item) => item.medication.id === med.id && item.scheduledTime > currentTime && item.status === 'pending'
     );
 
@@ -143,7 +143,7 @@ export const MedicationsListScreen = () => {
         }
       >
         {/* Today's Schedule Card */}
-        {todaysSchedule && todaysSchedule.summary && todaysSchedule.summary.total > 0 && (
+        {todaysSchedule && Array.isArray(todaysSchedule) && todaysSchedule.length > 0 && (
           <TouchableOpacity
             style={styles.todayCard}
             onPress={() => navigation.navigate('MedicationSchedule')}
