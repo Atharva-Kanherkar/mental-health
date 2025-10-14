@@ -37,19 +37,25 @@ export const MedicationDetailScreen = () => {
 
   const loadData = async () => {
     try {
+      console.log('Loading medication:', medicationId);
       const medData = await api.medication.getById(medicationId);
+      console.log('Medication loaded:', medData);
       setMedication(medData);
 
+      console.log('Loading logs and adherence...');
       const [logsData, adherenceData] = await Promise.all([
-        api.medication.getLogs(medicationId, 30).catch(() => []),
-        api.medication.getAdherence(medicationId, 30).catch(() => null),
+        api.medication.getLogs(medicationId, 30).catch((e) => { console.log('Logs error:', e); return []; }),
+        api.medication.getAdherence(medicationId, 30).catch((e) => { console.log('Adherence error:', e); return null; }),
       ]);
 
+      console.log('Logs loaded:', logsData.length);
+      console.log('Adherence loaded:', adherenceData);
       setLogs(logsData);
       setAdherence(adherenceData);
     } catch (error: any) {
       console.error('Failed to load medication details:', error);
-      Alert.alert('Error', 'Failed to load medication details.');
+      console.error('Error details:', error.message, error.response?.data);
+      Alert.alert('Error', error.message || 'Failed to load medication details.');
       navigation.goBack();
     } finally {
       setLoading(false);
