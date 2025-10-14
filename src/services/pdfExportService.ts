@@ -3,49 +3,94 @@
  * Generates PDF reports using Puppeteer
  */
 
-import puppeteer from 'puppeteer';
+import PDFDocument from 'pdfkit';
 import { Report } from './reportGenerationService';
 
 class PDFExportService {
   /**
-   * Generate PDF from report data
+   * Generate PDF from report data using PDFKit (no Chrome required)
    */
   async generateReportPDF(report: Report): Promise<Buffer> {
     console.log('[PDFExportService] Generating PDF report');
 
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu'
-      ]
-    });
+    return new Promise((resolve, reject) => {
+      try {
+        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const chunks: Buffer[] = [];
 
-    try {
-      const page = await browser.newPage();
-      const htmlContent = this.generateHTMLReport(report);
+        doc.on('data', (chunk) => chunks.push(chunk));
+        doc.on('end', () => resolve(Buffer.concat(chunks)));
+        doc.on('error', reject);
 
-      await page.setContent(htmlContent, {
-        waitUntil: 'networkidle0'
-      });
+        // Header
+        doc.fontSize(24).fillColor('#6B5FA8').text('Mental Health Report', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fontSize(12).fillColor('#6B7280').text('Confidential Clinical Summary', { align: 'center' });
+        doc.moveDown(2);
 
-      const pdf = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: {
-          top: '20mm',
-          right: '15mm',
-          bottom: '20mm',
-          left: '15mm'
+        // Meta Info
+        doc.fontSize(10).fillColor('#374151');
+        doc.text(`Patient: ${report.userName}`);
+        doc.text(`Period: ${new Date(report.reportPeriod.start).toLocaleDateString()} - ${new Date(report.reportPeriod.end).toLocaleDateString()}`);
+        doc.text(`Generated: ${new Date().toLocaleDateString()}`);
+        doc.moveDown(1.5);
+
+        // Executive Summary
+        doc.fontSize(16).fillColor('#6B5FA8').text('Executive Summary');
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#374151');
+        doc.text(`Average Mood: ${report.summary.averageMood}/10`);
+        doc.text(`Average Energy: ${report.summary.averageEnergy}/10`);
+        doc.text(`Average Stress: ${report.summary.averageStress}/10`);
+        doc.text(`Average Anxiety: ${report.summary.averageAnxiety}/10`);
+        doc.moveDown(1.5);
+
+        // Safety Assessment
+        doc.fontSize(16).fillColor('#6B5FA8').text('Safety Assessment');
+        doc.moveDown(0.5);
+        doc.fontSize(12).fillColor(this.getRiskColor(report.safetyIndicators.riskLevel)).text(`Risk Level: ${report.safetyIndicators.riskLevel.toUpperCase()}`);
+        doc.fontSize(10).fillColor('#374151');
+        doc.text(`Self-harm thoughts: ${report.safetyIndicators.selfHarmThoughts} occurrences`);
+        doc.text(`Suicidal thoughts: ${report.safetyIndicators.suicidalThoughts} occurrences`);
+        doc.text(`Self-harm actions: ${report.safetyIndicators.actedOnHarm} occurrences`);
+        doc.moveDown(1.5);
+
+        // Behavioral Patterns
+        doc.fontSize(16).fillColor('#6B5FA8').text('Behavioral Patterns');
+        doc.moveDown(0.5);
+        doc.fontSize(10).fillColor('#374151');
+        doc.text(`Exercise: ${report.behaviors.exercise.percentage}% (${report.behaviors.exercise.count} days)`);
+        doc.text(`Self-Care: ${report.behaviors.selfCare.percentage}% (${report.behaviors.selfCare.count} days)`);
+        doc.text(`Social Connection: ${report.behaviors.socialConnection.percentage}% (${report.behaviors.socialConnection.count} days)`);
+        doc.text(`Healthy Eating: ${report.behaviors.healthyEating.percentage}% (${report.behaviors.healthyEating.count} days)`);
+        doc.text(`Medication: ${report.behaviors.medication.percentage}% (${report.behaviors.medication.count} days)`);
+        doc.moveDown(1.5);
+
+        // Recommendations
+        if (report.recommendations.length > 0) {
+          doc.fontSize(16).fillColor('#6B5FA8').text('Clinical Recommendations');
+          doc.moveDown(0.5);
+          doc.fontSize(10).fillColor('#374151');
+          report.recommendations.forEach((rec: string) => {
+            doc.text(`• ${rec}`);
+          });
         }
-      });
 
-      console.log('[PDFExportService] PDF generated successfully');
-      return Buffer.from(pdf);
-    } finally {
-      await browser.close();
+        doc.end();
+        console.log('[PDFExportService] PDF generated successfully');
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  private getRiskColor(level: string): string {
+    switch (level) {
+      case 'low': return '#10B981';
+      case 'moderate': return '#F59E0B';
+      case 'high': return '#EF4444';
+      case 'critical': return '#DC2626';
+      default: return '#6B7280';
     }
   }
 
