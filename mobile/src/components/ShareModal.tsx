@@ -378,6 +378,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  downloadButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#6B5FA8',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  downloadButtonText: {
+    color: '#6B5FA8',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   doneButton: {
     backgroundColor: '#F3F4F6',
     paddingVertical: 16,
