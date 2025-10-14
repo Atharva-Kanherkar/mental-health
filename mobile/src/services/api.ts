@@ -70,6 +70,25 @@ import type {
   GamificationStatsResponse,
   TrackBehaviorResponse,
 } from '../types/rewards';
+import type {
+  Medication,
+  MedicationLog,
+  CreateMedicationData,
+  UpdateMedicationData,
+  LogDoseData,
+  TodaysSchedule,
+  AdherenceStats,
+  MissedDose,
+  SideEffect,
+  MedicationResponse,
+  MedicationsListResponse,
+  MedicationLogResponse,
+  MedicationLogsListResponse,
+  TodaysScheduleResponse,
+  AdherenceStatsResponse,
+  MissedDosesResponse,
+  SideEffectsResponse,
+} from '../types/medication';
 
 class ApiService {
   private client: AxiosInstance;
@@ -870,6 +889,111 @@ class ApiService {
         url: API_ENDPOINTS.REWARDS.GET_ALL_ACHIEVEMENTS,
       });
       return response.achievements;
+    },
+  };
+
+  // Medication Management API methods
+  medication = {
+    create: async (data: CreateMedicationData): Promise<Medication> => {
+      const response = await this.request<{ success: boolean; medication: Medication }>({
+        method: 'POST',
+        url: API_ENDPOINTS.MEDICATIONS.CREATE,
+        data,
+      });
+      return response.medication;
+    },
+
+    getAll: async (activeOnly: boolean = true): Promise<Medication[]> => {
+      const response = await this.request<{ success: boolean; medications: Medication[]; count: number }>({
+        method: 'GET',
+        url: API_ENDPOINTS.MEDICATIONS.GET_ALL,
+        params: { activeOnly },
+      });
+      return response.medications;
+    },
+
+    getById: async (id: string): Promise<Medication> => {
+      const response = await this.request<{ success: boolean; medication: Medication }>({
+        method: 'GET',
+        url: API_ENDPOINTS.MEDICATIONS.GET_BY_ID(id),
+      });
+      return response.medication;
+    },
+
+    update: async (id: string, data: UpdateMedicationData): Promise<Medication> => {
+      const response = await this.request<MedicationResponse>({
+        method: 'PUT',
+        url: API_ENDPOINTS.MEDICATIONS.UPDATE(id),
+        data,
+      });
+      return response.data.medication;
+    },
+
+    delete: async (id: string): Promise<void> => {
+      await this.request({
+        method: 'DELETE',
+        url: API_ENDPOINTS.MEDICATIONS.DELETE(id),
+      });
+    },
+
+    logDose: async (data: LogDoseData): Promise<MedicationLog> => {
+      const response = await this.request<MedicationLogResponse>({
+        method: 'POST',
+        url: API_ENDPOINTS.MEDICATIONS.LOG_DOSE,
+        data,
+      });
+      return response.data.log;
+    },
+
+    getLogs: async (medicationId?: string, days?: number): Promise<MedicationLog[]> => {
+      const response = await this.request<MedicationLogsListResponse>({
+        method: 'GET',
+        url: API_ENDPOINTS.MEDICATIONS.GET_LOGS,
+        params: {
+          ...(medicationId && { medicationId }),
+          ...(days && { days }),
+        },
+      });
+      return response.data.logs;
+    },
+
+    getTodaysSchedule: async (): Promise<TodaysSchedule> => {
+      const response = await this.request<TodaysScheduleResponse>({
+        method: 'GET',
+        url: API_ENDPOINTS.MEDICATIONS.GET_TODAY_SCHEDULE,
+      });
+      return response.data;
+    },
+
+    getAdherence: async (medicationId?: string, days?: number): Promise<AdherenceStats> => {
+      const response = await this.request<AdherenceStatsResponse>({
+        method: 'GET',
+        url: API_ENDPOINTS.MEDICATIONS.GET_ADHERENCE,
+        params: {
+          ...(medicationId && { medicationId }),
+          ...(days && { days }),
+        },
+      });
+      return response.data;
+    },
+
+    getMissed: async (days?: number): Promise<MissedDose[]> => {
+      const response = await this.request<MissedDosesResponse>({
+        method: 'GET',
+        url: API_ENDPOINTS.MEDICATIONS.GET_MISSED,
+        params: {
+          ...(days && { days }),
+        },
+      });
+      return response.data.missedDoses;
+    },
+
+    getSideEffects: async (): Promise<SideEffect[]> => {
+      const response = await this.request<SideEffectsResponse>({
+        method: 'GET',
+        url: API_ENDPOINTS.MEDICATIONS.GET_SIDE_EFFECTS,
+      });
+      return response.data.sideEffects;
     },
   };
 }
