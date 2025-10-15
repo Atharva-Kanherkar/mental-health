@@ -249,34 +249,24 @@ class MedicationService {
         throw new Error('Medication not found');
       }
 
-      // Check for existing log on the same day and time (EXACT hour + minute match)
+      // Simpler duplicate check: Find exact scheduledTime match (within 5 minute window)
       const scheduledDate = new Date(data.scheduledTime);
-      const scheduledHour = scheduledDate.getHours();
-      const scheduledMinute = scheduledDate.getMinutes();
-      
-      const dayStart = new Date(scheduledDate);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setDate(dayEnd.getDate() + 1);
+      const fiveMinsBefore = new Date(scheduledDate.getTime() - 5 * 60 * 1000);
+      const fiveMinsAfter = new Date(scheduledDate.getTime() + 5 * 60 * 1000);
 
-      // Find all logs for this medication on this day
-      const logsToday = await prisma.medicationLog.findMany({
+      const existingLog = await prisma.medicationLog.findFirst({
         where: {
           userId,
           medicationId: data.medicationId,
           scheduledTime: {
-            gte: dayStart,
-            lt: dayEnd
+            gte: fiveMinsBefore,
+            lte: fiveMinsAfter
           }
         }
       });
 
-      // Check if any log matches the EXACT scheduled hour and minute
-      const existingLog = logsToday.find(log => {
-        const logHour = log.scheduledTime.getHours();
-        const logMinute = log.scheduledTime.getMinutes();
-        return logHour === scheduledHour && logMinute === scheduledMinute;
-      });
+      console.log('[MedicationService] Checking for duplicate - scheduledTime:', data.scheduledTime);
+      console.log('[MedicationService] Existing log found:', !!existingLog, existingLog?.id);
 
       // Auto-calculate status based on time difference
       let finalStatus = data.status;
