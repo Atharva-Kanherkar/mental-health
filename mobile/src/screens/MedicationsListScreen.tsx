@@ -58,6 +58,7 @@ export const MedicationsListScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      console.log('MedicationsList screen focused - reloading data');
       loadData();
     }, [])
   );
