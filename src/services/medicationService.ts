@@ -90,6 +90,8 @@ class MedicationService {
    */
   async getUserMedications(userId: string, activeOnly: boolean = true) {
     try {
+      console.log(`[MedicationService] getUserMedications for userId: ${userId}, activeOnly: ${activeOnly}`);
+
       const where: any = { userId };
       if (activeOnly) {
         where.isActive = true;
@@ -100,11 +102,16 @@ class MedicationService {
         include: {
           logs: {
             orderBy: { scheduledTime: 'desc' },
-            take: 5 // Last 5 logs for each medication
+            take: 5
           }
         },
         orderBy: { createdAt: 'desc' }
       });
+
+      console.log(`[MedicationService] Found ${medications.length} medications for user ${userId}`);
+      if (medications.length > 0) {
+        console.log(`[MedicationService] First medication ID: ${medications[0].id}, userId: ${medications[0].userId}`);
+      }
 
       return medications;
     } catch (error) {
