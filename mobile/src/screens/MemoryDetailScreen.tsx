@@ -47,6 +47,7 @@ export const MemoryDetailScreen = ({ route, navigation }: any) => {
   const [userEmail, setUserEmail] = useState('');
   const [audioPlayer, setAudioPlayer] = useState<any>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isGeneratingWalkthrough, setIsGeneratingWalkthrough] = useState(false);
 
   const { state, decryptAndDisplay } = useEncryptedFiles();
 
