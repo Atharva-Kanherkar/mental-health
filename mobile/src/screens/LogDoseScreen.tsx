@@ -103,11 +103,22 @@ export const LogDoseScreen = () => {
 
     try {
       // Convert time string (HH:MM) to full ISO datetime
-      const today = new Date();
-      const [hours, minutes] = time.split(':');
-      const scheduledDateTime = new Date(today);
-      scheduledDateTime.setHours(parseInt(hours, 10));
-      scheduledDateTime.setMinutes(parseInt(minutes, 10));
+      // Use the original scheduledTime date if available, otherwise use today
+      const baseDate = scheduledTime ? new Date(scheduledTime) : new Date();
+      const [hoursStr, minutesStr] = time.split(':');
+      const hours = parseInt(hoursStr, 10);
+      const minutes = parseInt(minutesStr, 10);
+
+      // Validate parsed time
+      if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        Alert.alert('Error', 'Invalid time format. Please enter time as HH:MM (e.g., 08:00)');
+        setLoading(false);
+        return;
+      }
+
+      const scheduledDateTime = new Date(baseDate);
+      scheduledDateTime.setHours(hours);
+      scheduledDateTime.setMinutes(minutes);
       scheduledDateTime.setSeconds(0);
       scheduledDateTime.setMilliseconds(0);
 
@@ -121,6 +132,9 @@ export const LogDoseScreen = () => {
         ...(notes.trim() && { notes: notes.trim() }),
       };
 
+      console.log('[LogDose] Parsed time:', time, '→ hours:', hours, 'minutes:', minutes);
+      console.log('[LogDose] Base date:', baseDate.toISOString());
+      console.log('[LogDose] Scheduled datetime:', scheduledDateTime.toISOString());
       console.log('[LogDose] Sending log data:', JSON.stringify(logData, null, 2));
       const response = await api.medication.logDose(logData);
       console.log('[LogDose] Response:', JSON.stringify(response, null, 2));
@@ -128,7 +142,13 @@ export const LogDoseScreen = () => {
       Alert.alert('Success', 'Dose logged successfully');
       navigation.goBack();
     } catch (error: any) {
-      console.error('Failed to log dose:', error);
+      console.error('[LogDose] Failed to log dose:', error);
+      console.error('[LogDose] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        time,
+        scheduledTime,
+      });
       Alert.alert('Error', error.message || 'Failed to log dose. Please try again.');
     } finally {
       setLoading(false);
