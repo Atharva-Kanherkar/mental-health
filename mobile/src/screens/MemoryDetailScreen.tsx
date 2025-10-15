@@ -150,10 +150,13 @@ export const MemoryDetailScreen = ({ route, navigation }: any) => {
 
   const startWalkthrough = async () => {
     try {
+      setIsGeneratingWalkthrough(true);
       const walkthrough = await api.walkthrough.generateMemoryWalkthrough(memoryId);
       navigation.navigate('Walkthrough', { walkthrough });
     } catch (error) {
       Alert.alert('Error', 'Failed to generate walkthrough');
+    } finally {
+      setIsGeneratingWalkthrough(false);
     }
   };
 
