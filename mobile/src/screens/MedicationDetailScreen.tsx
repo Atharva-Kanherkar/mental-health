@@ -511,13 +511,49 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   actionButton: {
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
     flex: 1,
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
     backgroundColor: theme.colors.surface.whiteAlpha80,
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
     borderRadius: theme.borderRadius.xl,
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
     padding: theme.spacing.lg,
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
     borderWidth: 1,
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
     borderColor: theme.colors.border.light,
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
     alignItems: 'center',
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
+  },
+  },
+  actionButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#F3F4F6',
   },
   actionText: {
     fontSize: theme.fontSizes.sm,
@@ -639,8 +675,3 @@ const styles = StyleSheet.create({
   },
 });
 
-// Add this style after actionButton
-actionButtonDisabled: {
-  opacity: 0.5,
-  backgroundColor: '#F3F4F6',
-},
