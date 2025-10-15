@@ -12,32 +12,7 @@ const router = Router();
 // Apply authentication to all medication routes
 router.use(requireAuth);
 
-// ========== MEDICATION CRUD ==========
-
-// Create a new medication
-router.post('/', medicationController.createMedication.bind(medicationController));
-
-// Get all user medications (supports ?activeOnly=true/false query param)
-router.get('/', medicationController.getUserMedications.bind(medicationController));
-
-// Get a specific medication by ID
-router.get('/:id', medicationController.getMedicationById.bind(medicationController));
-
-// Update a medication
-router.put('/:id', medicationController.updateMedication.bind(medicationController));
-
-// Delete a medication
-router.delete('/:id', medicationController.deleteMedication.bind(medicationController));
-
-// ========== MEDICATION LOGGING ==========
-
-// Log medication dose (taken, missed, skipped, late)
-router.post('/log', medicationController.logMedicationTaken.bind(medicationController));
-
-// Get medication logs (supports ?medicationId=xxx&days=30 query params)
-router.get('/logs', medicationController.getMedicationLogs.bind(medicationController));
-
-// ========== SCHEDULE & ADHERENCE ==========
+// ========== SCHEDULE & ADHERENCE (MUST BE BEFORE /:id ROUTE) ==========
 
 // Get today's medication schedule
 router.get('/schedule/today', medicationController.getTodaysSchedule.bind(medicationController));
@@ -50,5 +25,30 @@ router.get('/missed', medicationController.getMissedDoses.bind(medicationControl
 
 // Get side effects summary (supports ?medicationId=xxx query param)
 router.get('/side-effects', medicationController.getSideEffectsSummary.bind(medicationController));
+
+// Get medication logs (supports ?medicationId=xxx&days=30 query params)
+router.get('/logs', medicationController.getMedicationLogs.bind(medicationController));
+
+// ========== MEDICATION LOGGING ==========
+
+// Log medication dose (taken, missed, skipped, late)
+router.post('/log', medicationController.logMedicationTaken.bind(medicationController));
+
+// ========== MEDICATION CRUD ==========
+
+// Create a new medication
+router.post('/', medicationController.createMedication.bind(medicationController));
+
+// Get all user medications (supports ?activeOnly=true/false query param)
+router.get('/', medicationController.getUserMedications.bind(medicationController));
+
+// Get a specific medication by ID (MUST BE LAST GET ROUTE)
+router.get('/:id', medicationController.getMedicationById.bind(medicationController));
+
+// Update a medication
+router.put('/:id', medicationController.updateMedication.bind(medicationController));
+
+// Delete a medication
+router.delete('/:id', medicationController.deleteMedication.bind(medicationController));
 
 export default router;
