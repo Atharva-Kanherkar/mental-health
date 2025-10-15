@@ -333,9 +333,22 @@ export const MemoryDetailScreen = ({ route, navigation }: any) => {
 
           {/* AI Walkthrough Button - Only for server-managed memories */}
           {memory.privacyLevel === 'server_managed' && (
-            <TouchableOpacity style={styles.walkthroughButton} onPress={startWalkthrough}>
-              <SparklesIcon size={24} color="#FFFFFF" />
-              <Text style={styles.walkthroughButtonText}>Start AI Walkthrough</Text>
+            <TouchableOpacity
+              style={[styles.walkthroughButton, isGeneratingWalkthrough && { opacity: 0.6 }]}
+              onPress={startWalkthrough}
+              disabled={isGeneratingWalkthrough}
+            >
+              {isGeneratingWalkthrough ? (
+                <>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <Text style={styles.walkthroughButtonText}>Generating...</Text>
+                </>
+              ) : (
+                <>
+                  <SparklesIcon size={24} color="#FFFFFF" />
+                  <Text style={styles.walkthroughButtonText}>Start AI Walkthrough</Text>
+                </>
+              )}
             </TouchableOpacity>
           )}
         </ScrollView>
