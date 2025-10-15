@@ -395,18 +395,16 @@ class MedicationService {
             { endDate: null },
             { endDate: { gte: today } }
           ]
-        },
-        include: {
-          logs: {
-            where: {
-              scheduledTime: {
-                gte: today,
-                lt: tomorrow
-              }
-            },
-            orderBy: {
-              scheduledTime: 'desc'
-            }
+        }
+      });
+
+      // Get ALL logs for today separately (more reliable than include)
+      const allLogsToday = await prisma.medicationLog.findMany({
+        where: {
+          userId,
+          scheduledTime: {
+            gte: today,
+            lt: tomorrow
           }
         }
       });
@@ -420,12 +418,11 @@ class MedicationService {
           const scheduledTime = new Date(today);
           scheduledTime.setHours(hours, minutes, 0, 0);
 
-          // Check if there's a log for this scheduled time (within same hour and minute)
-          const log = medication.logs.find(l => {
+          // Find log for this medication and time
+          const log = allLogsToday.find(l => {
+            if (l.medicationId !== medication.id) return false;
             const logTime = new Date(l.scheduledTime);
-            const isSameDay = logTime >= today && logTime < tomorrow;
-            const isSameTime = logTime.getHours() === hours && logTime.getMinutes() === minutes;
-            return isSameDay && isSameTime;
+            return logTime.getHours() === hours && logTime.getMinutes() === minutes;
           });
 
           const scheduleItem = {
