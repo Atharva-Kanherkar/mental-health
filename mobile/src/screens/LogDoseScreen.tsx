@@ -189,8 +189,9 @@ export const LogDoseScreen = () => {
       const response = await api.medication.logDose(logData);
       console.log('[LogDose] Response:', JSON.stringify(response, null, 2));
 
+      // Navigate back with refresh flag
+      navigation.navigate('MedicationsList', { refresh: true });
       Alert.alert('Success', 'Dose logged successfully');
-      navigation.goBack();
     } catch (error: any) {
       console.error('[LogDose] Failed to log dose:', error);
       console.error('[LogDose] Error details:', {

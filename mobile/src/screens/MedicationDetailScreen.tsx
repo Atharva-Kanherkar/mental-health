@@ -211,9 +211,47 @@ export const MedicationDetailScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleMarkTaken}>
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              medication.scheduledTimes.every((time) => {
+                const [h, m] = time.split(':').map(Number);
+                const schedTime = new Date();
+                schedTime.setHours(h, m, 0, 0);
+                return logs.some(
+                  (l) =>
+                    l.status === 'taken' &&
+                    Math.abs(new Date(l.scheduledTime).getTime() - schedTime.getTime()) < 5 * 60 * 1000
+                );
+              }) && { opacity: 0.5, backgroundColor: '#F3F4F6' },
+            ]}
+            onPress={handleMarkTaken}
+            disabled={medication.scheduledTimes.every((time) => {
+              const [h, m] = time.split(':').map(Number);
+              const schedTime = new Date();
+              schedTime.setHours(h, m, 0, 0);
+              return logs.some(
+                (l) =>
+                  l.status === 'taken' &&
+                  Math.abs(new Date(l.scheduledTime).getTime() - schedTime.getTime()) < 5 * 60 * 1000
+              );
+            })}
+          >
             <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
-            <Text style={[styles.actionText, { color: theme.colors.success }]}>Mark as Taken</Text>
+            <Text style={[styles.actionText, { color: theme.colors.success }]}>
+              {medication.scheduledTimes.every((time) => {
+                const [h, m] = time.split(':').map(Number);
+                const schedTime = new Date();
+                schedTime.setHours(h, m, 0, 0);
+                return logs.some(
+                  (l) =>
+                    l.status === 'taken' &&
+                    Math.abs(new Date(l.scheduledTime).getTime() - schedTime.getTime()) < 5 * 60 * 1000
+                );
+              })
+                ? 'All Doses Taken Today'
+                : 'Mark as Taken'}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
