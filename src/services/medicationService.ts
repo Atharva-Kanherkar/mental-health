@@ -418,11 +418,13 @@ class MedicationService {
           const scheduledTime = new Date(today);
           scheduledTime.setHours(hours, minutes, 0, 0);
 
-          // Find log for this medication and time
+          // Find log within 5-minute window (handles timezone/rounding issues)
           const log = allLogsToday.find(l => {
             if (l.medicationId !== medication.id) return false;
             const logTime = new Date(l.scheduledTime);
-            return logTime.getHours() === hours && logTime.getMinutes() === minutes;
+            const diffMs = Math.abs(logTime.getTime() - scheduledTime.getTime());
+            const diffMins = diffMs / (1000 * 60);
+            return diffMins < 5; // Within 5 minutes
           });
 
           const scheduleItem = {
