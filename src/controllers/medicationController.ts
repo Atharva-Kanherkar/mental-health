@@ -282,8 +282,11 @@ export class MedicationController {
         return res.status(401).json({ error: 'Authentication required' });
       }
 
+      console.log('[MedicationController] logMedication body:', JSON.stringify(req.body, null, 2));
+
       const validation = LogMedicationSchema.safeParse(req.body);
       if (!validation.success) {
+        console.error('[MedicationController] Validation failed:', JSON.stringify(validation.error.issues, null, 2));
         return res.status(400).json({
           error: 'Invalid log data',
           details: validation.error.issues

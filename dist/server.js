@@ -24,6 +24,7 @@ const user_1 = __importDefault(require("./routes/user"));
 const crisis_1 = __importDefault(require("./routes/crisis"));
 const checkInInsights_1 = __importDefault(require("./routes/checkInInsights"));
 const share_1 = __importDefault(require("./routes/share"));
+const medications_1 = __importDefault(require("./routes/medications"));
 const app = (0, express_1.default)();
 // Behind proxy/CDN (required for Secure cookies + correct proto)
 app.set('trust proxy', 1);
@@ -86,6 +87,7 @@ app.use('/api/user', user_1.default);
 app.use('/api/crisis', crisis_1.default);
 app.use('/api/share', share_1.default); // Authenticated share endpoints
 app.use('/share', share_1.default); // Public share endpoints
+app.use('/api/medications', medications_1.default);
 app.get('/health', (_req, res) => {
     res.json({ status: 'OK', message: 'Mental Health API is running' });
 });

@@ -45,9 +45,18 @@ export const LogDoseScreen = () => {
     setLoading(true);
 
     try {
+      // Convert time string (HH:MM) to full ISO datetime
+      const today = new Date();
+      const [hours, minutes] = time.split(':');
+      const scheduledDateTime = new Date(today);
+      scheduledDateTime.setHours(parseInt(hours, 10));
+      scheduledDateTime.setMinutes(parseInt(minutes, 10));
+      scheduledDateTime.setSeconds(0);
+      scheduledDateTime.setMilliseconds(0);
+
       await api.medication.logDose({
         medicationId,
-        scheduledTime: time,
+        scheduledTime: scheduledDateTime.toISOString(),
         takenAt: status === 'taken' ? new Date().toISOString() : undefined,
         status,
         ...(effectiveness > 0 && { effectiveness }),
