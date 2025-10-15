@@ -638,3 +638,9 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.sm,
   },
 });
+
+// Add this style after actionButton
+actionButtonDisabled: {
+  opacity: 0.5,
+  backgroundColor: '#F3F4F6',
+},
