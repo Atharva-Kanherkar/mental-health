@@ -392,6 +392,11 @@ export class MedicationController {
 
       const schedule = await medicationService.getTodaysSchedule(userId);
 
+      console.log('[Controller] Returning schedule with', schedule.length, 'items');
+      if (schedule.length > 0) {
+        console.log('[Controller] First item:', JSON.stringify(schedule[0], null, 2));
+      }
+
       res.json({
         success: true,
         schedule,

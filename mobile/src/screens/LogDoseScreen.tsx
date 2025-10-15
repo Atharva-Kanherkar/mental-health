@@ -47,6 +47,12 @@ export const LogDoseScreen = () => {
   const getInitialTime = () => {
     if (scheduledTime) {
       try {
+        // Check if it's already in HH:MM format
+        if (/^\d{2}:\d{2}$/.test(scheduledTime)) {
+          console.log('[LogDose] scheduledTime is already HH:MM:', scheduledTime);
+          return scheduledTime;
+        }
+        
         // Try to parse as ISO string
         const date = new Date(scheduledTime);
         
@@ -131,8 +137,17 @@ export const LogDoseScreen = () => {
 
     try {
       // Convert time string (HH:MM) to full ISO datetime
-      // Use the original scheduledTime date if available, otherwise use today
-      const baseDate = scheduledTime ? new Date(scheduledTime) : new Date();
+      // Determine the base date to use
+      let baseDate: Date;
+      
+      if (scheduledTime && /^\d{4}-\d{2}-\d{2}T/.test(scheduledTime)) {
+        // If scheduledTime is an ISO string, use its date part
+        baseDate = new Date(scheduledTime);
+      } else {
+        // Otherwise use today's date
+        baseDate = new Date();
+      }
+      
       const [hoursStr, minutesStr] = time.split(':');
       const hours = parseInt(hoursStr, 10);
       const minutes = parseInt(minutesStr, 10);
@@ -149,6 +164,13 @@ export const LogDoseScreen = () => {
       scheduledDateTime.setMinutes(minutes);
       scheduledDateTime.setSeconds(0);
       scheduledDateTime.setMilliseconds(0);
+      
+      // Validate the final date
+      if (isNaN(scheduledDateTime.getTime())) {
+        Alert.alert('Error', 'Invalid date/time. Please try again.');
+        setLoading(false);
+        return;
+      }
 
       const logData = {
         medicationId,
