@@ -63,13 +63,26 @@ export const MedicationDetailScreen = () => {
   };
 
   const handleMarkTaken = () => {
+    // Find the next pending dose from today's schedule or use the first scheduled time
     const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    // Find next upcoming scheduled time
+    const nextTime = medication?.scheduledTimes?.find((time: string) => {
+      const [hours, mins] = time.split(':').map(Number);
+      const timeMinutes = hours * 60 + mins;
+      return timeMinutes >= currentMinutes;
+    }) || medication?.scheduledTimes?.[0] || '08:00';
+    
+    // Convert to full ISO datetime for today
+    const [hours, minutes] = nextTime.split(':').map(Number);
+    const scheduledDateTime = new Date();
+    scheduledDateTime.setHours(hours, minutes, 0, 0);
 
     navigation.navigate('LogDose', {
       medicationId,
       medicationName: medication?.name,
-      scheduledTime: currentTime,
+      scheduledTime: scheduledDateTime.toISOString(),
     });
   };
 
