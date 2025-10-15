@@ -289,7 +289,7 @@ export const MedicationsListScreen = () => {
                     <View style={styles.nextDoseRow}>
                       <Ionicons name="arrow-forward-circle" size={16} color={theme.colors.success} />
                       <Text style={styles.nextDoseText}>
-                        Next: {typeof nextDose === 'string' && !nextDose.includes('T') ? nextDose : new Date(nextDose).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })} {formatTimeUntil(nextDose)}
+                        Next: {nextDose} {formatTimeUntil(nextDose)}
                       </Text>
                     </View>
                   )}
