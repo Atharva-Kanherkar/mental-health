@@ -36,11 +36,18 @@ export const LogDoseScreen = () => {
   const route = useRoute<RouteProp<{ params: { medicationId: string; medicationName: string; scheduledTime?: string } }, 'params'>>();
   const { medicationId, medicationName, scheduledTime } = route.params;
 
-  const now = new Date();
-  const defaultTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  // Parse scheduledTime if it's an ISO string, otherwise use current time
+  const getInitialTime = () => {
+    if (scheduledTime) {
+      const date = new Date(scheduledTime);
+      return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+    }
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
 
   const [status, setStatus] = useState<'taken' | 'missed' | 'skipped'>('taken');
-  const [time, setTime] = useState(scheduledTime || defaultTime);
+  const [time, setTime] = useState(getInitialTime());
   const [effectiveness, setEffectiveness] = useState<number>(0);
   const [sideEffects, setSideEffects] = useState('');
   const [notes, setNotes] = useState('');
