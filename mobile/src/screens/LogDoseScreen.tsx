@@ -36,14 +36,42 @@ export const LogDoseScreen = () => {
   const route = useRoute<RouteProp<{ params: { medicationId: string; medicationName: string; scheduledTime?: string } }, 'params'>>();
   const { medicationId, medicationName, scheduledTime } = route.params;
 
+  console.log('[LogDose] Screen opened with params:', {
+    medicationId,
+    medicationName,
+    scheduledTime,
+    scheduledTimeType: typeof scheduledTime,
+  });
+
   // Parse scheduledTime if it's an ISO string, otherwise use current time
   const getInitialTime = () => {
     if (scheduledTime) {
-      const date = new Date(scheduledTime);
-      return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+      try {
+        // Try to parse as ISO string
+        const date = new Date(scheduledTime);
+        
+        // Check if date is valid
+        if (isNaN(date.getTime())) {
+          console.error('[LogDose] Invalid scheduledTime:', scheduledTime);
+          // Fall through to use current time
+        } else {
+          const hours = date.getHours();
+          const minutes = date.getMinutes();
+          console.log('[LogDose] Parsed scheduledTime:', scheduledTime, '→', hours, ':', minutes);
+          return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        }
+      } catch (error) {
+        console.error('[LogDose] Error parsing scheduledTime:', scheduledTime, error);
+        // Fall through to use current time
+      }
     }
+    
+    // Fallback to current time
     const now = new Date();
-    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    console.log('[LogDose] Using current time:', hours, ':', minutes);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   };
 
   const [status, setStatus] = useState<'taken' | 'missed' | 'skipped'>('taken');
