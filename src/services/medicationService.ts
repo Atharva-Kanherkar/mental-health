@@ -318,6 +318,9 @@ class MedicationService {
       const tomorrow = new Date(today);
       tomorrow.setDate(tomorrow.getDate() + 1);
 
+      console.log('[MedicationService] getTodaysSchedule for userId:', userId);
+      console.log('[MedicationService] Today range:', today.toISOString(), 'to', tomorrow.toISOString());
+
       // Get active medications
       const medications = await prisma.medication.findMany({
         where: {
@@ -335,10 +338,15 @@ class MedicationService {
                 gte: today,
                 lt: tomorrow
               }
+            },
+            orderBy: {
+              scheduledTime: 'desc'
             }
           }
         }
       });
+
+      console.log('[MedicationService] Found', medications.length, 'active medications');
 
       // Generate schedule with status
       const schedule = medications.flatMap(medication => {
@@ -347,13 +355,15 @@ class MedicationService {
           const scheduledTime = new Date(today);
           scheduledTime.setHours(hours, minutes, 0, 0);
 
-          // Check if there's a log for this scheduled time
+          // Check if there's a log for this scheduled time (within same hour and minute)
           const log = medication.logs.find(l => {
             const logTime = new Date(l.scheduledTime);
-            return logTime.getHours() === hours && logTime.getMinutes() === minutes;
+            const isSameDay = logTime >= today && logTime < tomorrow;
+            const isSameTime = logTime.getHours() === hours && logTime.getMinutes() === minutes;
+            return isSameDay && isSameTime;
           });
 
-          return {
+          const scheduleItem = {
             medicationId: medication.id,
             medicationName: medication.name,
             dosage: medication.dosage,
@@ -363,11 +373,17 @@ class MedicationService {
             takenAt: log?.takenAt || null,
             logId: log?.id || null
           };
+
+          console.log('[MedicationService] Schedule item:', medication.name, time, '→', scheduleItem.status, 'log:', !!log);
+
+          return scheduleItem;
         });
       });
 
       // Sort by scheduled time
       schedule.sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime());
+
+      console.log('[MedicationService] Generated', schedule.length, 'schedule items');
 
       return schedule;
     } catch (error) {

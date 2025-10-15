@@ -68,20 +68,49 @@ export const MedicationsListScreen = () => {
   };
 
   const getNextDose = (med: Medication) => {
-    if (!todaysSchedule) return null;
+    if (!todaysSchedule) {
+      // If no schedule data, use medication's scheduled times
+      const now = new Date();
+      const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
 
+      // Find next upcoming time today
+      const nextTime = med.scheduledTimes.find((time) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        const scheduledMinutes = hours * 60 + minutes;
+        return scheduledMinutes > currentTimeMinutes;
+      });
+
+      // If found, return it; otherwise return first time (for tomorrow)
+      return nextTime || med.scheduledTimes[0];
+    }
+
+    // Get today's schedule items for this medication
     const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
 
+    // Find next pending dose from schedule
     const upcoming = Array.isArray(todaysSchedule) ? todaysSchedule.find(
-      (item: any) => item.medicationId === med.id && item.scheduledTime > currentTime && item.status === 'pending'
+      (item: any) => {
+        if (item.medicationId !== med.id || item.status !== 'pending') return false;
+        
+        const scheduledTime = new Date(item.scheduledTime);
+        const scheduledMinutes = scheduledTime.getHours() * 60 + scheduledTime.getMinutes();
+        return scheduledMinutes > currentTimeMinutes;
+      }
     ) : null;
 
     if (upcoming) {
       return upcoming.scheduledTime;
     }
 
-    return med.scheduledTimes.find((time) => time > currentTime) || med.scheduledTimes[0];
+    // No upcoming doses today, find next time for tomorrow
+    const nextTime = med.scheduledTimes.find((time) => {
+      const [hours, minutes] = time.split(':').map(Number);
+      const scheduledMinutes = hours * 60 + minutes;
+      return scheduledMinutes > currentTimeMinutes;
+    });
+
+    return nextTime || med.scheduledTimes[0];
   };
 
   const formatTimeUntil = (time: string | Date) => {
