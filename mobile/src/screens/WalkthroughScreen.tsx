@@ -94,6 +94,23 @@ export const WalkthroughScreen = ({ route, navigation }: any) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFE',
+  },
+  loadingText: {
+    fontSize: theme.fontSizes.lg,
+    fontWeight: theme.fontWeights.medium as any,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.lg,
+  },
+  loadingSubtext: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+  },
   safeArea: { flex: 1 },
   closeButton: {
     position: 'absolute',
