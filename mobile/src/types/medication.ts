@@ -33,7 +33,7 @@ export interface MedicationLog {
   medicationId: string;
   scheduledTime: string;
   takenAt?: string;
-  status: 'pending' | 'taken' | 'missed' | 'skipped' | 'late';
+  status: 'pending' | 'taken' | 'missed' | 'skipped' | 'late';  // Added 'late'
   sideEffects?: string;
   effectiveness?: number;
   notes?: string;
@@ -97,7 +97,7 @@ export interface TodaysSchedule {
   medications: Array<{
     medication: Medication;
     scheduledTime: string;
-    status: 'pending' | 'taken' | 'missed' | 'skipped';
+    status: 'pending' | 'taken' | 'missed' | 'skipped' | 'late';  // Added 'late'
     log?: MedicationLog;
   }>;
   summary: {
@@ -107,6 +107,18 @@ export interface TodaysSchedule {
     pending: number;
   };
 }
+
+// Backend returns array directly, not nested in object
+export type TodaysScheduleItem = {
+  medicationId: string;
+  medicationName: string;
+  dosage: string;
+  dosageUnit: string;
+  scheduledTime: string;  // ISO datetime
+  status: 'pending' | 'taken' | 'missed' | 'skipped' | 'late';
+  takenAt: string | null;
+  logId: string | null;
+};
 
 export interface AdherenceStats {
   medicationId?: string;

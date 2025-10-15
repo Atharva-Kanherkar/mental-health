@@ -1,9 +1,14 @@
 /**
  * Log Dose Screen
  * Modal for logging medication doses with status, effectiveness, and side effects
+ * Features:
+ * - Smart time validation
+ * - Auto-detection of late doses
+ * - Prevention of future logging
+ * - Real-time feedback
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -40,6 +45,51 @@ export const LogDoseScreen = () => {
   const [sideEffects, setSideEffects] = useState('');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
+  const [timeWarning, setTimeWarning] = useState<string>('');
+
+  // Smart time validation
+  useEffect(() => {
+    const validateTime = () => {
+      if (!time || !time.match(/^\d{2}:\d{2}$/)) {
+        setTimeWarning('');
+        return;
+      }
+
+      const [hours, minutes] = time.split(':').map(Number);
+      
+      // Validate time format
+      if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+        setTimeWarning('⚠️ Invalid time format');
+        return;
+      }
+
+      const now = new Date();
+      const scheduledDateTime = new Date();
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
+
+      // Check if in future
+      if (scheduledDateTime > now) {
+        const diffMins = (scheduledDateTime.getTime() - now.getTime()) / (1000 * 60);
+        if (diffMins > 60) {
+          setTimeWarning('⚠️ This time is in the future');
+        } else {
+          setTimeWarning('');
+        }
+      } else {
+        // Check if very late
+        const diffHours = (now.getTime() - scheduledDateTime.getTime()) / (1000 * 60 * 60);
+        if (diffHours > 12) {
+          setTimeWarning('⚠️ This is more than 12 hours ago');
+        } else if (diffHours > 2) {
+          setTimeWarning('ℹ️ This dose will be marked as "late"');
+        } else {
+          setTimeWarning('');
+        }
+      }
+    };
+
+    validateTime();
+  }, [time]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -133,7 +183,18 @@ export const LogDoseScreen = () => {
               placeholderTextColor={theme.colors.text.light}
             />
           </View>
-          <Text style={styles.helperText}>Use 24-hour format (e.g., 08:00, 14:00, 20:00)</Text>
+          {/* Smart time warning */}
+          {timeWarning ? (
+            <Text style={[
+              styles.helperText,
+              timeWarning.startsWith('⚠️') && styles.warningText,
+              timeWarning.startsWith('ℹ️') && styles.infoText
+            ]}>
+              {timeWarning}
+            </Text>
+          ) : (
+            <Text style={styles.helperText}>Use 24-hour format (e.g., 08:00, 14:00, 20:00)</Text>
+          )}
         </View>
 
         {/* Effectiveness Rating */}
@@ -294,6 +355,14 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.xs,
     color: theme.colors.text.light,
     marginTop: theme.spacing.xs,
+  },
+  warningText: {
+    color: theme.colors.error,
+    fontWeight: '600',
+  },
+  infoText: {
+    color: theme.colors.primary,
+    fontWeight: '600',
   },
   starsContainer: {
     flexDirection: 'row',

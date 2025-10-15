@@ -19,12 +19,12 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NavigationProp } from '@react-navigation/native';
 import { theme } from '../config/theme';
 import { api } from '../services/api';
-import type { Medication, TodaysSchedule, AdherenceStats } from '../types/medication';
+import type { Medication, TodaysScheduleItem, AdherenceStats } from '../types/medication';
 
 export const MedicationsListScreen = () => {
   const navigation = useNavigation<NavigationProp<any>>();
   const [medications, setMedications] = useState<Medication[]>([]);
-  const [todaysSchedule, setTodaysSchedule] = useState<TodaysSchedule | null>(null);
+  const [todaysSchedule, setTodaysSchedule] = useState<TodaysScheduleItem[] | null>(null);
   const [adherence, setAdherence] = useState<AdherenceStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -89,15 +89,15 @@ export const MedicationsListScreen = () => {
     const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
 
     // Find next pending dose from schedule
-    const upcoming = Array.isArray(todaysSchedule) ? todaysSchedule.find(
-      (item: any) => {
+    const upcoming = todaysSchedule.find(
+      (item) => {
         if (item.medicationId !== med.id || item.status !== 'pending') return false;
         
         const scheduledTime = new Date(item.scheduledTime);
         const scheduledMinutes = scheduledTime.getHours() * 60 + scheduledTime.getMinutes();
         return scheduledMinutes > currentTimeMinutes;
       }
-    ) : null;
+    );
 
     if (upcoming) {
       return upcoming.scheduledTime;
@@ -187,7 +187,8 @@ export const MedicationsListScreen = () => {
         }
       >
         {/* Today's Schedule Card */}
-        {todaysSchedule && Array.isArray(todaysSchedule) && todaysSchedule.length > 0 && (
+        {/* Today's Schedule Card */}
+        {todaysSchedule && todaysSchedule.length > 0 && (
           <TouchableOpacity
             style={styles.todayCard}
             onPress={() => navigation.navigate('MedicationSchedule')}
@@ -199,21 +200,21 @@ export const MedicationsListScreen = () => {
             <View style={styles.todaySummary}>
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryValue}>
-                  {Array.isArray(todaysSchedule) ? todaysSchedule.filter((s: any) => s.status === 'taken').length : 0}
+                  {todaysSchedule.filter(s => s.status === 'taken' || s.status === 'late').length}
                 </Text>
                 <Text style={styles.summaryLabel}>Taken</Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryValue}>
-                  {Array.isArray(todaysSchedule) ? todaysSchedule.filter((s: any) => s.status === 'pending').length : 0}
+                  {todaysSchedule.filter(s => s.status === 'pending').length}
                 </Text>
                 <Text style={styles.summaryLabel}>Pending</Text>
               </View>
               <View style={styles.summaryDivider} />
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryValue}>
-                  {Array.isArray(todaysSchedule) ? todaysSchedule.filter((s: any) => s.status === 'missed').length : 0}
+                  {todaysSchedule.filter(s => s.status === 'missed' || s.status === 'skipped').length}
                 </Text>
                 <Text style={styles.summaryLabel}>Missed</Text>
               </View>

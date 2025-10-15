@@ -52,8 +52,31 @@ const UpdateMedicationSchema = z.object({
 
 const LogMedicationSchema = z.object({
   medicationId: z.string().uuid('Invalid medication ID'),
-  scheduledTime: z.string().datetime().transform(val => new Date(val)),
-  takenAt: z.string().datetime().optional().transform(val => val ? new Date(val) : undefined),
+  scheduledTime: z.string().datetime().transform(val => {
+    const scheduledTime = new Date(val);
+    const now = new Date();
+    const futureLimit = new Date(now.getTime() + 24 * 60 * 60 * 1000); // Max 24h in future
+
+    // Prevent logging more than 24 hours in the future
+    if (scheduledTime > futureLimit) {
+      throw new Error('Cannot log doses more than 24 hours in the future');
+    }
+
+    return scheduledTime;
+  }),
+  takenAt: z.string().datetime().optional().transform(val => {
+    if (!val) return undefined;
+    
+    const takenAt = new Date(val);
+    const now = new Date();
+    
+    // Prevent future takenAt
+    if (takenAt > now) {
+      throw new Error('Cannot set takenAt time in the future');
+    }
+    
+    return takenAt;
+  }),
   status: z.enum(['taken', 'missed', 'skipped', 'late']),
   sideEffects: z.string().optional(),
   effectiveness: z.number().int().min(1).max(5).optional(),

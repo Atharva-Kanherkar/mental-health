@@ -77,6 +77,7 @@ import type {
   UpdateMedicationData,
   LogDoseData,
   TodaysSchedule,
+  TodaysScheduleItem,
   AdherenceStats,
   MissedDose,
   SideEffect,
@@ -959,8 +960,8 @@ class ApiService {
       return response.logs;
     },
 
-    getTodaysSchedule: async (): Promise<any> => {
-      const response = await this.request<{ success: boolean; schedule: any; count: number }>({
+    getTodaysSchedule: async (): Promise<TodaysScheduleItem[]> => {
+      const response = await this.request<{ success: boolean; schedule: TodaysScheduleItem[]; count: number }>({
         method: 'GET',
         url: API_ENDPOINTS.MEDICATIONS.GET_TODAY_SCHEDULE,
       });

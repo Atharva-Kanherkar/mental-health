@@ -233,6 +233,10 @@ class MedicationService {
 
   /**
    * Log medication taken
+   * Improvements:
+   * - Prevents duplicate logs (updates existing instead)
+   * - Auto-calculates "late" status based on time difference
+   * - Validates timing constraints
    */
   async logMedicationTaken(userId: string, data: LogMedicationData) {
     try {
@@ -245,13 +249,81 @@ class MedicationService {
         throw new Error('Medication not found');
       }
 
+      // Check for existing log on the same day and time
+      const scheduledDate = new Date(data.scheduledTime);
+      const dayStart = new Date(scheduledDate);
+      dayStart.setHours(0, 0, 0, 0);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      const existingLog = await prisma.medicationLog.findFirst({
+        where: {
+          userId,
+          medicationId: data.medicationId,
+          scheduledTime: {
+            gte: dayStart,
+            lt: dayEnd
+          }
+        }
+      });
+
+      // Auto-calculate status based on time difference
+      let finalStatus = data.status;
+      
+      if (data.status === 'taken' && data.takenAt) {
+        const scheduledTime = new Date(data.scheduledTime);
+        const takenTime = new Date(data.takenAt);
+        const diffMs = takenTime.getTime() - scheduledTime.getTime();
+        const diffHours = diffMs / (1000 * 60 * 60);
+
+        // If taken more than 2 hours late, auto-mark as "late"
+        const LATE_THRESHOLD_HOURS = 2;
+        
+        if (diffHours > LATE_THRESHOLD_HOURS) {
+          finalStatus = 'late';
+          console.log(`[MedicationService] Auto-marked as late: ${diffHours.toFixed(1)}h after scheduled time`);
+        } else if (diffHours < -0.5) {
+          // Taken more than 30 minutes EARLY - log warning but allow
+          console.log(`[MedicationService] WARNING: Dose logged ${Math.abs(diffHours).toFixed(1)}h before scheduled time`);
+        }
+      }
+
+      // If existing log found, check if it's the same scheduled time
+      if (existingLog) {
+        const existingHour = existingLog.scheduledTime.getHours();
+        const existingMin = existingLog.scheduledTime.getMinutes();
+        const newHour = scheduledDate.getHours();
+        const newMin = scheduledDate.getMinutes();
+
+        if (existingHour === newHour && existingMin === newMin) {
+          // UPDATE existing log instead of creating duplicate
+          const updatedLog = await prisma.medicationLog.update({
+            where: { id: existingLog.id },
+            data: {
+              takenAt: data.takenAt,
+              status: finalStatus,
+              sideEffects: data.sideEffects,
+              effectiveness: data.effectiveness,
+              notes: data.notes
+            },
+            include: {
+              medication: true
+            }
+          });
+
+          console.log(`[MedicationService] Updated existing log ${existingLog.id} with status ${finalStatus}`);
+          return updatedLog;
+        }
+      }
+
+      // No existing log found, create new one
       const log = await prisma.medicationLog.create({
         data: {
           userId,
           medicationId: data.medicationId,
           scheduledTime: data.scheduledTime,
           takenAt: data.takenAt,
-          status: data.status,
+          status: finalStatus,
           sideEffects: data.sideEffects,
           effectiveness: data.effectiveness,
           notes: data.notes
@@ -261,7 +333,7 @@ class MedicationService {
         }
       });
 
-      console.log(`[MedicationService] Logged medication ${data.status} for ${data.medicationId}`);
+      console.log(`[MedicationService] Created new log with status ${finalStatus} for ${data.medicationId}`);
       return log;
     } catch (error) {
       console.error('[MedicationService] Error logging medication:', error);
