@@ -315,7 +315,7 @@ class MedicationService {
           userId,
           medicationId: data.medicationId,
           scheduledTime: data.scheduledTime,
-          takenAt: data.takenAt,
+          takenAt: data.takenAt || (data.status === 'taken' ? new Date() : null),
           status: finalStatus,
           sideEffects: data.sideEffects,
           effectiveness: data.effectiveness,
