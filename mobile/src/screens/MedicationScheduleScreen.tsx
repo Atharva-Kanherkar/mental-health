@@ -29,7 +29,9 @@ export const MedicationScheduleScreen = () => {
 
   const loadSchedule = async () => {
     try {
+      console.log('[MedicationSchedule] Fetching today\'s schedule...');
       const data = await api.medication.getTodaysSchedule();
+      console.log('[MedicationSchedule] Received schedule:', JSON.stringify(data, null, 2));
       setSchedule(data || []);
     } catch (error: any) {
       console.error('Failed to load schedule:', error);

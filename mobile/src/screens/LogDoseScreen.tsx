@@ -104,7 +104,7 @@ export const LogDoseScreen = () => {
       scheduledDateTime.setSeconds(0);
       scheduledDateTime.setMilliseconds(0);
 
-      await api.medication.logDose({
+      const logData = {
         medicationId,
         scheduledTime: scheduledDateTime.toISOString(),
         takenAt: status === 'taken' ? new Date().toISOString() : undefined,
@@ -112,7 +112,11 @@ export const LogDoseScreen = () => {
         ...(effectiveness > 0 && { effectiveness }),
         ...(sideEffects.trim() && { sideEffects: sideEffects.trim() }),
         ...(notes.trim() && { notes: notes.trim() }),
-      });
+      };
+
+      console.log('[LogDose] Sending log data:', JSON.stringify(logData, null, 2));
+      const response = await api.medication.logDose(logData);
+      console.log('[LogDose] Response:', JSON.stringify(response, null, 2));
 
       Alert.alert('Success', 'Dose logged successfully');
       navigation.goBack();
