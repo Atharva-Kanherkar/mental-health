@@ -211,9 +211,27 @@ export const MedicationDetailScreen = () => {
 
         {/* Action Buttons */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity style={styles.actionButton} onPress={handleMarkTaken}>
-            <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
-            <Text style={[styles.actionText, { color: theme.colors.success }]}>Mark as Taken</Text>
+          <TouchableOpacity
+            style={[styles.actionButton, logs.some(l =>
+              l.status === 'taken' &&
+              new Date(l.scheduledTime).toDateString() === new Date().toDateString()
+            ) && styles.actionButtonDisabled]}
+            onPress={handleMarkTaken}
+            disabled={logs.some(l =>
+              l.status === 'taken' &&
+              new Date(l.scheduledTime).toDateString() === new Date().toDateString()
+            )}
+          >
+            <Ionicons
+              name={logs.some(l => l.status === 'taken' && new Date(l.scheduledTime).toDateString() === new Date().toDateString()) ? "checkmark-done-circle" : "checkmark-circle"}
+              size={24}
+              color={theme.colors.success}
+            />
+            <Text style={[styles.actionText, { color: theme.colors.success }]}>
+              {logs.some(l => l.status === 'taken' && new Date(l.scheduledTime).toDateString() === new Date().toDateString())
+                ? "Already Taken Today"
+                : "Mark as Taken"}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
