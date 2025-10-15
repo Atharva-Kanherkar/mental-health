@@ -249,14 +249,18 @@ class MedicationService {
         throw new Error('Medication not found');
       }
 
-      // Check for existing log on the same day and time
+      // Check for existing log on the same day and time (EXACT hour + minute match)
       const scheduledDate = new Date(data.scheduledTime);
+      const scheduledHour = scheduledDate.getHours();
+      const scheduledMinute = scheduledDate.getMinutes();
+      
       const dayStart = new Date(scheduledDate);
       dayStart.setHours(0, 0, 0, 0);
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayEnd.getDate() + 1);
 
-      const existingLog = await prisma.medicationLog.findFirst({
+      // Find all logs for this medication on this day
+      const logsToday = await prisma.medicationLog.findMany({
         where: {
           userId,
           medicationId: data.medicationId,
@@ -265,6 +269,13 @@ class MedicationService {
             lt: dayEnd
           }
         }
+      });
+
+      // Check if any log matches the EXACT scheduled hour and minute
+      const existingLog = logsToday.find(log => {
+        const logHour = log.scheduledTime.getHours();
+        const logMinute = log.scheduledTime.getMinutes();
+        return logHour === scheduledHour && logMinute === scheduledMinute;
       });
 
       // Auto-calculate status based on time difference
@@ -288,32 +299,24 @@ class MedicationService {
         }
       }
 
-      // If existing log found, check if it's the same scheduled time
+      // If existing log found with exact time match, UPDATE instead of creating duplicate
       if (existingLog) {
-        const existingHour = existingLog.scheduledTime.getHours();
-        const existingMin = existingLog.scheduledTime.getMinutes();
-        const newHour = scheduledDate.getHours();
-        const newMin = scheduledDate.getMinutes();
+        const updatedLog = await prisma.medicationLog.update({
+          where: { id: existingLog.id },
+          data: {
+            takenAt: data.takenAt,
+            status: finalStatus,
+            sideEffects: data.sideEffects,
+            effectiveness: data.effectiveness,
+            notes: data.notes
+          },
+          include: {
+            medication: true
+          }
+        });
 
-        if (existingHour === newHour && existingMin === newMin) {
-          // UPDATE existing log instead of creating duplicate
-          const updatedLog = await prisma.medicationLog.update({
-            where: { id: existingLog.id },
-            data: {
-              takenAt: data.takenAt,
-              status: finalStatus,
-              sideEffects: data.sideEffects,
-              effectiveness: data.effectiveness,
-              notes: data.notes
-            },
-            include: {
-              medication: true
-            }
-          });
-
-          console.log(`[MedicationService] Updated existing log ${existingLog.id} with status ${finalStatus}`);
-          return updatedLog;
-        }
+        console.log(`[MedicationService] Updated existing log ${existingLog.id} with status ${finalStatus}`);
+        return updatedLog;
       }
 
       // No existing log found, create new one
