@@ -42,6 +42,8 @@ export const MedicationScheduleScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      // Force reload every time screen comes into focus
+      setLoading(true);
       loadSchedule();
     }, [])
   );
@@ -49,6 +51,22 @@ export const MedicationScheduleScreen = () => {
   const onRefresh = () => {
     setRefreshing(true);
     loadSchedule();
+  };
+
+  /**
+   * Check if a dose is actionable (can be logged now)
+   * Returns true if:
+   * - Dose is past due (scheduled time has passed)
+   * - Dose is within 1 hour of scheduled time
+   * Returns false if dose is more than 1 hour in the future
+   */
+  const isDoseActionable = (scheduledTime: string): boolean => {
+    const now = new Date();
+    const scheduledDate = new Date(scheduledTime);
+    const diffInMinutes = (scheduledDate.getTime() - now.getTime()) / (1000 * 60);
+    
+    // Allow logging if dose is past due OR within 60 minutes of scheduled time
+    return diffInMinutes <= 60;
   };
 
   const handleMarkTaken = async (
@@ -260,28 +278,30 @@ export const MedicationScheduleScreen = () => {
                           )}
                         </View>
                       </View>
-                      {/* Show button for pending OR allow editing logged doses */}
-                      <TouchableOpacity
-                        style={[
-                          styles.markButton,
-                          (item.status === 'missed' || item.status === 'skipped') && styles.markButtonDisabled
-                        ]}
-                        onPress={() =>
-                          handleMarkTaken(
-                            item.medicationId,
-                            item.scheduledTime,
-                            item.medicationName,
-                            item.logId
-                          )
-                        }
-                        disabled={item.status === 'missed' || item.status === 'skipped'}
-                      >
-                        <Ionicons
-                          name={item.logId ? 'create-outline' : 'checkmark-circle'}
-                          size={24}
-                          color={item.logId ? theme.colors.text.secondary : theme.colors.success}
-                        />
-                      </TouchableOpacity>
+                      {/* Show button only if dose is actionable (within 1 hour or past due) */}
+                      {isDoseActionable(item.scheduledTime) && (
+                        <TouchableOpacity
+                          style={[
+                            styles.markButton,
+                            (item.status === 'missed' || item.status === 'skipped') && styles.markButtonDisabled
+                          ]}
+                          onPress={() =>
+                            handleMarkTaken(
+                              item.medicationId,
+                              item.scheduledTime,
+                              item.medicationName,
+                              item.logId
+                            )
+                          }
+                          disabled={item.status === 'missed' || item.status === 'skipped'}
+                        >
+                          <Ionicons
+                            name={item.logId ? 'create-outline' : 'checkmark-circle'}
+                            size={24}
+                            color={item.logId ? theme.colors.text.secondary : theme.colors.success}
+                          />
+                        </TouchableOpacity>
+                      )}
                     </View>
 
                     <View style={styles.doseInfo}>
@@ -289,6 +309,11 @@ export const MedicationScheduleScreen = () => {
                       <Text style={styles.doseMedDosage}>
                         {item.dosage} {item.dosageUnit}
                       </Text>
+                      {!isDoseActionable(item.scheduledTime) && item.status === 'pending' && (
+                        <Text style={styles.futureHint}>
+                          Available 1 hour before dose time
+                        </Text>
+                      )}
                     </View>
                   </View>
                 </View>
@@ -487,6 +512,13 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSizes.md,
     color: theme.colors.text.secondary,
     marginTop: theme.spacing.xs,
+  },
+  futureHint: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+    fontStyle: 'italic',
+    opacity: 0.7,
   },
   doseMedInstructions: {
     fontSize: theme.fontSizes.sm,
