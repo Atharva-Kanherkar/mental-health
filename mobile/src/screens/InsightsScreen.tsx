@@ -130,8 +130,9 @@ export default function InsightsScreen() {
             {data.moodTrend.averageMood.toFixed(1)}/10
           </Text>
           <Text style={styles.trendChange}>
-            {data.moodTrend.changePercent > 0 ? '+' : ''}
-            {data.moodTrend.changePercent.toFixed(1)}% from last week
+            {data.moodTrend.changePercent !== null && data.moodTrend.changePercent !== undefined
+              ? `${data.moodTrend.changePercent > 0 ? '+' : ''}${data.moodTrend.changePercent.toFixed(1)}% from last week`
+              : 'First week - no comparison data'}
           </Text>
         </View>
 
