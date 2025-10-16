@@ -228,7 +228,8 @@ class ReportGenerationService {
     return await prisma.journalEntry.findMany({
       where: {
         userId,
-        createdAt: { gte: startDate }
+        createdAt: { gte: startDate },
+        privacyLevel: 'server_managed' // EXCLUDE encrypted journals from reports
       },
       orderBy: { createdAt: 'desc' }
     });

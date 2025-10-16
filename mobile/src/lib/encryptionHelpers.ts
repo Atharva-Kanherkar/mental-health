@@ -3,20 +3,19 @@ import * as Crypto from 'expo-crypto';
 import { EncryptionKeys } from './encryption';
 
 export async function encryptText(text: string, keys: EncryptionKeys): Promise<{ encryptedText: string; iv: string }> {
-  const textWordArray = CryptoJS.enc.Utf8.parse(text);
-
   const ivBytes = await Crypto.getRandomBytesAsync(16);
   const ivHex = Array.from(ivBytes).map(b => b.toString(16).padStart(2, '0')).join('');
   const iv = CryptoJS.enc.Hex.parse(ivHex);
 
-  const encrypted = CryptoJS.AES.encrypt(textWordArray, keys.derivedKey, {
+  // Encrypt the text string directly
+  const encrypted = CryptoJS.AES.encrypt(text, keys.derivedKey, {
     iv: iv,
     mode: CryptoJS.mode.CBC,
     padding: CryptoJS.pad.Pkcs7
   });
 
   return {
-    encryptedText: encrypted.ciphertext.toString(CryptoJS.enc.Base64),
+    encryptedText: encrypted.toString(), // Full cipher including IV
     iv: ivHex
   };
 }
