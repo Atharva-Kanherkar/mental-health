@@ -890,18 +890,13 @@ export class CheckInAnalyticsService implements ICheckInAnalyticsService {
       overallProgress: 'needs_attention'
     };
   }
-}
-
-export const checkInAnalyticsService = new CheckInAnalyticsService();
-
   private async fetchJournals(userId: string, days: number) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     return await prisma.journalEntry.findMany({
       where: { userId, createdAt: { gte: startDate } },
       select: { aiSentiment: true, aiWellnessScore: true, aiMoodTags: true, aiThemes: true, aiInsights: true },
-      orderBy: { createdAt: 'desc' },
-      take: 10
+      orderBy: { createdAt: 'desc' }, take: 10
     });
   }
 
@@ -909,17 +904,10 @@ export const checkInAnalyticsService = new CheckInAnalyticsService();
     if (journals.length === 0) return null;
     const scores = journals.map((j: any) => j.aiWellnessScore).filter((s: any) => s);
     const tags = journals.flatMap((j: any) => j.aiMoodTags || []);
-    const themes = journals.flatMap((j: any) => j.aiThemes || []);
-    const tagCounts: any = {};
-    tags.forEach((t: any) => tagCounts[t] = (tagCounts[t] || 0) + 1);
-    const themeCounts: any = {};
-    themes.forEach((t: any) => themeCounts[t] = (themeCounts[t] || 0) + 1);
-    return {
-      totalEntries: journals.length,
-      avgWellnessScore: scores.length > 0 ? Math.round(scores.reduce((a: any, b: any) => a + b) / scores.length) : null,
-      topMoodTags: Object.entries(tagCounts).sort((a: any, b: any) => b[1] - a[1]).slice(0, 5).map(([tag, count]) => ({ tag, count })),
-      topThemes: Object.entries(themeCounts).sort((a: any, b: any) => b[1] - a[1]).slice(0, 3).map(([theme, count]) => ({ theme, count })),
-      recentInsights: journals.map((j: any) => j.aiInsights).filter(Boolean).slice(0, 3)
-    };
+    const tc: any = {};
+    tags.forEach((t: any) => tc[t] = (tc[t] || 0) + 1);
+    return { totalEntries: journals.length, avgWellnessScore: scores.length > 0 ? Math.round(scores.reduce((a: any, b: any) => a + b) / scores.length) : null, topMoodTags: Object.entries(tc).sort((a: any, b: any) => b[1] - a[1]).slice(0, 5).map(([tag, count]) => ({ tag, count })), topThemes: [], recentInsights: journals.map((j: any) => j.aiInsights).filter(Boolean).slice(0, 3) };
   }
+
 }
+
