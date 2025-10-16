@@ -4,26 +4,31 @@ import { EncryptionKeys } from './encryption';
 
 export async function encryptText(text: string, keys: EncryptionKeys): Promise<{ encryptedText: string; iv: string }> {
   try {
+    console.log('[encryptText] Starting encryption');
+
     const ivBytes = await Crypto.getRandomBytesAsync(16);
     const ivHex = Array.from(ivBytes).map(b => b.toString(16).padStart(2, '0')).join('');
     const iv = CryptoJS.enc.Hex.parse(ivHex);
 
-    // Use the hex string key directly (not WordArray)
-    const keyHex = keys.encryptionKey;
+    console.log('[encryptText] IV generated');
 
-    const encrypted = CryptoJS.AES.encrypt(text, keyHex, {
+    // CRITICAL: Use derivedKey WordArray directly, NOT the hex string
+    // Passing a string makes CryptoJS treat it as a password and try to derive a key
+    const encrypted = CryptoJS.AES.encrypt(text, keys.derivedKey, {
       iv: iv,
       mode: CryptoJS.mode.CBC,
       padding: CryptoJS.pad.Pkcs7
     });
+
+    console.log('[encryptText] Encryption successful');
 
     return {
       encryptedText: encrypted.ciphertext.toString(CryptoJS.enc.Base64),
       iv: ivHex
     };
   } catch (error) {
-    console.error('Encryption error:', error);
-    throw new Error('Failed to encrypt text');
+    console.error('[encryptText] Encryption failed:', error);
+    throw new Error('Failed to encrypt text: ' + (error as Error).message);
   }
 }
 
