@@ -19,9 +19,7 @@ import { theme } from '../config/theme';
 import { Button } from '../components/Button';
 import { api } from '../services/api';
 import type { JournalEntry } from '../types/journal';
-
-const HeartIcon = () => <Text style={styles.icon}>❤️</Text>;
-const PlusIcon = () => <Text style={styles.icon}>➕</Text>;
+import { HeartIcon, PlusIcon, BookIcon, ArrowBackIcon } from '../components/Icons';
 
 export const JournalListScreen = ({ navigation }: any) => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -94,7 +92,7 @@ export const JournalListScreen = ({ navigation }: any) => {
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconCircle}>
-              <Text style={styles.icon}>📖</Text>
+              <BookIcon size={28} color={theme.colors.primary} />
             </View>
             <Text style={styles.title}>Your Sacred Journal</Text>
             <Text style={styles.subtitle}>
@@ -107,7 +105,7 @@ export const JournalListScreen = ({ navigation }: any) => {
             <Button
               title="Begin a new reflection"
               onPress={() => navigation.navigate('NewJournal')}
-              icon={<PlusIcon />}
+              icon={<PlusIcon size={20} color="#FFFFFF" />}
               style={styles.newButton}
             />
           </View>
@@ -115,7 +113,7 @@ export const JournalListScreen = ({ navigation }: any) => {
           {/* Entries */}
           {entries.length === 0 ? (
             <View style={styles.emptyState}>
-              <HeartIcon />
+              <HeartIcon size={64} color={theme.colors.primary} />
               <Text style={styles.emptyTitle}>Your sanctuary awaits</Text>
               <Text style={styles.emptyText}>
                 This is where your thoughts will find their home
@@ -123,6 +121,7 @@ export const JournalListScreen = ({ navigation }: any) => {
               <Button
                 title="Begin your first reflection"
                 onPress={() => navigation.navigate('NewJournal')}
+                icon={<PlusIcon size={20} color="#FFFFFF" />}
                 style={styles.emptyButton}
               />
             </View>
@@ -135,6 +134,7 @@ export const JournalListScreen = ({ navigation }: any) => {
                   <TouchableOpacity
                     style={styles.entryItem}
                     activeOpacity={0.7}
+                    onPress={() => navigation.navigate('JournalDetail', { entryId: entry.id })}
                   >
                     <View style={styles.entryHeader}>
                       <View style={styles.dateCircle}>
