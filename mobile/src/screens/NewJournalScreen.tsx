@@ -990,7 +990,9 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
                   <>
                     <SparklesIcon size={20} color="#FFFFFF" />
                     <Text style={styles.submitButtonText}>
-                      Share with my companion
+                      {privacyLevel === 'zero_knowledge'
+                        ? 'Save Encrypted Journal'
+                        : 'Share with my companion'}
                     </Text>
                   </>
                 )}

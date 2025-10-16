@@ -7,15 +7,15 @@ export async function encryptText(text: string, keys: EncryptionKeys): Promise<{
   const ivHex = Array.from(ivBytes).map(b => b.toString(16).padStart(2, '0')).join('');
   const iv = CryptoJS.enc.Hex.parse(ivHex);
 
-  // Encrypt the text string directly
-  const encrypted = CryptoJS.AES.encrypt(text, keys.derivedKey, {
+  // Encrypt using the key directly as string (CryptoJS accepts string keys)
+  const encrypted = CryptoJS.AES.encrypt(text, keys.encryptionKey, {
     iv: iv,
     mode: CryptoJS.mode.CBC,
     padding: CryptoJS.pad.Pkcs7
   });
 
   return {
-    encryptedText: encrypted.toString(), // Full cipher including IV
+    encryptedText: encrypted.toString(),
     iv: ivHex
   };
 }
