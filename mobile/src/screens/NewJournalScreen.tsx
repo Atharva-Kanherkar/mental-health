@@ -326,13 +326,18 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
   };
 
   const handleSubmit = async (password?: string) => {
+    console.log('[handleSubmit] Called with password:', !!password, 'privacyLevel:', privacyLevel);
+
     if (!validateForm()) return;
 
     // Prompt for password if zero_knowledge and not provided
     if (privacyLevel === 'zero_knowledge' && !password) {
+      console.log('[handleSubmit] Showing password prompt');
       setShowPasswordPrompt(true);
       return;
     }
+
+    console.log('[handleSubmit] Proceeding with submission');
 
     try {
       setIsSubmitting(true);
