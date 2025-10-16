@@ -27,6 +27,7 @@ import { DashboardScreen } from '../screens/DashboardScreen';
 // Journal Screens
 import { JournalListScreen } from '../screens/JournalListScreen';
 import { NewJournalScreen } from '../screens/NewJournalScreen';
+import { JournalDetailScreen } from '../screens/JournalDetailScreen';
 
 // Memory Screens
 import { MemoriesListScreen } from '../screens/MemoriesListScreen';
@@ -159,6 +160,7 @@ const MainAppStack = () => {
 
       {/* Journal Screens */}
       <Stack.Screen name="NewJournal" component={NewJournalScreen} />
+      <Stack.Screen name="JournalDetail" component={JournalDetailScreen} />
 
       {/* Memory Screens */}
       <Stack.Screen name="NewMemory" component={NewMemoryScreen} />
