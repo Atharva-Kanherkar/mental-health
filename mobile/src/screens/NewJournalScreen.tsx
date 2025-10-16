@@ -343,16 +343,32 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
 
       // Encrypt if zero_knowledge
       if (privacyLevel === 'zero_knowledge' && password && user?.email) {
-        const { deriveEncryptionKey } = await import('../lib/encryption');
-        const { encryptText } = await import('../lib/encryptionHelpers');
+        try {
+          console.log('[Journal] Starting client-side encryption');
+          const encryptionLib = await import('../lib/encryption');
+          const helpersLib = await import('../lib/encryptionHelpers');
 
-        const keys = deriveEncryptionKey(password, user.email);
-        const encryptedTitle = await encryptText(title, keys);
-        const encryptedContent = await encryptText(content, keys);
+          console.log('[Journal] Deriving key from password');
+          const keys = encryptionLib.deriveEncryptionKey(password, user.email);
+          console.log('[Journal] Key derived successfully');
 
-        finalTitle = encryptedTitle.encryptedText;
-        finalContent = encryptedContent.encryptedText;
-        iv = encryptedTitle.iv;
+          console.log('[Journal] Encrypting title');
+          const encryptedTitle = await helpersLib.encryptText(title, keys);
+          console.log('[Journal] Title encrypted');
+
+          console.log('[Journal] Encrypting content');
+          const encryptedContent = await helpersLib.encryptText(content, keys);
+          console.log('[Journal] Content encrypted');
+
+          finalTitle = encryptedTitle.encryptedText;
+          finalContent = encryptedContent.encryptedText;
+          iv = encryptedTitle.iv;
+
+          console.log('[Journal] Encryption complete, IV:', iv);
+        } catch (encError) {
+          console.error('[Journal] Encryption failed:', encError);
+          throw new Error('Failed to encrypt journal: ' + (encError as Error).message);
+        }
       }
 
       const data: any = {
