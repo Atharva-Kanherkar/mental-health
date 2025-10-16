@@ -84,10 +84,10 @@ export class JournalController {
       if (privacyLevel === 'zero_knowledge') {
         // Skip AI analysis for encrypted journals (privacy preserved)
         aiAnalysis = {
-          aiSentiment: null,
+          aiSentiment: 'encrypted',
           aiMoodTags: [],
-          aiWellnessScore: null,
-          aiInsights: null,
+          aiWellnessScore: 0,
+          aiInsights: 'Content is encrypted - AI analysis unavailable',
           aiThemes: [],
           isSafetyRisk: false,
           supportiveMessage: 'Your thoughts are safely encrypted. Only you can read them.'
