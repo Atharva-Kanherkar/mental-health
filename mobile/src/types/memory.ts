@@ -123,3 +123,9 @@ export interface FileAccessData {
   encryptionAuthTag?: string;
   expiresIn: number;
 }
+
+export interface PanicModeWalkthrough {
+  selectedMemories: string[];
+  overallNarrative: string;
+  estimatedDuration: number;
+}
