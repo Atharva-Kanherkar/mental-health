@@ -15,6 +15,8 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { deriveEncryptionKey, encryptText } from '../lib/encryption';
 import {
   View,
   Text,
@@ -93,6 +95,9 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<AIAnalysis | null>(null);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [encryptionPassword, setEncryptionPassword] = useState('');
+  const { user } = useAuth();
   const [errors, setErrors] = useState<{ title?: string; content?: string }>({});
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [focusField, setFocusField] = useState<'title' | 'content'>('content');
