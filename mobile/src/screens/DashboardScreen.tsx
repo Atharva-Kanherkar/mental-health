@@ -110,6 +110,7 @@ export const DashboardScreen = ({ navigation }: any) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Features</Text>
 
+            {/* Temporarily disabled - incomplete feature
             <TouchableOpacity
               style={styles.featureCard}
               onPress={() => navigation.navigate('AssessmentList')}
@@ -125,6 +126,7 @@ export const DashboardScreen = ({ navigation }: any) => {
               </View>
               <Text style={styles.arrow}>→</Text>
             </TouchableOpacity>
+            */}
 
             <TouchableOpacity
               style={styles.featureCard}
