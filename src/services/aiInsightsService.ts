@@ -188,13 +188,10 @@ Be compassionate and identify patterns that could help with coping strategies.`;
     }
 
     try {
-      // Get user profile context if userId provided
+      // Profile context is included via journal aggregation now
       let profileContext = '';
-      if (userId) {
-        profileContext = await UserProfileService.getAIContext(userId);
-      }
 
-      const avgMood = this.average(checkInData.map(c => c.overallMood));
+      const avgMood = this.average(checkInData.map((c: any) => c.overallMood));
       const avgEnergy = this.average(checkInData.map(c => c.energyLevel));
       const avgStress = this.average(checkInData.map(c => c.stressLevel));
       const avgAnxiety = this.average(checkInData.map(c => c.anxietyLevel));
