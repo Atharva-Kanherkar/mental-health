@@ -27,8 +27,10 @@ export interface JournalEntry {
   anxietyLevel?: number | null;
   stressLevel?: number | null;
 
-  // Privacy & Memory
+  // Privacy & Encryption
   privacyLevel: 'zero_knowledge' | 'server_managed';
+  isEncrypted: boolean;
+  encryptionIV?: string | null;
   convertToMemory: boolean;
   associatedMemoryId?: string | null;
   pointsEarned: number;
