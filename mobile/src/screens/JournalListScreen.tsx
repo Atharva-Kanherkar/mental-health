@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../config/theme';
 import { Button } from '../components/Button';
 import { api } from '../services/api';
@@ -143,7 +144,14 @@ export const JournalListScreen = ({ navigation }: any) => {
                         </Text>
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={styles.entryTitle}>{entry.title}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Text style={styles.entryTitle} numberOfLines={1}>
+                            {entry.isEncrypted ? 'Encrypted Journal' : entry.title}
+                          </Text>
+                          {entry.isEncrypted && (
+                            <Ionicons name="lock-closed" size={16} color={theme.colors.primary} />
+                          )}
+                        </View>
                         <Text style={styles.entryDate}>
                           {new Date(entry.createdAt).toLocaleDateString('en-US', {
                             weekday: 'long',
@@ -158,7 +166,9 @@ export const JournalListScreen = ({ navigation }: any) => {
                     <View style={styles.entryContent}>
                       <View style={styles.marginLine} />
                       <Text style={styles.entryText} numberOfLines={4}>
-                        {entry.content}
+                        {entry.isEncrypted
+                          ? 'This journal is encrypted. Tap to decrypt and view.'
+                          : entry.content}
                       </Text>
                     </View>
 
