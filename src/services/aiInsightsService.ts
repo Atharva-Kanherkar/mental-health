@@ -178,7 +178,7 @@ Be compassionate and identify patterns that could help with coping strategies.`;
   /**
    * Generate personalized insight from check-in data
    */
-  async generatePersonalizedInsight(checkInData: DailyCheckIn[], userId?: string): Promise<string> {
+  async generatePersonalizedInsight(checkInData: DailyCheckIn[], journalAggregation: any = null): Promise<string> {
     if (checkInData.length === 0) {
       return this.getFallbackInsight();
     }
