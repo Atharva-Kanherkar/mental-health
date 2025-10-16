@@ -21,10 +21,20 @@ import { api } from '../services/api';
 import type { JournalEntry } from '../types/journal';
 import { ArrowBackIcon, HeartIcon, SparklesIcon, BrainIcon, EditIcon, DeleteIcon } from '../components/Icons';
 
+import { PasswordPrompt } from '../components/PasswordPrompt';
+import { deriveEncryptionKey } from '../lib/encryption';
+import { decryptText } from '../lib/encryptionHelpers';
+import { useAuth } from '../context/AuthContext';
+
 export const JournalDetailScreen = ({ route, navigation }: any) => {
   const { entryId } = route.params;
   const [entry, setEntry] = useState<JournalEntry | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [decryptedTitle, setDecryptedTitle] = useState<string>('');
+  const [decryptedContent, setDecryptedContent] = useState<string>('');
+  const [isDecrypted, setIsDecrypted] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     loadEntry();
@@ -34,12 +44,39 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
     try {
       const data = await api.journal.getById(entryId);
       setEntry(data);
+
+      // Check if encrypted
+      if (data.privacyLevel === 'zero_knowledge' && data.isEncrypted) {
+        // Show password prompt for encrypted journals
+        setShowPasswordPrompt(true);
+      } else {
+        // Not encrypted - show directly
+        setIsDecrypted(true);
+      }
     } catch (error) {
       console.error('Failed to load journal entry:', error);
       Alert.alert('Error', 'Failed to load journal entry');
       navigation.goBack();
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePasswordConfirm = async (password: string) => {
+    if (!entry || !user?.email) return;
+
+    try {
+      const keys = deriveEncryptionKey(password, user.email);
+
+      const decTitle = decryptText(entry.title, entry.encryptionIV!, keys);
+      const decContent = decryptText(entry.content, entry.encryptionIV!, keys);
+
+      setDecryptedTitle(decTitle);
+      setDecryptedContent(decContent);
+      setIsDecrypted(true);
+      setShowPasswordPrompt(false);
+    } catch (error) {
+      Alert.alert('Decryption Failed', 'Incorrect password or corrupted data');
     }
   };
 
@@ -95,23 +132,45 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Title Card */}
-          <View style={styles.titleCard}>
-            <Text style={styles.title}>{entry.title}</Text>
-            <Text style={styles.date}>
-              {new Date(entry.createdAt).toLocaleDateString('en-US', {
-                weekday: 'long',
-                month: 'long',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-            </Text>
-          </View>
+          {isDecrypted ? (
+            <>
+              {/* Title Card */}
+              <View style={styles.titleCard}>
+                <Text style={styles.title}>
+                  {entry.isEncrypted ? decryptedTitle : entry.title}
+                </Text>
+                <Text style={styles.date}>
+                  {new Date(entry.createdAt).toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </Text>
+                {entry.isEncrypted && (
+                  <View style={styles.encryptedBadge}>
+                    <Ionicons name="lock-closed" size={16} color="#10B981" />
+                    <Text style={styles.encryptedText}>Encrypted & Private</Text>
+                  </View>
+                )}
+              </View>
 
-          {/* Content Card */}
-          <View style={styles.contentCard}>
-            <Text style={styles.content}>{entry.content}</Text>
-          </View>
+              {/* Content Card */}
+              <View style={styles.contentCard}>
+                <Text style={styles.content}>
+                  {entry.isEncrypted ? decryptedContent : entry.content}
+                </Text>
+              </View>
+            </>
+          ) : (
+            <View style={styles.encryptedPlaceholder}>
+              <Ionicons name="lock-closed" size={64} color={theme.colors.primary} />
+              <Text style={styles.encryptedTitle}>Encrypted Journal</Text>
+              <Text style={styles.encryptedSubtitle}>
+                This journal is protected with end-to-end encryption
+              </Text>
+            </View>
+          )}
 
           {/* Mood Tracking */}
           {(entry.overallMood || entry.energyLevel || entry.anxietyLevel || entry.stressLevel) && (
@@ -200,6 +259,19 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
             </View>
           )}
         </ScrollView>
+
+        {/* Password Prompt */}
+        <PasswordPrompt
+          isOpen={showPasswordPrompt}
+          onClose={() => {
+            setShowPasswordPrompt(false);
+            navigation.goBack();
+          }}
+          onConfirm={handlePasswordConfirm}
+          title="Decrypt Journal"
+          description="Enter your password to view this encrypted journal"
+          isLoading={false}
+        />
       </SafeAreaView>
     </LinearGradient>
   );
@@ -390,5 +462,36 @@ const styles = StyleSheet.create({
     color: theme.colors.text.primary,
     fontStyle: 'italic',
     lineHeight: 20,
+  },
+  encryptedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: theme.spacing.sm,
+  },
+  encryptedText: {
+    fontSize: theme.fontSizes.xs,
+    color: '#10B981',
+    fontWeight: theme.fontWeights.semibold as any,
+  },
+  encryptedPlaceholder: {
+    alignItems: 'center',
+    padding: theme.spacing.xl,
+    backgroundColor: theme.colors.surface.whiteAlpha80,
+    borderRadius: theme.borderRadius['2xl'],
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  encryptedTitle: {
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.medium as any,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.md,
+  },
+  encryptedSubtitle: {
+    fontSize: theme.fontSizes.sm,
+    color: theme.colors.text.secondary,
+    marginTop: theme.spacing.xs,
+    textAlign: 'center',
   },
 });
