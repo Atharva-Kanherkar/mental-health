@@ -30,6 +30,14 @@ export const JournalListScreen = ({ navigation }: any) => {
   const loadEntries = async () => {
     try {
       const { entries: loadedEntries } = await api.journal.getAll({ page: 1, limit: 20 });
+      console.log('[JournalList] Loaded', loadedEntries.length, 'entries');
+      if (loadedEntries.length > 0) {
+        console.log('[JournalList] First entry:', {
+          title: loadedEntries[0].title.substring(0, 30),
+          isEncrypted: loadedEntries[0].isEncrypted,
+          privacyLevel: loadedEntries[0].privacyLevel
+        });
+      }
       setEntries(loadedEntries);
     } catch (error) {
       console.error('Failed to load entries:', error);
