@@ -33,20 +33,28 @@ export interface DecryptedFile {
  * This key is used for client-side encryption and NEVER sent to server
  */
 export function deriveEncryptionKey(password: string, userEmail: string): EncryptionKeys {
-  // Use email as salt (combined with a fixed salt for additional security)
-  const salt = CryptoJS.enc.Utf8.parse(userEmail + 'mental-health-app-salt-2024');
+  try {
+    // Use email as salt
+    const saltString = userEmail + 'mental-health-app-salt-2024';
 
-  // Derive key using PBKDF2 with 100,000 iterations (high security)
-  const derivedKey = CryptoJS.PBKDF2(password, salt, {
-    keySize: 256 / 32, // 256-bit key
-    iterations: 100000,
-    hasher: CryptoJS.algo.SHA256
-  });
+    // Simple but secure: SHA256 hash of password+salt
+    // Repeated 100k times for key stretching
+    let key = password + saltString;
+    for (let i = 0; i < 100000; i++) {
+      key = CryptoJS.SHA256(key).toString();
+    }
 
-  return {
-    encryptionKey: derivedKey.toString(CryptoJS.enc.Hex),
-    derivedKey
-  };
+    // Convert final hash to WordArray for use in AES
+    const derivedKey = CryptoJS.enc.Hex.parse(key.substring(0, 64)); // 256 bits
+
+    return {
+      encryptionKey: key.substring(0, 64),
+      derivedKey
+    };
+  } catch (error) {
+    console.error('Key derivation error:', error);
+    throw new Error('Failed to derive encryption key');
+  }
 }
 
 /**
