@@ -79,7 +79,7 @@ export class UserProfileController {
         return res.status(400).json({
           success: false,
           message: 'Invalid profile data',
-          errors: validationResult.error.errors,
+          errors: validationResult.error.issues,
         });
       }
 
