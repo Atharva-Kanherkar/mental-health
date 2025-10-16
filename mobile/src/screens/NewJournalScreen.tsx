@@ -325,36 +325,59 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (password?: string) => {
     if (!validateForm()) return;
+
+    // Prompt for password if zero_knowledge and not provided
+    if (privacyLevel === 'zero_knowledge' && !password) {
+      setShowPasswordPrompt(true);
+      return;
+    }
 
     try {
       setIsSubmitting(true);
 
-      const data: CreateJournalEntryData = {
-        title: title.trim(),
-        content: content.trim(),
+      let finalTitle = title.trim();
+      let finalContent = content.trim();
+      let iv: string | undefined;
+
+      // Encrypt if zero_knowledge
+      if (privacyLevel === 'zero_knowledge' && password && user?.email) {
+        const { deriveEncryptionKey } = await import('../lib/encryption');
+        const { encryptText } = await import('../lib/encryptionHelpers');
+
+        const keys = deriveEncryptionKey(password, user.email);
+        const encryptedTitle = await encryptText(title, keys);
+        const encryptedContent = await encryptText(content, keys);
+
+        finalTitle = encryptedTitle.encryptedText;
+        finalContent = encryptedContent.encryptedText;
+        iv = encryptedTitle.iv;
+      }
+
+      const data: any = {
+        title: finalTitle,
+        content: finalContent,
         overallMood,
         energyLevel,
         anxietyLevel,
         stressLevel,
         privacyLevel,
         convertToMemory,
+        ...(iv && { iv }),
       };
 
       const entry = await api.journal.create(data);
       setAiAnalysis(entry.aiAnalysis);
 
-      // Clear draft after successful submission
       await clearDraft();
 
-      // Navigate to list after showing AI insights
       setTimeout(() => {
         navigation.navigate('JournalList');
       }, 5000);
     } catch (error) {
       console.error('Failed to create journal entry:', error);
-      alert('Failed to create journal entry. Please try again.');
+      Alert.alert('Error', 'Failed to create journal entry');
     } finally {
       setIsSubmitting(false);
     }
