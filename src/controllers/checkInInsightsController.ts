@@ -5,7 +5,8 @@
 
 import { Request, Response } from 'express';
 import { z } from 'zod';
-import { checkInAnalyticsService } from '../services/checkInAnalyticsService';
+import { CheckInAnalyticsService } from '../services/checkInAnalyticsService';
+const checkInAnalyticsService = new CheckInAnalyticsService();
 
 // Validation schemas
 const DaysQuerySchema = z.object({

@@ -4,7 +4,8 @@
  */
 
 import prisma from '../prisma/client';
-import { checkInAnalyticsService } from './checkInAnalyticsService';
+import { CheckInAnalyticsService } from './checkInAnalyticsService';
+const checkInAnalyticsService = new CheckInAnalyticsService();
 import { medicationService } from './medicationService';
 
 export interface Report {
