@@ -207,8 +207,11 @@ export class CheckInAnalyticsService implements ICheckInAnalyticsService {
     }
 
     try {
-      // Fetch last 7 days
-      const checkIns = await this.fetchCheckIns(userId, 7);
+      // Fetch last 7 days of check-ins AND journals
+      const [checkIns, journals] = await Promise.all([
+        this.fetchCheckIns(userId, 7),
+        this.fetchJournals(userId, 7)
+      ]);
 
       if (checkIns.length === 0) {
         return this.getEmptyWeeklyInsight();
@@ -230,17 +233,21 @@ export class CheckInAnalyticsService implements ICheckInAnalyticsService {
       // Get patterns
       const patterns = await this.detectPatterns(userId, 7);
 
+      // Aggregate journal data (statistical, not LLM)
+      const journalAggregation = this.aggregateJournalData(journals);
+
       // Generate AI summary with circuit breaker and rate limiting
+      // NOW includes journal context
       const aiSummary = await this.rateLimiter.enqueue(async () => {
         return await this.circuitBreaker.execute(async () => {
-          return await aiInsightsService.generateWeeklySummary(checkIns);
+          return await aiInsightsService.generateWeeklySummary(checkIns, journalAggregation);
         });
       });
 
-      // Get personalized insight
+      // Get personalized insight with journal context
       const personalizedInsight = await this.rateLimiter.enqueue(async () => {
         return await this.circuitBreaker.execute(async () => {
-          return await aiInsightsService.generatePersonalizedInsight(checkIns);
+          return await aiInsightsService.generatePersonalizedInsight(checkIns, journalAggregation);
         });
       });
 
