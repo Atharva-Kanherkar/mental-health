@@ -34,6 +34,7 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
   const [decryptedTitle, setDecryptedTitle] = useState<string>('');
   const [decryptedContent, setDecryptedContent] = useState<string>('');
   const [isDecrypted, setIsDecrypted] = useState(false);
+  const [isDecrypting, setIsDecrypting] = useState(false);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -66,17 +67,27 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
     if (!entry || !user?.email) return;
 
     try {
+      setIsDecrypting(true);
+      console.log('[JournalDetail] Decrypting with password...');
+
       const keys = deriveEncryptionKey(password, user.email);
+      console.log('[JournalDetail] Key derived');
 
       const decTitle = decryptText(entry.title, entry.encryptionIV!, keys);
+      console.log('[JournalDetail] Title decrypted');
+
       const decContent = decryptText(entry.content, entry.encryptionIV!, keys);
+      console.log('[JournalDetail] Content decrypted');
 
       setDecryptedTitle(decTitle);
       setDecryptedContent(decContent);
       setIsDecrypted(true);
       setShowPasswordPrompt(false);
     } catch (error) {
+      console.error('[JournalDetail] Decryption failed:', error);
       Alert.alert('Decryption Failed', 'Incorrect password or corrupted data');
+    } finally {
+      setIsDecrypting(false);
     }
   };
 
@@ -270,7 +281,7 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
           onConfirm={handlePasswordConfirm}
           title="Decrypt Journal"
           description="Enter your password to view this encrypted journal"
-          isLoading={false}
+          isLoading={isDecrypting}
         />
       </SafeAreaView>
     </LinearGradient>
