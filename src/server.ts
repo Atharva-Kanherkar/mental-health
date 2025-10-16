@@ -93,8 +93,9 @@ app.use('/api/rewards', rewardRoutes);
 app.use('/api/checkin', dailyCheckinRoutes);
 app.use('/api/checkin/insights', checkInInsightsRoutes);
 app.use('/api/questionnaires', questionnaireRoutes);
-app.use('/api/user', userRoutes);
+// Mount more specific routes first to avoid conflicts
 app.use('/api/user/profile', userProfileRoutes);
+app.use('/api/user', userRoutes);
 app.use('/api/crisis', crisisRoutes);
 app.use('/api/share', shareRoutes); // Authenticated share endpoints
 app.use('/share', shareRoutes); // Public share endpoints
