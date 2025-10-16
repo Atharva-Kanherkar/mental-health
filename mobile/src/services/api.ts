@@ -90,6 +90,13 @@ import type {
   MissedDosesResponse,
   SideEffectsResponse,
 } from '../types/medication';
+import type {
+  UserProfile,
+  CreateUserProfileData,
+  UpdateUserProfileData,
+  UserProfileResponse,
+  UserProfileStatusResponse,
+} from '../types/userProfile';
 
 class ApiService {
   private client: AxiosInstance;
@@ -997,6 +1004,51 @@ class ApiService {
         url: API_ENDPOINTS.MEDICATIONS.GET_SIDE_EFFECTS,
       });
       return response.summary;
+    },
+  };
+
+  // User Profile API methods
+  userProfile = {
+    get: async (): Promise<UserProfile | null> => {
+      try {
+        const response = await this.request<UserProfileResponse>({
+          method: 'GET',
+          url: '/api/user/profile',
+        });
+        return response.profile;
+      } catch (error: any) {
+        if (error.message?.includes('404')) {
+          return null;
+        }
+        throw error;
+      }
+    },
+
+    createOrUpdate: async (data: CreateUserProfileData | UpdateUserProfileData): Promise<UserProfile> => {
+      const response = await this.request<UserProfileResponse>({
+        method: 'POST',
+        url: '/api/user/profile',
+        data,
+      });
+      return response.profile;
+    },
+
+    delete: async (): Promise<void> => {
+      await this.request({
+        method: 'DELETE',
+        url: '/api/user/profile',
+      });
+    },
+
+    getStatus: async (): Promise<{ hasProfile: boolean; completeness: number }> => {
+      const response = await this.request<UserProfileStatusResponse>({
+        method: 'GET',
+        url: '/api/user/profile/status',
+      });
+      return {
+        hasProfile: response.hasProfile,
+        completeness: response.completeness,
+      };
     },
   };
 }

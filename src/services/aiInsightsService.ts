@@ -11,6 +11,7 @@ import {
   MoodDriver,
   IAIInsightsService
 } from '../types/insights';
+import { UserProfileService } from './userProfileService';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -177,7 +178,7 @@ Be compassionate and identify patterns that could help with coping strategies.`;
   /**
    * Generate personalized insight from check-in data
    */
-  async generatePersonalizedInsight(checkInData: DailyCheckIn[]): Promise<string> {
+  async generatePersonalizedInsight(checkInData: DailyCheckIn[], userId?: string): Promise<string> {
     if (checkInData.length === 0) {
       return this.getFallbackInsight();
     }
@@ -187,6 +188,12 @@ Be compassionate and identify patterns that could help with coping strategies.`;
     }
 
     try {
+      // Get user profile context if userId provided
+      let profileContext = '';
+      if (userId) {
+        profileContext = await UserProfileService.getAIContext(userId);
+      }
+
       const avgMood = this.average(checkInData.map(c => c.overallMood));
       const avgEnergy = this.average(checkInData.map(c => c.energyLevel));
       const avgStress = this.average(checkInData.map(c => c.stressLevel));
@@ -206,6 +213,8 @@ Be compassionate and identify patterns that could help with coping strategies.`;
         .slice(0, 5);
 
       const prompt = `You are a compassionate mental health therapist providing a brief, personalized insight.
+
+${profileContext ? `${profileContext}\n` : ''}
 
 DATA SUMMARY (Last ${checkInData.length} days):
 - Average Mood: ${avgMood.toFixed(1)}/10

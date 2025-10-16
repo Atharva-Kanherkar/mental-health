@@ -50,6 +50,7 @@ import { AssessmentResultsScreen } from '../screens/AssessmentResultsScreen';
 
 // Profile Screens
 import { ProfileScreen } from '../screens/ProfileScreen';
+import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { ProfileAnalysisScreen } from '../screens/ProfileAnalysisScreen';
 
 // Rewards Screen
@@ -179,6 +180,7 @@ const MainAppStack = () => {
       <Stack.Screen name="AssessmentResults" component={AssessmentResultsScreen} />
 
       {/* Profile Screens */}
+      <Stack.Screen name="ProfileSetup" component={ProfileSetupScreen} />
       <Stack.Screen name="ProfileAnalysis" component={ProfileAnalysisScreen} />
 
       {/* Rewards */}

@@ -1,5 +1,6 @@
 /**
- * Mental Health Profile Screen
+ * User Profile Screen
+ * Display and edit simple UserProfile (not MentalHealthProfile)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -16,13 +17,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../config/theme';
 import { api } from '../services/api';
-import { MentalHealthProfile } from '../types/profile';
-import { ArrowBackIcon, BrainIcon, SparklesIcon, LogoutIcon } from '../components/Icons';
+import { UserProfile, MainGoalLabels, PreferredToneLabels } from '../types/userProfile';
+import { ArrowBackIcon, BrainIcon, SparklesIcon, LogoutIcon, EditIcon } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 
 export const ProfileScreen = ({ navigation }: any) => {
-  const [profile, setProfile] = useState<MentalHealthProfile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [completeness, setCompleteness] = useState(0);
   const { logout, user } = useAuth();
 
   useEffect(() => {
@@ -31,8 +33,12 @@ export const ProfileScreen = ({ navigation }: any) => {
 
   const loadProfile = async () => {
     try {
-      const data = await api.profile.get();
-      setProfile(data);
+      const [profileData, statusData] = await Promise.all([
+        api.userProfile.get(),
+        api.userProfile.getStatus(),
+      ]);
+      setProfile(profileData);
+      setCompleteness(statusData.completeness);
     } catch (error) {
       console.log('No profile found');
     } finally {
@@ -47,13 +53,19 @@ export const ProfileScreen = ({ navigation }: any) => {
     ]);
   };
 
-  const generateAnalysis = async () => {
-    try {
-      const analysis = await api.profile.generateAnalysis();
-      navigation.navigate('ProfileAnalysis', { analysis });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to generate analysis');
-    }
+  const handleEdit = () => {
+    navigation.navigate('ProfileSetup', {
+      isEditing: true,
+      existingProfile: profile,
+      onComplete: loadProfile,
+    });
+  };
+
+  const handleCreateProfile = () => {
+    navigation.navigate('ProfileSetup', {
+      isEditing: false,
+      onComplete: loadProfile,
+    });
   };
 
   return (
@@ -77,27 +89,87 @@ export const ProfileScreen = ({ navigation }: any) => {
           <ScrollView contentContainerStyle={styles.scrollContent}>
             {profile ? (
               <>
-                <TouchableOpacity style={styles.actionCard} onPress={generateAnalysis}>
-                  <BrainIcon size={32} color={theme.colors.primary} />
+                {/* Profile Completeness */}
+                <View style={styles.completenessCard}>
+                  <View style={styles.completenessHeader}>
+                    <Text style={styles.completenessTitle}>Profile Completeness</Text>
+                    <Text style={styles.completenessPercent}>{completeness}%</Text>
+                  </View>
+                  <View style={styles.progressBar}>
+                    <View
+                      style={[styles.progressFill, { width: `${completeness}%` }]}
+                    />
+                  </View>
+                  <Text style={styles.completenessHint}>
+                    Complete your profile for better AI personalization
+                  </Text>
+                </View>
+
+                {/* Edit Button */}
+                <TouchableOpacity style={styles.actionCard} onPress={handleEdit}>
+                  <SparklesIcon size={32} color={theme.colors.primary} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.actionTitle}>Generate AI Analysis</Text>
-                    <Text style={styles.actionDesc}>Get personalized insights</Text>
+                    <Text style={styles.actionTitle}>Edit Profile</Text>
+                    <Text style={styles.actionDesc}>Update your information</Text>
                   </View>
                   <Text style={styles.arrow}>→</Text>
                 </TouchableOpacity>
 
+                {/* Age */}
+                {profile.age && (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.infoLabel}>Age</Text>
+                    <Text style={styles.infoValue}>{profile.age}</Text>
+                  </View>
+                )}
+
+                {/* Pronouns */}
+                {profile.pronouns && (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.infoLabel}>Pronouns</Text>
+                    <Text style={styles.infoValue}>{profile.pronouns}</Text>
+                  </View>
+                )}
+
+                {/* Main Goal */}
+                {profile.mainGoal && (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.infoLabel}>Main Goal</Text>
+                    <Text style={styles.infoValue}>{MainGoalLabels[profile.mainGoal]}</Text>
+                  </View>
+                )}
+
+                {/* Current Challenges */}
+                {profile.currentChallenges && (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.infoLabel}>Current Challenges</Text>
+                    <Text style={styles.infoValue}>{profile.currentChallenges}</Text>
+                  </View>
+                )}
+
+                {/* What Helps */}
+                {profile.whatHelps && (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.infoLabel}>What Helps</Text>
+                    <Text style={styles.infoValue}>{profile.whatHelps}</Text>
+                  </View>
+                )}
+
+                {/* Preferred Tone */}
                 <View style={styles.infoCard}>
-                  <Text style={styles.infoLabel}>Age</Text>
-                  <Text style={styles.infoValue}>{profile.age || 'Not set'}</Text>
+                  <Text style={styles.infoLabel}>Communication Style</Text>
+                  <Text style={styles.infoValue}>{PreferredToneLabels[profile.preferredTone]}</Text>
                 </View>
 
-                <View style={styles.infoCard}>
-                  <Text style={styles.infoLabel}>Primary Concerns</Text>
-                  <Text style={styles.infoValue}>
-                    {profile.primaryConcerns?.join(', ') || 'None listed'}
-                  </Text>
-                </View>
+                {/* Bio */}
+                {profile.bio && (
+                  <View style={styles.infoCard}>
+                    <Text style={styles.infoLabel}>About You</Text>
+                    <Text style={styles.infoValue}>{profile.bio}</Text>
+                  </View>
+                )}
 
+                {/* Profile Created */}
                 <View style={styles.infoCard}>
                   <Text style={styles.infoLabel}>Profile Created</Text>
                   <Text style={styles.infoValue}>
@@ -110,8 +182,11 @@ export const ProfileScreen = ({ navigation }: any) => {
                 <BrainIcon size={64} color={theme.colors.text.light} />
                 <Text style={styles.emptyTitle}>No Profile Yet</Text>
                 <Text style={styles.emptyText}>
-                  Create your mental health profile to get personalized insights
+                  Create your profile to get personalized AI experiences throughout the app
                 </Text>
+                <TouchableOpacity style={styles.createButton} onPress={handleCreateProfile}>
+                  <Text style={styles.createButtonText}>Create Profile</Text>
+                </TouchableOpacity>
               </View>
             )}
           </ScrollView>
@@ -153,6 +228,45 @@ const styles = StyleSheet.create({
   },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   scrollContent: { padding: theme.spacing.lg },
+  completenessCard: {
+    backgroundColor: theme.colors.surface.whiteAlpha80,
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  completenessHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  completenessTitle: {
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold as any,
+    color: theme.colors.text.primary,
+  },
+  completenessPercent: {
+    fontSize: theme.fontSizes.xl,
+    fontWeight: theme.fontWeights.bold as any,
+    color: theme.colors.primary,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: theme.colors.border.light,
+    borderRadius: theme.borderRadius.full,
+    overflow: 'hidden',
+    marginBottom: theme.spacing.sm,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: theme.colors.primary,
+  },
+  completenessHint: {
+    fontSize: theme.fontSizes.xs,
+    color: theme.colors.text.secondary,
+  },
   actionCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -196,6 +310,7 @@ const styles = StyleSheet.create({
   infoValue: {
     fontSize: theme.fontSizes.md,
     color: theme.colors.text.primary,
+    lineHeight: 22,
   },
   emptyCard: {
     backgroundColor: theme.colors.surface.whiteAlpha80,
@@ -217,5 +332,18 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     textAlign: 'center',
     lineHeight: 22,
+    marginBottom: theme.spacing.lg,
+  },
+  createButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.full,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.xl,
+    ...theme.shadows.md,
+  },
+  createButtonText: {
+    fontSize: theme.fontSizes.md,
+    fontWeight: theme.fontWeights.semibold as any,
+    color: '#FFFFFF',
   },
 });

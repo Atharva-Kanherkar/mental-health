@@ -17,6 +17,7 @@ import rewardRoutes from './routes/rewards';
 import dailyCheckinRoutes from './routes/dailyCheckin';
 import questionnaireRoutes from './routes/questionnaires';
 import userRoutes from './routes/user';
+import userProfileRoutes from './routes/userProfile';
 import crisisRoutes from './routes/crisis';
 import checkInInsightsRoutes from './routes/checkInInsights';
 import shareRoutes from './routes/share';
@@ -93,6 +94,7 @@ app.use('/api/checkin', dailyCheckinRoutes);
 app.use('/api/checkin/insights', checkInInsightsRoutes);
 app.use('/api/questionnaires', questionnaireRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/user/profile', userProfileRoutes);
 app.use('/api/crisis', crisisRoutes);
 app.use('/api/share', shareRoutes); // Authenticated share endpoints
 app.use('/share', shareRoutes); // Public share endpoints

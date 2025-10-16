@@ -28,7 +28,10 @@ model User {
   userRewards          UserReward[]
   streaks              Streak[]
   achievements         UserAchievement[]
-  
+
+  // User Profile (simple, encouraged)
+  userProfile          UserProfile?
+
   // Comprehensive Mental Health Assessment
   mentalHealthProfile  MentalHealthProfile?
   assessmentResponses  AssessmentResponse[]
@@ -39,7 +42,7 @@ model User {
   // Medication Management
   medications          Medication[]
   medicationLogs       MedicationLog[]
-  
+
   // Gamification stats
   totalPoints          Int @default(0)
   currentLevel         Int @default(1)
@@ -48,6 +51,31 @@ model User {
   sharedReports        SharedReport[]
 
   @@map("user")
+}
+
+// User Profile Model - Simple, lightweight profile for AI personalization
+model UserProfile {
+  id String @id @default(uuid())
+  userId String @unique
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Basic Info
+  age Int?
+  pronouns String? // "he/him", "she/her", "they/them", "other"
+
+  // Mental Health Context
+  mainGoal String? // "reduce_anxiety", "improve_mood", "better_sleep", "manage_stress", "build_habits", "general_wellness"
+  currentChallenges String? // Brief text, max 200 chars
+  whatHelps String? // What coping strategies work, max 200 chars
+
+  // AI Personalization
+  preferredTone String @default("gentle") // "gentle", "direct", "encouraging", "professional"
+
+  // Optional
+  bio String? // Max 300 chars
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model MemoryVault {
@@ -59,7 +87,7 @@ model MemoryVault {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  //what remains is just the AI meta data for now. 
+  //what remains is just the AI meta data for now.
 }
 
 model JournalEntry {

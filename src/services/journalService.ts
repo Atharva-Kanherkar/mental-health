@@ -2,6 +2,7 @@ import { z } from "zod";
 import { GeminiService } from "./geminiService";
 import prisma from "../prisma/client";
 import { selectCompanionTemplate, shouldUseAIGeneration } from "./companionTemplates";
+import { UserProfileService } from "./userProfileService";
  
 // export interface JournalAnalysis{
 //  aiSentiment: string
@@ -61,10 +62,15 @@ export class JournalService {
       // Get recent entries for context (last 3 entries)
       const recentEntries = await this.getRecentEntriesForContext(userId);
 
+      // Get user profile context for AI personalization
+      const profileContext = await UserProfileService.getAIContext(userId);
+
        const prompt = `
         You are a compassionate AI mental health assistant analyzing a journal entry.
-        
-        RECENT CONTEXT: ${recentEntries.length > 0 ? recentEntries.map((entry: RecentEntryContext, index: number) => 
+
+        ${profileContext ? `${profileContext}\n` : ''}
+
+        RECENT CONTEXT: ${recentEntries.length > 0 ? recentEntries.map((entry: RecentEntryContext, index: number) =>
           `${index + 1}. ${entry.title}: ${entry.content.substring(0, 150)}... [${new Date(entry.createdAt).toLocaleDateString()}]`
         ).join(' | ') : 'First entry.'}
 

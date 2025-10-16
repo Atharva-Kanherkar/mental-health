@@ -4,7 +4,22 @@
  */
 
 export interface UserContextForAI {
-  // Mental Health Profile
+  // User Profile (simple, encouraged)
+  userProfile?: {
+    id: string;
+    userId: string;
+    age?: number;
+    pronouns?: string;
+    mainGoal?: string;
+    currentChallenges?: string;
+    whatHelps?: string;
+    preferredTone: string;
+    bio?: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+
+  // Mental Health Profile (complex, optional)
   mentalHealthProfile?: {
     id: string;
     userId: string;

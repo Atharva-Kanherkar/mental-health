@@ -193,12 +193,28 @@ Remember: This person is seeking healing. Every word should contribute to their 
    * Build comprehensive user context section for personalized AI therapy
    */
   private static buildUserContextSection(userContext: UserContextForAI): string {
-    const profile = userContext.mentalHealthProfile;
     let contextSection = `
 USER CONTEXT FOR PERSONALIZED THERAPY:`;
 
+    // User Profile (simple, encouraged - prioritize this)
+    const userProfile = userContext.userProfile;
+    if (userProfile) {
+      contextSection += `
+USER PROFILE:
+- Age: ${userProfile.age || 'Not specified'}
+- Pronouns: ${userProfile.pronouns || 'Not specified'}
+- Main Goal: ${userProfile.mainGoal || 'Not specified'}
+- Current Challenges: ${userProfile.currentChallenges || 'Not specified'}
+- What Helps Them: ${userProfile.whatHelps || 'Not specified'}
+- Preferred Communication Tone: ${userProfile.preferredTone}
+${userProfile.bio ? `- About Them: ${userProfile.bio}` : ''}`;
+    }
+
+    // Mental Health Profile (complex, optional - use if available)
+    const profile = userContext.mentalHealthProfile;
     if (profile) {
       contextSection += `
+
 MENTAL HEALTH PROFILE:
 - Age: ${profile.age || 'Not specified'}
 - Current Concerns: ${userContext.primaryConcerns?.join(', ') || 'Not specified'}
