@@ -16,7 +16,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { deriveEncryptionKey, encryptText } from '../lib/encryption';
+import { PasswordPrompt } from '../components/PasswordPrompt';
 import {
   View,
   Text,
@@ -389,7 +389,7 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
       await clearDraft();
 
       setTimeout(() => {
-        navigation.navigate('JournalList');
+        navigation.goBack();
       }, 5000);
     } catch (error) {
       console.error('Failed to create journal entry:', error);
@@ -1031,6 +1031,19 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
 
       {/* Past Entries Bottom Sheet */}
       {renderPastEntriesSheet()}
+
+      {/* Password Prompt for Encrypted Journals */}
+      <PasswordPrompt
+        isOpen={showPasswordPrompt}
+        onClose={() => setShowPasswordPrompt(false)}
+        onConfirm={(password) => {
+          setShowPasswordPrompt(false);
+          handleSubmit(password);
+        }}
+        title="Encrypt Your Journal"
+        description="Enter a password to encrypt this journal. Remember it - cannot be recovered!"
+        isLoading={isSubmitting}
+      />
     </LinearGradient>
   );
 };
