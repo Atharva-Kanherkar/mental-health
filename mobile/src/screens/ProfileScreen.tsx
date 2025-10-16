@@ -37,6 +37,8 @@ export const ProfileScreen = ({ navigation }: any) => {
         api.userProfile.get(),
         api.userProfile.getStatus(),
       ]);
+      console.log('Profile data loaded:', profileData);
+      console.log('Status data:', statusData);
       setProfile(profileData);
       setCompleteness(statusData.completeness);
     } catch (error) {
