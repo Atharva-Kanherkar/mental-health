@@ -36,13 +36,18 @@ export const PanicModeScreen = ({ navigation }: any) => {
         return;
       }
 
-      // Navigate to walkthrough with selected memories
-      navigation.replace('Walkthrough', {
-        panicMode: true,
-        selectedMemories: response.selectedMemories,
-        narrative: response.overallNarrative,
-        duration: response.estimatedDuration,
-      });
+      console.log('Panic mode response:', response);
+
+      // Backend returns array of memory IDs - need to fetch full walkthrough data
+      // For now, show simple success message
+      Alert.alert(
+        'Grounding Memories Selected',
+        response.overallNarrative,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
+
+      // TODO: Navigate to actual walkthrough when implemented
+      // navigation.replace('Walkthrough', { walkthrough: response });
     } catch (error: any) {
       console.error('Panic mode error:', error);
       Alert.alert('Error', error.message || 'Failed to activate panic mode');
