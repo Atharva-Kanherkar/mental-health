@@ -70,6 +70,20 @@ export const DashboardScreen = ({ navigation }: any) => {
             <Text style={styles.welcomeSubtext}>How are you feeling today?</Text>
           </View>
 
+          {/* Panic Button */}
+          <TouchableOpacity
+            style={styles.panicButton}
+            onPress={() => navigation.navigate('PanicMode')}
+          >
+            <View style={styles.panicIconCircle}>
+              <HeartIcon size={32} color="#FFFFFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.panicButtonTitle}>Need Help Now?</Text>
+              <Text style={styles.panicButtonText}>Emergency Grounding · Instant Support</Text>
+            </View>
+          </TouchableOpacity>
+
           {/* Quick Actions */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Quick Actions</Text>
@@ -230,4 +244,32 @@ const styles = StyleSheet.create({
   icon: { fontSize: 28 },
   infoCard: { backgroundColor: theme.colors.purple.lightest, borderRadius: theme.borderRadius.xl, padding: theme.spacing.md, marginTop: theme.spacing.lg },
   infoText: { fontSize: theme.fontSizes.sm, fontWeight: theme.fontWeights.light as any, color: theme.colors.text.secondary, textAlign: 'center', fontStyle: 'italic' },
+  panicButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    backgroundColor: '#DC2626',
+    borderRadius: theme.borderRadius.xl,
+    padding: theme.spacing.lg,
+    marginBottom: theme.spacing.lg,
+    ...theme.shadows.lg,
+  },
+  panicIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  panicButtonTitle: {
+    fontSize: theme.fontSizes.lg,
+    fontWeight: theme.fontWeights.bold as any,
+    color: '#FFFFFF',
+  },
+  panicButtonText: {
+    fontSize: theme.fontSizes.sm,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 2,
+  },
 });

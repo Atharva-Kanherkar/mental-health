@@ -65,6 +65,9 @@ import { MedicationDetailScreen } from '../screens/MedicationDetailScreen';
 import { LogDoseScreen } from '../screens/LogDoseScreen';
 import { MedicationScheduleScreen } from '../screens/MedicationScheduleScreen';
 
+// Panic Mode
+import { PanicModeScreen } from '../screens/PanicModeScreen';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -190,6 +193,9 @@ const MainAppStack = () => {
       <Stack.Screen name="MedicationDetail" component={MedicationDetailScreen} />
       <Stack.Screen name="LogDose" component={LogDoseScreen} />
       <Stack.Screen name="MedicationSchedule" component={MedicationScheduleScreen} />
+
+      {/* Panic Mode */}
+      <Stack.Screen name="PanicMode" component={PanicModeScreen} options={{ presentation: 'modal' }} />
     </Stack.Navigator>
   );
 };
