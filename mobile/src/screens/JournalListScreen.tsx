@@ -154,9 +154,9 @@ export const JournalListScreen = ({ navigation }: any) => {
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                           <Text style={styles.entryTitle} numberOfLines={1}>
-                            {entry.isEncrypted ? 'Encrypted Journal' : entry.title}
+                            {entry.privacyLevel === 'zero_knowledge' ? 'Encrypted Journal' : entry.title}
                           </Text>
-                          {entry.isEncrypted && (
+                          {entry.privacyLevel === 'zero_knowledge' && (
                             <Ionicons name="lock-closed" size={16} color={theme.colors.primary} />
                           )}
                         </View>
@@ -174,7 +174,7 @@ export const JournalListScreen = ({ navigation }: any) => {
                     <View style={styles.entryContent}>
                       <View style={styles.marginLine} />
                       <Text style={styles.entryText} numberOfLines={4}>
-                        {entry.isEncrypted
+                        {entry.privacyLevel === 'zero_knowledge'
                           ? 'This journal is encrypted. Tap to decrypt and view.'
                           : entry.content}
                       </Text>

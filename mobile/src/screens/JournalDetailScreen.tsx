@@ -46,7 +46,7 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
       setEntry(data);
 
       // Check if encrypted
-      if (data.privacyLevel === 'zero_knowledge' && data.isEncrypted) {
+      if (data.privacyLevel === 'zero_knowledge') {
         // Show password prompt for encrypted journals
         setShowPasswordPrompt(true);
       } else {
@@ -137,7 +137,7 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
               {/* Title Card */}
               <View style={styles.titleCard}>
                 <Text style={styles.title}>
-                  {entry.isEncrypted ? decryptedTitle : entry.title}
+                  {entry.privacyLevel === 'zero_knowledge' ? decryptedTitle : entry.title}
                 </Text>
                 <Text style={styles.date}>
                   {new Date(entry.createdAt).toLocaleDateString('en-US', {
@@ -147,7 +147,7 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
                     year: 'numeric',
                   })}
                 </Text>
-                {entry.isEncrypted && (
+                {entry.privacyLevel === 'zero_knowledge' && (
                   <View style={styles.encryptedBadge}>
                     <Ionicons name="lock-closed" size={16} color="#10B981" />
                     <Text style={styles.encryptedText}>Encrypted & Private</Text>
@@ -158,7 +158,7 @@ export const JournalDetailScreen = ({ route, navigation }: any) => {
               {/* Content Card */}
               <View style={styles.contentCard}>
                 <Text style={styles.content}>
-                  {entry.isEncrypted ? decryptedContent : entry.content}
+                  {entry.privacyLevel === 'zero_knowledge' ? decryptedContent : entry.content}
                 </Text>
               </View>
             </>
