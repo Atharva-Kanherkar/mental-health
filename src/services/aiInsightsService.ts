@@ -328,7 +328,7 @@ FORMAT AS JSON:
   /**
    * Generate weekly summary of check-ins
    */
-  async generateWeeklySummary(checkIns: DailyCheckIn[], journalAggregation?: any): Promise<string> {
+  async generateWeeklySummary(checkIns: DailyCheckIn[], journalAggregation: any = null): Promise<string> {
     if (checkIns.length === 0) {
       return 'No check-in data available for this week.';
     }
