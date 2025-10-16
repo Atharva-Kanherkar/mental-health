@@ -5,21 +5,22 @@ import { JournalService, JournalAnalysis } from '../services/journalService';
 
 
 const createJournalSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title must be less than 200 characters'),
-  content: z.string().min(1, 'Content is required').max(5000, 'Content must be less than 5000 characters'),
+  title: z.string().min(1, 'Title is required').max(5000, 'Title is too long'), // Encrypted title can be longer
+  content: z.string().min(1, 'Content is required').max(50000, 'Content is too long'), // Encrypted content can be much longer
   mediaType: z.enum(['image', 'audio', 'video']).optional(),
   mediaUrl: z.string().url().optional(),
-  
+
   // Mental Health Tracking (all 1-10 scale)
   overallMood: z.number().min(1).max(10).optional(),
   energyLevel: z.number().min(1).max(10).optional(),
   anxietyLevel: z.number().min(1).max(10).optional(),
   stressLevel: z.number().min(1).max(10).optional(),
-  
+
   // Privacy & Memory options
   privacyLevel: z.enum(['zero_knowledge', 'server_managed']).default('server_managed'),
   convertToMemory: z.boolean().default(false),
   associatedMemoryId: z.string().uuid().optional(),
+  iv: z.string().optional(), // Encryption IV for zero-knowledge journals
 }).refine(
   (data) => {
     // If mediaType is provided, mediaUrl must also be provided
@@ -77,45 +78,76 @@ export class JournalController {
         });
       }
 
-      // Analyze the journal entry with AI
-      const aiAnalysis: JournalAnalysis = await JournalService.analyzeEntry(
-        title, 
-        content, 
-        userId, 
-        mediaType, 
-        mediaUrl
-      );
+      // Analyze the journal entry with AI (ONLY for server-managed journals)
+      let aiAnalysis: JournalAnalysis;
 
-      // Create the journal entry in database
-      const journalEntry = await prisma.journalEntry.create({
-        data: {
-          userId: userId,
+      if (privacyLevel === 'zero_knowledge') {
+        // Skip AI analysis for encrypted journals (privacy preserved)
+        aiAnalysis = {
+          aiSentiment: null,
+          aiMoodTags: [],
+          aiWellnessScore: null,
+          aiInsights: null,
+          aiThemes: [],
+          isSafetyRisk: false,
+          supportiveMessage: 'Your thoughts are safely encrypted. Only you can read them.'
+        };
+      } else {
+        // AI analysis for server-managed journals
+        aiAnalysis = await JournalService.analyzeEntry(
           title,
           content,
-          mediaType: mediaType || null,
-          mediaUrl: mediaUrl || null,
-          
-          // Mental Health Tracking
-          overallMood: overallMood || null,
-          energyLevel: energyLevel || null,
-          anxietyLevel: anxietyLevel || null,
-          stressLevel: stressLevel || null,
-          
-          // Privacy & Memory
-          privacyLevel: privacyLevel || 'server_managed',
-          convertToMemory: convertToMemory || false,
-          associatedMemoryId: associatedMemoryId || null,
-          
-          // AI Analysis results
+          userId,
+          mediaType,
+          mediaUrl
+        );
+      }
+
+      // For zero-knowledge journals: content is already encrypted client-side
+      // AI analysis only runs for server_managed journals
+      let aiAnalysisData = {};
+
+      if (privacyLevel === 'server_managed') {
+        // AI can analyze server-managed journals
+        aiAnalysisData = {
           aiSentiment: aiAnalysis.aiSentiment,
           aiMoodTags: aiAnalysis.aiMoodTags,
           aiWellnessScore: aiAnalysis.aiWellnessScore,
           aiInsights: aiAnalysis.aiInsights,
           aiThemes: aiAnalysis.aiThemes,
           aiSupportiveMessage: aiAnalysis.supportiveMessage,
-          
-          // Points will be calculated later based on AI analysis
-          pointsEarned: 0 // TODO: Calculate points based on aiAnalysis
+        };
+      }
+      // For zero_knowledge: AI fields remain null (privacy preserved)
+
+      // Create the journal entry in database
+      const journalEntry = await prisma.journalEntry.create({
+        data: {
+          userId: userId,
+          title, // Encrypted if privacyLevel=zero_knowledge
+          content, // Encrypted if privacyLevel=zero_knowledge
+          mediaType: mediaType || null,
+          mediaUrl: mediaUrl || null,
+
+          // Privacy
+          privacyLevel: privacyLevel || 'server_managed',
+          isEncrypted: privacyLevel === 'zero_knowledge',
+          encryptionIV: req.body.iv || null, // Client provides IV for encrypted journals
+
+          // Mental Health Tracking
+          overallMood: overallMood || null,
+          energyLevel: energyLevel || null,
+          anxietyLevel: anxietyLevel || null,
+          stressLevel: stressLevel || null,
+
+          // Memory Options
+          convertToMemory: convertToMemory || false,
+          associatedMemoryId: associatedMemoryId || null,
+
+          // AI Analysis (only for server_managed)
+          ...aiAnalysisData,
+
+          pointsEarned: 0
         }
       });
 

@@ -94,12 +94,17 @@ model JournalEntry {
   id        String @id @default(uuid())
   userId    String
   user      User   @relation(fields: [userId], references: [id])
-  
+
   // Content
   title     String
-  content   String
+  content   String // Encrypted if privacyLevel = zero_knowledge
   mediaType String? // "image" | "audio" | "video"
   mediaUrl  String?
+
+  // Privacy & Encryption
+  privacyLevel String @default("server_managed") // "zero_knowledge" | "server_managed"
+  isEncrypted Boolean @default(false)
+  encryptionIV String? // For zero-knowledge journals
   
   // AI Analysis
   aiSentiment         String? // "positive" | "neutral" | "negative"
@@ -111,12 +116,11 @@ model JournalEntry {
   
   // Mental Health Tracking
   overallMood      Int?     // 1-10 scale
-  energyLevel      Int?     // 1-10 scale  
+  energyLevel      Int?     // 1-10 scale
   anxietyLevel     Int?     // 1-10 scale
   stressLevel      Int?     // 1-10 scale
-  
-  // Privacy & Memory
-  privacyLevel              String @default("server_managed") // "zero_knowledge" | "server_managed"
+
+  // Memory Options
   convertToMemory           Boolean @default(false)
   associatedMemoryId        String?
   
