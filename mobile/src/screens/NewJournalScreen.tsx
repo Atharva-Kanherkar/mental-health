@@ -1002,7 +1002,7 @@ export const NewJournalScreen: React.FC<NewJournalScreenProps> = ({ navigation }
                   styles.submitButton,
                   (!title.trim() || !content.trim()) && styles.submitButtonDisabled,
                 ]}
-                onPress={handleSubmit}
+                onPress={() => handleSubmit()}
                 disabled={isSubmitting || !title.trim() || !content.trim()}
               >
                 {isSubmitting ? (
