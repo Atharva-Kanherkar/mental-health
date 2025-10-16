@@ -894,9 +894,14 @@ export class CheckInAnalyticsService implements ICheckInAnalyticsService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
     return await prisma.journalEntry.findMany({
-      where: { userId, createdAt: { gte: startDate } },
+      where: {
+        userId,
+        createdAt: { gte: startDate },
+        privacyLevel: 'server_managed' // Exclude encrypted journals
+      },
       select: { aiSentiment: true, aiWellnessScore: true, aiMoodTags: true, aiThemes: true, aiInsights: true },
-      orderBy: { createdAt: 'desc' }, take: 10
+      orderBy: { createdAt: 'desc' },
+      take: 10
     });
   }
 
